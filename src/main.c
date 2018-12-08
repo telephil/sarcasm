@@ -46,8 +46,8 @@ int main(int argc, char* argv[]) {
         apply(ctx, write, cons(vec, scm_null));
     } catch {
         printf("%s: %s\n",
-                get_string_cstr(get_error_type(ctx->stack->err)),
-                get_string_cstr(get_error_message(ctx->stack->err)));
+                string_to_cstr(error_type(ctx->stack->err)),
+                string_to_cstr(error_message(ctx->stack->err)));
     }
 
     return 0;

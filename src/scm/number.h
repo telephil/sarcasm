@@ -10,5 +10,5 @@ static inline bool is_flonum(scmval v) { return type_of(v) == SCM_TYPE_FLONUM; }
 define_contract(fixnum_c, "integer", is_fixnum);
 
 // accessors
-static inline scm_fixnum_t get_fixnum(scmval v) { return v.i; }
-static inline scm_flonum_t get_flonum(scmval v) { return v.d; }
+static inline scm_fixnum_t fixnum_value(scmval v) { return v.i; }
+static inline scm_flonum_t flonum_value(scmval v) { return v.d; }

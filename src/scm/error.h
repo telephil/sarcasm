@@ -13,8 +13,8 @@ static inline bool is_error(scmval v) { return type_of(v) == SCM_TYPE_ERROR; }
 
 // accessors
 static inline scm_error_t* get_error(scmval v) { return (scm_error_t*)v.o; }
-static inline scmval get_error_type(scmval v) { return get_error(v)->type; }
-static inline scmval get_error_message(scmval v) { return get_error(v)->message; }
+static inline scmval error_type(scmval v) { return get_error(v)->type; }
+static inline scmval error_message(scmval v) { return get_error(v)->message; }
 
 // standard library
 void init_errors(scm_ctx_t*);

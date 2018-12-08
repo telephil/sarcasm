@@ -24,7 +24,7 @@ static scmval scm_make_vector(scm_ctx_t* ctx) {
     scmval r, s, i;
     s = arg_ref(ctx, 0);
     i = arg_ref_opt(ctx, 1, make_fixnum(0));
-    r = make_vector(get_fixnum(s), i);
+    r = make_vector(fixnum_value(s), i);
     return r;
 }
 
@@ -43,11 +43,11 @@ static scmval scm_vector_ref(scm_ctx_t* ctx) {
     scmval r, v, i;
     v = arg_ref(ctx, 0);
     i = arg_ref(ctx, 1);
-    if(get_fixnum(i) < 0 || get_fixnum(i) >= vector_size(v)) {
-        scmval e = range_error("vector-ref", get_fixnum(i), vector_size(v));
+    if(fixnum_value(i) < 0 || fixnum_value(i) >= vector_size(v)) {
+        scmval e = range_error("vector-ref", fixnum_value(i), vector_size(v));
         throw(ctx, e);
     }
-    r = vector_ref(v, get_fixnum(i));
+    r = vector_ref(v, fixnum_value(i));
     return r;
 }
 
@@ -56,11 +56,11 @@ static scmval scm_vector_set(scm_ctx_t* ctx) {
     v = arg_ref(ctx, 0);
     i = arg_ref(ctx, 1);
     x = arg_ref(ctx, 2);
-    if(get_fixnum(i) < 0 || get_fixnum(i) >= vector_size(v)) {
-        scmval e = range_error("vector-set!", get_fixnum(i), vector_size(v));
+    if(fixnum_value(i) < 0 || fixnum_value(i) >= vector_size(v)) {
+        scmval e = range_error("vector-set!", fixnum_value(i), vector_size(v));
         throw(ctx, e);
     }
-    vector_set(v, get_fixnum(i), x);
+    vector_set(v, fixnum_value(i), x);
     return scm_undef;
 }
 

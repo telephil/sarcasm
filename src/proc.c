@@ -24,8 +24,8 @@ scmval make_primv(const char* name, scm_prim_fun fun, arity_t arity, int n, va_l
 
 // arity
 static scmval arity_error(scmval v, int argc) {
-    arity_t arity = get_prim(v)->arity;
-    char* n = get_string_cstr(get_prim(v)->name);
+    arity_t arity = prim_arity(v);
+    char* n = string_to_cstr(prim_name(v));
     char* m;
     switch(arity.type) {
         case ARITY_EXACTLY:
@@ -47,7 +47,7 @@ static scmval arity_error(scmval v, int argc) {
 static void ensure_arity(scm_ctx_t* ctx, scmval v, int argc) {
     scmval e;
     bool match = false;
-    arity_t arity = get_prim(v)->arity;
+    arity_t arity = prim_arity(v);
     switch(arity.type) {
         case ARITY_EXACTLY:
             match = (argc == arity.min);
@@ -71,13 +71,13 @@ static void ensure_arity(scm_ctx_t* ctx, scmval v, int argc) {
 // Contract
 static void ensure_contract(scm_ctx_t* ctx, scmval v, int argc, const scmval* argv) {
     scmval e;
-    contract_t* contracts = get_prim(v)->contracts;
+    contract_t* contracts = prim_contracts(v);
     int ncontracts = sizeof(contracts) / sizeof(contracts[0]);
     for(int i = 0, n = 0; i < argc; i++) {
         if(!contracts[n].pred(argv[i])) {
             e = error(contract_error_type,
                       "%s: contract violation (received XXX but expected %s)",
-                      get_string_cstr(get_prim(v)->name),
+                      string_to_cstr(prim_name(v)),
                       contracts[n].name);
             throw(ctx, e);
         }
@@ -97,7 +97,7 @@ scmval apply(scm_ctx_t* ctx, scmval prim, scmval args) {
         arg_set(ctx, i, car(v));
     }
     ensure_contract(ctx, prim, l, ctx->stack->argv);
-    r = get_prim(prim)->fun(ctx);
+    r = prim_fun(prim)(ctx);
     pop_frame(ctx);
     return r;
 }

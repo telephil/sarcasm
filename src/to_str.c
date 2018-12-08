@@ -16,20 +16,20 @@ static CORD to_cord(scmval v, bool write) {
             r = is_true(v) ? "#t" : "#f";
             break;
         case SCM_TYPE_FIXNUM:
-            CORD_sprintf(&r, "%lld", get_fixnum(v));
+            CORD_sprintf(&r, "%lld", fixnum_value(v));
             break;
         case SCM_TYPE_FLONUM:
-            CORD_sprintf(&r, "%lf", get_flonum(v));
+            CORD_sprintf(&r, "%lf", flonum_value(v));
             break;
         case SCM_TYPE_CHAR:
             if(write) {
-                CORD_sprintf(&r, "#\\%c", get_char(v));
+                CORD_sprintf(&r, "#\\%c", char_value(v));
             } else {
-                CORD_sprintf(&r, "%c", get_char(v));
+                CORD_sprintf(&r, "%c", char_value(v));
             }
             break;
         case SCM_TYPE_SYMBOL:
-            r = get_string(v)->value;
+            r = string_value(v);
             break;
         case SCM_TYPE_PAIR:
             r = "(";
@@ -61,9 +61,9 @@ static CORD to_cord(scmval v, bool write) {
             break;
         case SCM_TYPE_STRING:
             if(write)
-                CORD_sprintf(&r, "\"%r\"", get_string(v)->value);
+                CORD_sprintf(&r, "\"%r\"", string_value(v));
             else
-                r = get_string(v)->value;
+                r = string_value(v);
             break;
     }
     return r;

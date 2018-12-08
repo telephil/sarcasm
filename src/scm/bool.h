@@ -14,7 +14,7 @@ static inline bool is_false(scmval v) { return is_bool(v) && !v.b; }
 define_contract(bool_c, "boolean", is_bool);
 
 // accessors
-static inline scm_bool_t get_bool(scmval v) { return v.b; }
+static inline scm_bool_t bool_value(scmval v) { return v.b; }
 
 // standard library
 void init_bool(scm_ctx_t*);

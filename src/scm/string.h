@@ -15,4 +15,5 @@ static inline bool is_string(scmval v) { return type_of(v) == SCM_TYPE_STRING; }
 
 // accessors
 static inline scm_string_t* get_string(scmval v) { return (scm_string_t*)v.o; }
-static inline char* get_string_cstr(scmval v) { return CORD_to_char_star(get_string(v)->value); }
+static inline CORD string_value(scmval v) { return get_string(v)->value; }
+static inline char* string_to_cstr(scmval v) { return CORD_to_char_star(string_value(v)); }

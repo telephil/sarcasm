@@ -22,16 +22,16 @@ bool is_eqv(scmval x, scmval y) {
             r = true;
             break;
         case SCM_TYPE_BOOL:
-            r = (get_bool(x) == get_bool(y));
+            r = (bool_value(x) == bool_value(y));
             break;
         case SCM_TYPE_FIXNUM:
-            r = (get_fixnum(x) == get_fixnum(y));
+            r = (fixnum_value(x) == fixnum_value(y));
             break;
         case SCM_TYPE_FLONUM:
-            r = (get_flonum(x) == get_flonum(y));
+            r = (flonum_value(x) == flonum_value(y));
             break;
         case SCM_TYPE_CHAR:
-            r = (get_char(x) == get_char(y));
+            r = (char_value(x) == char_value(y));
             break;
         default:
             r = (x.o == y.o);

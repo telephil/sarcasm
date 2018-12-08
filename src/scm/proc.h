@@ -19,6 +19,10 @@ static inline bool is_prim(scmval v) { return type_of(v) == SCM_TYPE_PRIM; }
 
 // accessors
 static inline scm_prim_t* get_prim(scmval v) { return (scm_prim_t*)v.o; }
+static inline scmval prim_name(scmval v) { return get_prim(v)->name; }
+static inline scm_prim_fun prim_fun(scmval v) { return get_prim(v)->fun; }
+static inline arity_t prim_arity(scmval v) { return get_prim(v)->arity; }
+static inline contract_t* prim_contracts(scmval v) { return get_prim(v)->contracts; }
 
 // standard library
 scmval apply(scm_ctx_t*, scmval, scmval);
