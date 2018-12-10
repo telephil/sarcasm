@@ -28,6 +28,12 @@ static CORD to_cord(scmval v, bool write) {
                 CORD_sprintf(&r, "%c", char_value(v));
             }
             break;
+        case SCM_TYPE_STRING:
+            if(write)
+                CORD_sprintf(&r, "\"%r\"", string_value(v));
+            else
+                r = string_value(v);
+            break;
         case SCM_TYPE_SYMBOL:
             r = string_value(v);
             break;
@@ -59,11 +65,20 @@ static CORD to_cord(scmval v, bool write) {
             }
             r = CORD_cat(r, ")");
             break;
-        case SCM_TYPE_STRING:
-            if(write)
-                CORD_sprintf(&r, "\"%r\"", string_value(v));
-            else
-                r = string_value(v);
+        case SCM_TYPE_ENV:
+            r = "#<environment>";
+            break;
+        case SCM_TYPE_PRIM:
+            CORD_sprintf(&r, "#<primitive:%s>", prim_name(v));
+            break;
+        case SCM_TYPE_ERROR:
+            r = to_cord(error_message(v), write);
+            break;
+        case SCM_TYPE_INPUT_PORT:
+            r = "#<input-port>"; // XXX
+            break;
+        case SCM_TYPE_OUTPUT_PORT:
+            CORD_sprintf(&r, "#<output-port:%s>", output_port_type(v) == FILE_PORT ? "file" : "string");
             break;
     }
     return r;
