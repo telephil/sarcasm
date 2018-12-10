@@ -16,6 +16,7 @@ static scm_ctx_t* scm_init() {
     ctx = init_context();
     init_errors(ctx);
     init_bool(ctx);
+    init_char(ctx);
     init_pair(ctx);
     init_vector(ctx);
     init_port(ctx);
