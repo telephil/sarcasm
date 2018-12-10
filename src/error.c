@@ -7,7 +7,7 @@ scmval contract_error_type;
 
 // constructor
 scmval make_error(scmval type, scmval message) {
-    scm_error_t* e = GC_MALLOC(sizeof(scm_error_t));
+    scm_error_t* e = scm_new(scm_error_t);
     e->type = type;
     e->message = message;
     return make_ptr(SCM_TYPE_ERROR, e);

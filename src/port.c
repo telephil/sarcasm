@@ -7,7 +7,7 @@ scmval scm_eof;
 
 // constructors
 scmval make_output_port(enum port_type type, void* p, outp_vtable* vtable) {
-    scm_output_port_t* outp = GC_MALLOC(sizeof(scm_output_port_t));
+    scm_output_port_t* outp = scm_new(scm_output_port_t);
     outp->type = type;
     outp->port = p;
     outp->open = true;
@@ -169,7 +169,7 @@ static void string_close(scmval p) {
 scmval make_string_output_port() {
     static outp_vtable vtable = { string_putc, string_puts, string_flush, string_close };
     scmval v;
-    scm_string_t* s = GC_MALLOC(sizeof(scm_string_t));
+    scm_string_t* s = scm_new(scm_string_t);
     s->value = "";
     v = make_output_port(STRING_PORT, s, &vtable);
     return v;

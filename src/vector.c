@@ -2,9 +2,9 @@
 
 // constructor
 scmval make_vector(size_t size, scmval initial) {
-    scm_vector_t* v = GC_MALLOC(sizeof(scm_vector_t));
+    scm_vector_t* v = scm_new(scm_vector_t);
     v->size = size;
-    v->elts = GC_MALLOC(size*sizeof(scmval));
+    v->elts = scm_new_array(size, scmval);
     for(int i = 0; i < size; i++) {
         v->elts[i] = initial;
     }

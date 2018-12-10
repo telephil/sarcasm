@@ -45,6 +45,10 @@ struct scmval {
     };
 };
 
+#define scm_new(T) GC_MALLOC(sizeof(T))
+#define scm_new_array(S, T) GC_MALLOC(S*sizeof(T))
+#define scm_delete(P) GC_FREE(P)
+
 static inline int type_of(scmval v) { return v.type; }
 static inline scmval make_val(int type) { scmval v = { .type = type, .o = NULL }; return v; }
 static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o = o }; return v; }

@@ -2,7 +2,7 @@
 
 // constructor
 scmval make_env() {
-    scm_env_t* e = GC_MALLOC(sizeof(scm_env_t));
+    scm_env_t* e = scm_new(scm_env_t);
     e->bindings= make_dict();
     e->next = NULL;
     return make_ptr(SCM_TYPE_ENV, e);

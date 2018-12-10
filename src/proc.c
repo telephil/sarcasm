@@ -11,7 +11,7 @@ scmval make_prim(const char* name, scm_prim_fun fun, arity_t arity, int n, ...) 
 }
 
 scmval make_primv(const char* name, scm_prim_fun fun, arity_t arity, int n, va_list ap) {
-    scm_prim_t* prim = GC_MALLOC(sizeof(scm_prim_t));
+    scm_prim_t* prim = scm_new(scm_prim_t);
     prim->name  = make_string(name);
     prim->fun   = fun;
     prim->arity = arity;
