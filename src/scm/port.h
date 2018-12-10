@@ -50,8 +50,8 @@ static inline bool is_port_open(scmval v) { return get_output_port(v)->open; }
 static inline void set_port_open(scmval p, bool b) { get_output_port(p)->open = b; } 
 static inline void output_port_putc(scmval p, scmval v) { get_output_port(p)->vtable->putc(p, v); }
 static inline void output_port_puts(scmval p, scmval v) { get_output_port(p)->vtable->puts(p, v); }
-static inline void output_port_flush(scmval p, scmval v) { get_output_port(p)->vtable->flush(p); }
-static inline void output_port_close(scmval p, scmval v) { get_output_port(p)->vtable->close(p); }
+static inline void output_port_flush(scmval p) { get_output_port(p)->vtable->flush(p); }
+static inline void output_port_close(scmval p) { get_output_port(p)->vtable->close(p); }
 
 
 // standard library

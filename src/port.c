@@ -92,6 +92,13 @@ static scmval scm_newline(scm_ctx_t* ctx) {
     return scm_undef;
 }
 
+static scmval scm_flush_output_port(scm_ctx_t* ctx) {
+    scmval p;
+    p = arg_ref_opt(ctx, 0, ctx->current_output_port);
+    output_port_flush(p);
+    return scm_undef;
+}
+
 void init_port(scm_ctx_t* ctx) {
     scm_eof   = make_val(SCM_TYPE_EOF);
 
@@ -107,6 +114,7 @@ void init_port(scm_ctx_t* ctx) {
     define(ctx, "write-char", scm_write_char, arity_or(1, 2), 2, char_c, output_port_c);
     define(ctx, "display", scm_display, arity_or(1, 2), 2, any_c, output_port_c);
     define(ctx, "newline", scm_newline, arity_or(0, 1), 1, output_port_c);
+    define(ctx, "flush-output-port", scm_flush_output_port, arity_or(0, 1), 1, output_port_c);
 }
 
 // OUTPUT PORTS implementations
