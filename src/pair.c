@@ -15,7 +15,7 @@ scmval make_pair(scmval car, scmval cdr) {
 static scmval scm_pair_p(scm_ctx_t* ctx) {
     scmval v;
     v = arg_ref(ctx, 0);
-    if(is_pair(v))
+    if(is_pair(v) && !is_null(v))
         return scm_true;
     return scm_false;
 }
@@ -62,6 +62,22 @@ static scmval scm_cdr(scm_ctx_t* ctx) {
     return r;
 }
 
+static scmval scm_setcar(scm_ctx_t* ctx) {
+    scmval l, v;
+    l = arg_ref(ctx, 0);
+    v = arg_ref(ctx, 1);
+    setcar(l, v);
+    return scm_undef;
+}
+
+static scmval scm_setcdr(scm_ctx_t* ctx) {
+    scmval l, v;
+    l = arg_ref(ctx, 0);
+    v = arg_ref(ctx, 1);
+    setcdr(l, v);
+    return scm_undef;
+}
+
 static scmval scm_length(scm_ctx_t* ctx) {
     scmval r, l;
     scm_fixnum_t i;
@@ -82,6 +98,8 @@ void init_pair(scm_ctx_t* ctx) {
     define(ctx, "cons", scm_cons, arity_exactly(2), 2, any_c, any_c);
     define(ctx, "car", scm_car, arity_exactly(1), 1, list_c);
     define(ctx, "cdr", scm_cdr, arity_exactly(1), 1, list_c);
+    define(ctx, "set-car!", scm_setcar, arity_exactly(2), 2, list_c, any_c);
+    define(ctx, "set-cdr!", scm_setcdr, arity_exactly(2), 2, list_c, any_c);
     define(ctx, "length", scm_length, arity_exactly(1), 1, list_c);
 }
 

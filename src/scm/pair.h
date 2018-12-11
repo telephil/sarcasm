@@ -26,6 +26,8 @@ void init_pair(scm_ctx_t*);
 
 static inline scmval car(scmval v) { return get_pair(v)->car; }
 static inline scmval cdr(scmval v) { return get_pair(v)->cdr; }
+static inline void setcar(scmval v, scmval c) { get_pair(v)->car = c; }
+static inline void setcdr(scmval v, scmval c) { get_pair(v)->cdr = c; }
 static inline scmval cons(scmval car, scmval cdr) { return make_pair(car, cdr); }
 
 static inline size_t list_length(scmval v) {
