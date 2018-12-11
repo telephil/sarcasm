@@ -69,6 +69,7 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/proc.h"
 #include "scm/port.h"
 #include "scm/env.h"
+#include "scm/writer.h"
 
 // utilities
-scmval to_str(scmval, bool);
+

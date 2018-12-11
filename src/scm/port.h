@@ -56,3 +56,5 @@ static inline void output_port_close(scmval p) { get_output_port(p)->vtable->clo
 
 // standard library
 void init_port(scm_ctx_t*);
+scmval open_output_string();
+scmval get_output_string(scmval);

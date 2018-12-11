@@ -60,11 +60,10 @@ static scmval scm_port_open_p(scm_ctx_t* ctx) {
 }
 
 static scmval scm_write(scm_ctx_t* ctx) {
-    scmval v, p, s;
+    scmval v, p;
     v = arg_ref(ctx, 0);
     p = arg_ref_opt(ctx, 1, ctx->current_output_port);
-    s = to_str(v, true);
-    output_port_puts(p, s);
+    write(p, v, WRITE_MODE_WRITE);
     return scm_undef;
 }
 
@@ -77,11 +76,10 @@ static scmval scm_write_char(scm_ctx_t* ctx) {
 }
 
 static scmval scm_display(scm_ctx_t* ctx) {
-    scmval v, p, s;
+    scmval v, p; //, s;
     v = arg_ref(ctx, 0);
     p = arg_ref_opt(ctx, 1, ctx->current_output_port);
-    s = to_str(v, false);
-    output_port_puts(p, s);
+    write(p, v, WRITE_MODE_DISPLAY);
     return scm_undef;
 }
 
@@ -166,12 +164,20 @@ static void string_close(scmval p) {
     set_port_open(p, false);
 }
 
-scmval make_string_output_port() {
+static scmval make_string_output_port() {
     static outp_vtable vtable = { string_putc, string_puts, string_flush, string_close };
     scmval v;
     scm_string_t* s = scm_new(scm_string_t);
-    s->value = "";
+    s->value = NULL;
     v = make_output_port(STRING_PORT, s, &vtable);
     return v;
 }
 
+scmval open_output_string() {
+    return make_string_output_port();
+}
+
+scmval get_output_string(scmval v) {
+    scm_string_t* s = output_port_port(v);
+    return make_ptr(SCM_TYPE_STRING, s);
+}
