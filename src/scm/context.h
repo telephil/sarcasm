@@ -15,6 +15,7 @@ struct context {
     
     scmval current_output_port;
     scmval current_error_port;
+    scmval current_input_port;
 
     stack_frame_t* stack;
     jmp_buf err_buf;
