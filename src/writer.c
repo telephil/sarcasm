@@ -1,21 +1,7 @@
 #include "scm.h"
 
-static inline void scm_putc(scmval p, scm_char_t c) {
-    output_port_putc(p, make_char(c));
-}
-
-static inline void scm_puts(scmval p, CORD c) {
-    output_port_puts(p, make_string_from_cord(c));
-}
-
-static inline void scm_printf(scmval p, CORD format, ...) {
-    CORD r;
-    va_list ap;
-    va_start(ap, format);
-    CORD_vsprintf(&r, format, ap);
-    va_end(ap);
-    scm_puts(p, r);
-}
+static void write_pair(scmval, scmval, write_mode);
+static void write_vector(scmval, scmval, write_mode);
 
 void write(scmval p, scmval v, write_mode mode) {
     switch(type_of(v)) {
@@ -58,29 +44,10 @@ void write(scmval p, scmval v, write_mode mode) {
             scm_puts(p, string_value(v));
             break;
         case SCM_TYPE_PAIR:
-            scm_putc(p, '(');
-            for(scmval l = v; !is_null(l); l = cdr(l)) {
-                write(p, car(l), mode);
-                if(!is_pair(cdr(l))) {
-                    scm_puts(p, " . ");
-                    write(p, cdr(l), mode);
-                    break;
-                }
-                if(!is_null(cdr(l))) {
-                    scm_putc(p, ' ');
-                }
-            }
-            scm_putc(p, ')');
+            write_pair(p, v, mode);
             break;
         case SCM_TYPE_VECTOR:
-            scm_puts(p, "#(");
-            for(int i = 0; i < vector_size(v); i++) {
-                if(i > 0) {
-                    scm_putc(p, ' ');
-                }
-                write(p, vector_ref(v, i), mode);
-            }
-            scm_putc(p, ')');
+            write_vector(p, v, mode);
             break;
         case SCM_TYPE_ENV:
             scm_puts(p, "#<environment>");
@@ -98,5 +65,32 @@ void write(scmval p, scmval v, write_mode mode) {
             scm_printf(p, "#<output-port:%s>", output_port_type(v) == FILE_PORT ? "file" : "string");
             break;
     }
+}
+
+static void write_pair(scmval p, scmval v, write_mode mode) {
+    scm_putc(p, '(');
+    for(scmval l = v; !is_null(l); l = cdr(l)) {
+        write(p, car(l), mode);
+        if(!is_pair(cdr(l))) {
+            scm_puts(p, " . ");
+            write(p, cdr(l), mode);
+            break;
+        }
+        if(!is_null(cdr(l))) {
+            scm_putc(p, ' ');
+        }
+    }
+    scm_putc(p, ')');
+}
+
+static void write_vector(scmval p, scmval v, write_mode mode) {
+    scm_puts(p, "#(");
+    for(int i = 0; i < vector_size(v); i++) {
+        if(i > 0) {
+            scm_putc(p, ' ');
+        }
+        write(p, vector_ref(v, i), mode);
+    }
+    scm_putc(p, ')');
 }
 

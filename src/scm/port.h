@@ -58,3 +58,17 @@ static inline void output_port_close(scmval p) { get_output_port(p)->vtable->clo
 void init_port(scm_ctx_t*);
 scmval open_output_string();
 scmval get_output_string(scmval);
+
+// utilities
+static inline void scm_putc(scmval p, scm_char_t c) { output_port_putc(p, make_char(c)); }
+static inline void scm_puts(scmval p, CORD c) { output_port_puts(p, make_string_from_cord(c)); }
+
+static inline void scm_printf(scmval p, CORD format, ...) {
+    CORD r;
+    va_list ap;
+    va_start(ap, format);
+    CORD_vsprintf(&r, format, ap);
+    va_end(ap);
+    scm_puts(p, r);
+}
+
