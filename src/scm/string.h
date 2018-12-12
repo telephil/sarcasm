@@ -13,6 +13,9 @@ scmval make_string_from_cord(CORD);
 // predicates
 static inline bool is_string(scmval v) { return type_of(v) == SCM_TYPE_STRING; }
 
+// contract
+define_contract(string_c, "string", is_string);
+
 // accessors
 static inline scm_string_t* get_string(scmval v) { return (scm_string_t*)v.o; }
 static inline CORD string_value(scmval v) { return get_string(v)->value; }
