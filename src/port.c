@@ -6,6 +6,15 @@
 scmval scm_eof;
 
 // constructors
+scmval make_input_port(enum port_type type, void* p, ip_vtable* vtable) {
+    scm_input_port_t* ip = scm_new(scm_input_port_t);
+    ip->type = type;
+    ip->port = p;
+    ip->open = true;
+    ip->vtable = vtable;
+    return make_ptr(SCM_TYPE_INPUT_PORT, ip);
+}
+
 scmval make_output_port(enum port_type type, void* p, outp_vtable* vtable) {
     scm_output_port_t* outp = scm_new(scm_output_port_t);
     outp->type = type;
@@ -14,9 +23,13 @@ scmval make_output_port(enum port_type type, void* p, outp_vtable* vtable) {
     outp->vtable = vtable;
     return make_ptr(SCM_TYPE_OUTPUT_PORT, outp);
 }
-// output ports
+// ports creation
+static scmval make_file_input_port(FILE*);
+static scmval make_file_input_port_from_filename(scmval);
+static scmval make_string_input_port(scmval);
 static scmval make_file_output_port(FILE*);
-
+static scmval make_file_output_port_from_filename(scmval);
+static scmval make_string_output_port();
 
 // port procedures
 static scmval scm_port_p(scm_ctx_t* ctx) {
@@ -57,6 +70,84 @@ static scmval scm_port_open_p(scm_ctx_t* ctx) {
     if(is_port_open(v))
         return scm_true;
     return scm_false;
+}
+
+static scmval scm_current_input_port(scm_ctx_t* ctx) {
+    return ctx->current_input_port;
+}
+
+static scmval scm_current_output_port(scm_ctx_t* ctx) {
+    return ctx->current_output_port;
+}
+
+static scmval scm_current_error_port(scm_ctx_t* ctx) {
+    return ctx->current_error_port;
+}
+
+static scmval scm_open_input_string(scm_ctx_t* ctx) {
+    scmval p, v;
+    v = arg_ref(ctx, 0);
+    p = make_string_input_port(v);
+    return p;
+}
+
+static scmval scm_open_input_file(scm_ctx_t* ctx) {
+    scmval p, v;
+    v = arg_ref(ctx, 0);
+    p = make_file_input_port_from_filename(v);
+    return p;
+}
+
+static scmval scm_close_input_port(scm_ctx_t* ctx) {
+    scmval p;
+    p = arg_ref(ctx, 0);
+    input_port_close(p);
+    return scm_undef;
+}
+
+static scmval scm_open_output_file(scm_ctx_t* ctx) {
+    scmval p, v;
+    v = arg_ref(ctx, 0);
+    p = make_file_output_port_from_filename(v);
+    return p;
+}
+
+static scmval scm_open_output_string(scm_ctx_t* ctx) {
+    scmval p;
+    p = make_string_output_port();
+    return p;
+}
+
+static scmval scm_get_output_string(scm_ctx_t* ctx) {
+    scmval v;
+    scm_string_t* s;
+    v = arg_ref(ctx, 0);
+    s = output_port_port(v);
+    return make_ptr(SCM_TYPE_STRING, s);
+}
+
+static scmval scm_close_output_port(scm_ctx_t* ctx) {
+    scmval p;
+    p = arg_ref(ctx, 0);
+    output_port_close(p);
+    return scm_undef;
+}
+
+static scmval scm_read_char(scm_ctx_t* ctx) {
+    scmval c, p;
+    p = arg_ref(ctx, 0);
+    c = input_port_getc(p);
+    return c;
+}
+
+static scmval scm_peek_char(scm_ctx_t* ctx) {
+    scmval c, p;
+    p = arg_ref(ctx, 0);
+    c = input_port_getc(p);
+    if(is_eof(c))
+        return scm_eof;
+    c = input_port_ungetc(p, c);
+    return c;
 }
 
 static scmval scm_write(scm_ctx_t* ctx) {
@@ -102,17 +193,112 @@ void init_port(scm_ctx_t* ctx) {
 
     ctx->current_output_port = make_file_output_port(stdout);
     ctx->current_error_port  = make_file_output_port(stderr);
+    ctx->current_input_port  = make_file_input_port(stdin);
 
     define(ctx, "port?", scm_port_p, arity_exactly(1), 1, any_c);
     define(ctx, "input-port?", scm_input_port_p, arity_exactly(1), 1, any_c);
     define(ctx, "output-port?", scm_output_port_p, arity_exactly(1), 1, any_c);
     define(ctx, "eof-object?", scm_eof_p, arity_exactly(1), 1, any_c);
     define(ctx, "port-open?", scm_port_open_p, arity_exactly(1), 1, port_c);
+    define(ctx, "current-input-port", scm_current_input_port, arity_exactly(0), 0);
+    define(ctx, "current-output-port", scm_current_output_port, arity_exactly(0), 0);
+    define(ctx, "current-error-port", scm_current_error_port, arity_exactly(0), 0);
+    define(ctx, "open-input-string", scm_open_input_string, arity_exactly(1), 1, string_c);
+    define(ctx, "open-input-file", scm_open_input_file, arity_exactly(1), 1, string_c);
+    define(ctx, "close-input-port", scm_close_input_port, arity_exactly(1), 1, input_port_c);
+    define(ctx, "open-output-string", scm_open_output_string, arity_exactly(1), 0);
+    define(ctx, "get-output-string", scm_get_output_string, arity_exactly(1), 1, output_port_c);
+    define(ctx, "open-output-file", scm_open_output_file, arity_exactly(1), 1, string_c);
+    define(ctx, "close-output-port", scm_close_output_port, arity_exactly(1), 1, output_port_c);
+    define(ctx, "read-char", scm_read_char, arity_exactly(1), 1, input_port_c);
+    define(ctx, "peek-char", scm_peek_char, arity_exactly(1), 1, input_port_c);
     define(ctx, "write", scm_write, arity_or(1, 2), 2, any_c, output_port_c);
     define(ctx, "write-char", scm_write_char, arity_or(1, 2), 2, char_c, output_port_c);
     define(ctx, "display", scm_display, arity_or(1, 2), 2, any_c, output_port_c);
     define(ctx, "newline", scm_newline, arity_or(0, 1), 1, output_port_c);
     define(ctx, "flush-output-port", scm_flush_output_port, arity_or(0, 1), 1, output_port_c);
+}
+
+// INPUT PORTS implementations
+// -- FILE
+static scmval file_getc(scmval p) {
+    FILE* fp = input_port_port(p);
+    if(feof(fp))
+        return scm_eof;
+    char c = getc(fp);
+    if(c == EOF)
+        return scm_eof;
+    return make_char(c);
+}
+
+static scmval file_ungetc(scmval p, scmval c) {
+    FILE* fp = input_port_port(p);
+    if(feof(fp))
+        return scm_eof;
+    char ch = ungetc(char_value(c), fp);
+    return make_char(ch);
+}
+
+static scmval file_char_ready(scmval p) {
+    if(is_port_open(p))
+        return scm_true; // XXX is this enough ?
+    return scm_false;
+}
+
+static void file_ip_close(scmval p) {
+    FILE* fp = input_port_port(p);
+    fclose(fp);
+    set_port_open(p, false);
+}
+
+static scmval make_file_input_port(FILE* fp) {
+    static struct ip_vtable vtable = { file_getc, file_ungetc, file_char_ready, file_ip_close };
+    scmval p = make_input_port(FILE_PORT, fp, &vtable);
+    return p;
+}
+
+static scmval make_file_input_port_from_filename(scmval f) {
+    FILE* fp = fopen(string_value(f), "r");
+    // XXX
+    return make_file_input_port(fp);
+}
+
+// -- STRING
+static scmval string_getc(scmval p) {
+    scm_input_string_t* in = input_port_port(p);
+    if(!CORD_pos_valid(in->pos))
+        return scm_eof;
+    char c = CORD_pos_fetch(in->pos);
+    CORD_next(in->pos);
+    return make_char(c);
+}
+
+static scmval string_ungetc(scmval p, scmval c) {
+    scm_input_string_t* in = input_port_port(p);
+    CORD_prev(in->pos);
+    if(!CORD_pos_valid(in->pos))
+        return scm_eof;
+    // XXX: need to actually put back char ?
+    return c;
+}
+
+static scmval string_char_ready(scmval p) {
+    return scm_true;
+}
+
+static void string_ip_close(scmval p) {
+    scm_delete(input_port_port(p));
+    set_port_open(p, false);
+}
+
+static scmval make_string_input_port(scmval s) {
+    static struct ip_vtable vtable = { string_getc, string_ungetc, string_char_ready, string_ip_close };
+    scmval p;
+    scm_input_string_t* in = scm_new(scm_input_string_t);
+    in->cord = string_value(s);
+    CORD_set_pos(in->pos, in->cord, 0);
+    p = make_input_port(STRING_PORT, in, &vtable);
+    return p;
 }
 
 // OUTPUT PORTS implementations
@@ -145,6 +331,11 @@ static scmval make_file_output_port(FILE* fp) {
     return v;
 }
 
+static scmval make_file_output_port_from_filename(scmval f) {
+    FILE* fp = fopen(string_value(f), "w");
+    return make_file_output_port(fp);
+}
+
 // -- STRING
 static void string_putc(scmval p, scmval v) {
     scm_string_t* s = output_port_port(p);
@@ -173,11 +364,3 @@ static scmval make_string_output_port() {
     return v;
 }
 
-scmval open_output_string() {
-    return make_string_output_port();
-}
-
-scmval get_output_string(scmval v) {
-    scm_string_t* s = output_port_port(v);
-    return make_ptr(SCM_TYPE_STRING, s);
-}
