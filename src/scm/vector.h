@@ -7,6 +7,7 @@ struct scm_vector {
 
 // constructor
 scmval make_vector(size_t, scmval);
+scmval make_vector_from_list(int, scmval);
 
 // accessor
 static inline scm_vector_t* get_vector(scmval v) { return (scm_vector_t*)v.o; }

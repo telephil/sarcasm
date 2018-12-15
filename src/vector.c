@@ -11,6 +11,20 @@ scmval make_vector(size_t size, scmval initial) {
     return make_ptr(SCM_TYPE_VECTOR, v);
 }
 
+scmval make_vector_from_list(int size, scmval l) {
+    int i;
+    scmval c;
+    scm_vector_t* v = scm_new(scm_vector_t);
+    if(size < 0)
+        size = list_length(l);
+    v->size = size;
+    v->elts = scm_new_array(size, scmval);
+    for(c = l, i = 0; !is_null(c); c = cdr(c), i++) {
+        v->elts[i] = car(c);
+    }
+    return make_ptr(SCM_TYPE_VECTOR, v);
+}
+
 // standard library
 static scmval scm_vector_p(scm_ctx_t* ctx) {
     scmval v;
