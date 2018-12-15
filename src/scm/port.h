@@ -27,8 +27,9 @@ struct scm_input_port {
 };
 
 struct scm_input_string {
-    CORD     cord;
-    CORD_pos pos;
+    const char* buf;
+    int idx;
+    int len;
 };
 
 // output port
@@ -96,7 +97,17 @@ static inline void output_port_close(scmval p) { get_output_port(p)->vtable->clo
 void init_port(scm_ctx_t*);
 //
 // utilities
-static inline scm_char_t scm_getc(scmval p) { return char_value(input_port_getc(p)); }
+static inline scm_char_t scm_getc(scmval p) {
+    scmval c = input_port_getc(p);
+    if(is_eof(c))
+        return EOF;
+    return char_value(c);
+}
+
+static inline void scm_ungetc(scmval p, scm_char_t c) {
+    input_port_ungetc(p, make_char(c));
+}
+
 static inline scm_char_t scm_peek(scmval p) {
     scm_char_t c = scm_getc(p);
     input_port_ungetc(p, make_char(c));

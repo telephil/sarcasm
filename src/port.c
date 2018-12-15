@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "scm.h"
 
 // globals
@@ -266,23 +264,24 @@ static scmval make_file_input_port_from_filename(scmval f) {
 // -- STRING
 static scmval string_getc(scmval p) {
     scm_input_string_t* in = input_port_port(p);
-    if(!CORD_pos_valid(in->pos))
+    if(in->idx >= in->len)
         return scm_eof;
-    char c = CORD_pos_fetch(in->pos);
-    CORD_next(in->pos);
+    char c = in->buf[in->idx++];
     return make_char(c);
 }
 
 static scmval string_ungetc(scmval p, scmval c) {
     scm_input_string_t* in = input_port_port(p);
-    CORD_prev(in->pos);
-    if(!CORD_pos_valid(in->pos))
+    if(in->idx <= 0)
         return scm_eof;
-    // XXX: need to actually put back char ?
+    in->idx--;
     return c;
 }
 
 static scmval string_char_ready(scmval p) {
+    scm_input_string_t* in = input_port_port(p);
+    if(in->idx >= in->len)
+        return scm_false;
     return scm_true;
 }
 
@@ -295,8 +294,9 @@ static scmval make_string_input_port(scmval s) {
     static struct ip_vtable vtable = { string_getc, string_ungetc, string_char_ready, string_ip_close };
     scmval p;
     scm_input_string_t* in = scm_new(scm_input_string_t);
-    in->cord = string_value(s);
-    CORD_set_pos(in->pos, in->cord, 0);
+    in->buf = CORD_to_const_char_star(string_value(s));
+    in->idx = 0;
+    in->len = strlen(in->buf);
     p = make_input_port(STRING_PORT, in, &vtable);
     return p;
 }
@@ -362,5 +362,9 @@ static scmval make_string_output_port() {
     s->value = NULL;
     v = make_output_port(STRING_PORT, s, &vtable);
     return v;
+}
+
+scmval open_input_string(const char* s) {
+    return make_string_input_port(make_string(s));
 }
 
