@@ -18,6 +18,8 @@ struct context {
     scmval current_input_port;
 
     stack_frame_t* stack;
+
+    scmval err;
     jmp_buf err_buf;
 };
 
@@ -39,4 +41,4 @@ static inline void arg_ref_list(scm_ctx_t* ctx, int* argc, scmval** argv) {
     *argv = ctx->stack->argv;
 }
 
-static inline void set_error(scm_ctx_t* ctx, scmval e) { ctx->stack->err = e; }
+static inline void set_error(scm_ctx_t* ctx, scmval e) { ctx->err = e; }
