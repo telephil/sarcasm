@@ -19,13 +19,19 @@ static inline scmval error_message(scmval v) { return get_error(v)->message; }
 // standard library
 void init_errors(scm_ctx_t*);
 
-static inline scmval error(scmval type, const char* format, ...) {
+static inline scmval verror(scmval type, const char* format, va_list ap) {
     char* buf;
+    vasprintf(&buf, format, ap);
+    return make_error(type, make_string(buf));
+}
+
+static inline scmval error(scmval type, const char* format, ...) {
+    scmval e;
     va_list ap;
     va_start(ap, format);
-    vasprintf(&buf, format, ap);
+    e = verror(type, format, ap);
     va_end(ap);
-    return make_error(type, make_string(buf));
+    return e;
 }
 
 // exceptions
