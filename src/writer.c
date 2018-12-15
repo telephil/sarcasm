@@ -1,5 +1,6 @@
 #include "scm.h"
 
+static void write_char(scmval, scmval, write_mode);
 static void write_pair(scmval, scmval, write_mode);
 static void write_vector(scmval, scmval, write_mode);
 
@@ -25,8 +26,7 @@ void write(scmval p, scmval v, write_mode mode) {
             break;
         case SCM_TYPE_CHAR:
             if(mode == WRITE_MODE_WRITE) {
-                scm_puts(p, "#\\");
-                scm_putc(p, char_value(v));
+                write_char(p, v, mode);
             } else {
                 scm_putc(p, char_value(v));
             }
@@ -63,6 +63,40 @@ void write(scmval p, scmval v, write_mode mode) {
             break;
         case SCM_TYPE_OUTPUT_PORT:
             scm_printf(p, "#<output-port:%s>", output_port_type(v) == FILE_PORT ? "file" : "string");
+            break;
+    }
+}
+
+static void write_char(scmval p, scmval v, write_mode mode) {
+    scm_char_t c = char_value(v);
+    scm_puts(p, "#\\");
+    switch(c) {
+        case '\a':
+            scm_puts(p, "alarm");
+            break;
+        case '\b':
+            scm_puts(p, "backspace");
+            break;
+        case '\n':
+            scm_puts(p, "newline");
+            break;
+        case '\0':
+            scm_puts(p, "null");
+            break;
+        case '\r':
+            scm_puts(p, "return");
+            break;
+        case ' ':
+            scm_puts(p, "space");
+            break;
+        case '\t':
+            scm_puts(p, "tab");
+            break;
+        case 0xb:
+            scm_puts(p, "vtab");
+            break;
+        default:
+            scm_putc(p, c);
             break;
     }
 }
