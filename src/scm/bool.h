@@ -18,5 +18,6 @@ static inline scm_bool_t bool_value(scmval v) { return v.b; }
 
 // standard library
 void init_bool(scm_ctx_t*);
+static inline bool is_eq(scmval x, scmval y) { return x.o == y.o; }
 bool is_eqv(scmval, scmval);
 
