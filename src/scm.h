@@ -75,3 +75,5 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/reader.h"
 
 // utilities
+void init_eval(scm_ctx_t*);
+scmval eval(scm_ctx_t*, scmval, scmval);
