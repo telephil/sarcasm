@@ -14,7 +14,7 @@ void define(scm_ctx_t* ctx, const char* name, scm_prim_fun fun, arity_t arity, i
     va_start(ap, n);
     scmval prim = make_primv(name, fun, arity, n, ap);
     va_end(ap);
-    dict_set(ctx->globals, intern(ctx, make_symbol(name)), prim);
+    dict_set(ctx->globals, intern(ctx, name), prim);
 }
 
 scmval lookup(scm_ctx_t* ctx, scmval s) {

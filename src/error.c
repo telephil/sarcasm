@@ -21,8 +21,8 @@ void throw(scm_ctx_t* ctx, scmval e) {
 
 // initialization
 void init_errors(scm_ctx_t* ctx) {
-    range_error_type = intern(ctx, make_symbol("range-error"));
-    arity_error_type = intern(ctx, make_symbol("arity-error"));
-    contract_error_type = intern(ctx, make_symbol("contract-error"));
+    range_error_type = intern(ctx, "range-error");
+    arity_error_type = intern(ctx, "arity-error");
+    contract_error_type = intern(ctx, "contract-error");
 }
 

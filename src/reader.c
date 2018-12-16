@@ -29,13 +29,13 @@ static bool is_valid_digit(scm_char_t, int);
 
 
 void init_reader(scm_ctx_t* ctx) {
-    scm_close_paren = intern(ctx, make_symbol(")"));
-    scm_dot         = intern(ctx, make_symbol("."));
-    read_error_type = intern(ctx, make_symbol("read-error"));
-    scm_quote       = intern(ctx, make_symbol("quote"));
-    scm_quasiquote  = intern(ctx, make_symbol("quasiquote"));
-    scm_unquote     = intern(ctx, make_symbol("unquote"));
-    scm_unquote_splicing = intern(ctx, make_symbol("unquote-splicing"));
+    scm_close_paren = intern(ctx, ")");
+    scm_dot         = intern(ctx, ".");
+    read_error_type = intern(ctx, "read-error");
+    scm_quote       = intern(ctx, "quote");
+    scm_quasiquote  = intern(ctx, "quasiquote");
+    scm_unquote     = intern(ctx, "unquote");
+    scm_unquote_splicing = intern(ctx, "unquote-splicing");
 }
 
 void read_error(scm_ctx_t* ctx, scmval p, const char* message, ...) {
@@ -189,9 +189,9 @@ static scmval read_any(scm_ctx_t* ctx, scmval p) {
             }
         }
         if(is_identifier)
-            v = intern(ctx, make_symbol(buf));
+            v = intern(ctx, buf);
     } else if(is_peculiar_identifier(buf[0])) {
-        v = intern(ctx, make_symbol(buf));
+        v = intern(ctx, buf);
     } else {
         read_error(ctx, p, "unrecognized token '%s'", buf);
     }

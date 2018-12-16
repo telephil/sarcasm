@@ -11,8 +11,9 @@ scmval make_symbol(const char* s) {
 }
 
 // standard library
-scmval intern(scm_ctx_t* ctx, scmval s) {
-    scmval r;
+scmval intern(scm_ctx_t* ctx, const char* name) {
+    scmval r, s;
+    s = make_symbol(name);
     r = dict_ref(ctx->symbols, s);
     if(is_undef(r)) {
         dict_set(ctx->symbols, s, s);
