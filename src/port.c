@@ -150,6 +150,27 @@ static scmval scm_peek_char(scm_ctx_t* ctx) {
     return c;
 }
 
+static scmval scm_read_line(scm_ctx_t* ctx) {
+    int i = 0, len = 1024;
+    scm_char_t* buf, c;
+    scmval v, p;
+    p = arg_ref(ctx, 0);
+    buf = scm_new_array(len, scm_char_t);
+    while(true) {
+        c = scm_getc(p);
+        if(c == EOF)
+            break;
+        if(c == '\n')
+            break;
+        buf[i++] = c;
+    }
+    if(i == 0 && c == EOF)
+        return scm_eof;
+    buf[i] = '\0';
+    v = make_string(buf);
+    return v;
+}
+
 static scmval scm_write(scm_ctx_t* ctx) {
     scmval v, p;
     v = arg_ref(ctx, 0);
@@ -212,6 +233,7 @@ void init_port(scm_ctx_t* ctx) {
     define(ctx, "close-output-port", scm_close_output_port, arity_exactly(1), 1, output_port_c);
     define(ctx, "read-char", scm_read_char, arity_exactly(1), 1, input_port_c);
     define(ctx, "peek-char", scm_peek_char, arity_exactly(1), 1, input_port_c);
+    define(ctx, "read-line", scm_read_line, arity_exactly(1), 1, input_port_c);
     define(ctx, "write", scm_write, arity_or(1, 2), 2, any_c, output_port_c);
     define(ctx, "write-char", scm_write_char, arity_or(1, 2), 2, char_c, output_port_c);
     define(ctx, "display", scm_display, arity_or(1, 2), 2, any_c, output_port_c);

@@ -133,3 +133,4 @@ static inline void scm_printf(scmval p, CORD format, ...) {
     scm_puts(p, r);
 }
 
+scmval open_input_string(const char*);
