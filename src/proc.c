@@ -15,7 +15,8 @@ scmval make_primv(const char* name, scm_prim_fun fun, arity_t arity, int n, va_l
     prim->name  = make_string(name);
     prim->fun   = fun;
     prim->arity = arity;
-    prim->contracts = GC_MALLOC(n*sizeof(contract_t));
+    prim->contracts = scm_new_array(n, contract_t);
+    prim->contract_count = n;
     for(int i = 0; i < n; i++) {
         prim->contracts[i] = va_arg(ap, contract_t);
     }
@@ -72,7 +73,7 @@ static void ensure_arity(scm_ctx_t* ctx, scmval v, int argc) {
 static void ensure_contract(scm_ctx_t* ctx, scmval v, int argc, const scmval* argv) {
     scmval e;
     contract_t* contracts = prim_contracts(v);
-    int ncontracts = sizeof(contracts) / sizeof(contracts[0]);
+    int ncontracts = prim_contract_count(v);
     for(int i = 0, n = 0; i < argc; i++) {
         if(!contracts[n].pred(argv[i])) {
             e = error(contract_error_type,

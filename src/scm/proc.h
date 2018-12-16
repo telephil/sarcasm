@@ -8,6 +8,7 @@ struct scm_prim {
     scm_prim_fun fun;
     arity_t arity;
     contract_t* contracts;
+    int contract_count;
 };
 
 // constructor
@@ -23,6 +24,7 @@ static inline scmval prim_name(scmval v) { return get_prim(v)->name; }
 static inline scm_prim_fun prim_fun(scmval v) { return get_prim(v)->fun; }
 static inline arity_t prim_arity(scmval v) { return get_prim(v)->arity; }
 static inline contract_t* prim_contracts(scmval v) { return get_prim(v)->contracts; }
+static inline int prim_contract_count(scmval v) { return get_prim(v)->contract_count; }
 
 // standard library
 scmval apply(scm_ctx_t*, scmval, scmval);
