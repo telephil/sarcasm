@@ -4,8 +4,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <setjmp.h>
 #include <gc/gc.h>
 #include <gc/cord.h>
@@ -71,6 +72,6 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/port.h"
 #include "scm/env.h"
 #include "scm/writer.h"
+#include "scm/reader.h"
 
 // utilities
-
