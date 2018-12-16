@@ -23,6 +23,8 @@ struct scm_input_port {
     enum port_type type;
     void*          port;
     bool           open;
+    int            line;
+    int            pos;
     ip_vtable*     vtable;
 };
 
@@ -91,6 +93,8 @@ static inline void output_port_putc(scmval p, scmval v) { get_output_port(p)->vt
 static inline void output_port_puts(scmval p, scmval v) { get_output_port(p)->vtable->puts(p, v); }
 static inline void output_port_flush(scmval p) { get_output_port(p)->vtable->flush(p); }
 static inline void output_port_close(scmval p) { get_output_port(p)->vtable->close(p); }
+#define port_line(P) get_input_port(P)->line
+#define port_pos(P) get_input_port(P)->pos
 
 
 // standard library
@@ -101,11 +105,15 @@ static inline scm_char_t scm_getc(scmval p) {
     scmval c = input_port_getc(p);
     if(is_eof(c))
         return EOF;
+    if(char_value(c) == '\n') port_line(p)++;
+    port_pos(p)++;
     return char_value(c);
 }
 
 static inline void scm_ungetc(scmval p, scm_char_t c) {
     input_port_ungetc(p, make_char(c));
+    if(c == '\n') port_line(p)--;
+    port_pos(p)--;
 }
 
 static inline scm_char_t scm_peek(scmval p) {

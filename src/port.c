@@ -9,6 +9,8 @@ scmval make_input_port(enum port_type type, void* p, ip_vtable* vtable) {
     ip->type = type;
     ip->port = p;
     ip->open = true;
+    ip->line = 1;
+    ip->pos  = 0;
     ip->vtable = vtable;
     return make_ptr(SCM_TYPE_INPUT_PORT, ip);
 }
