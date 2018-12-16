@@ -1,6 +1,6 @@
 CC = clang
-CFLAGS = -std=c11 -Wall -Werror -pedantic `pkg-config --cflags bdw-gc`
-LDFLAGS = `pkg-config --libs bdw-gc` -lcord
+CFLAGS = -std=c11 -Wall -Werror -pedantic `pkg-config --cflags bdw-gc` -g -Ilinenoise
+LDFLAGS = `pkg-config --libs bdw-gc` -lcord -lreadline
 
 TARGET  = scm
 SOURCES = $(wildcard src/*.c)

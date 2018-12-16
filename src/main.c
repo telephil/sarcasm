@@ -1,3 +1,5 @@
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "scm.h"
 
 void dstats() {
@@ -20,37 +22,57 @@ static scm_ctx_t* scm_init() {
     init_pair(ctx);
     init_vector(ctx);
     init_port(ctx);
+    init_reader(ctx);
+    init_eval(ctx);
 
     return ctx;
 }
 
+static char* get_history_filename() {
+    static const char* filename = ".scm_history";
+    char path[4096];
+    snprintf(path, 4096, "%s/%s", getenv("HOME"), filename);
+    return strdup(path);
+}
+
+
+static void repl(scm_ctx_t* ctx) {
+    char* path = get_history_filename();
+    char* line = NULL;
+    scmval in, v;
+    read_history(path);
+    while(true) {
+        line = readline("> ");
+        if(!line)
+            break;
+        if(*line == ',' && *(line+1) == 'q')
+            break;
+        try(ctx) {
+            in = open_input_string(line);
+            v  = read(ctx, in);
+            v  = eval(ctx, v, ctx->toplevel);
+            if(!is_undef(v)) {
+                write(ctx->current_output_port, v, WRITE_MODE_DISPLAY);
+                printf("\n");
+            }
+            add_history(line);
+        } catch {
+            write(ctx->current_error_port, ctx->err, WRITE_MODE_DISPLAY);
+            fprintf(stderr, "\n");
+        }
+    }
+    write_history(path);
+}
 
 int main(int argc, char* argv[]) {
-    scm_ctx_t* ctx = scm_init();
+    scm_ctx_t* ctx;
 
     printf("scm v0.1\n");
 
-    scmval write  = lookup(ctx, make_symbol("write"));
-    scmval vector = lookup(ctx, make_symbol("vector"));
+    ctx = scm_init();
+    repl(ctx);
 
-    scmval v = 
-        cons(make_fixnum(42),
-            cons(make_flonum(3.14),
-                cons(make_string("hello"),
-                    cons(scm_true, scm_null))));
-
-    apply(ctx, write, cons(v, scm_null));
-    printf("\n");
-
-    try(ctx) {
-        scmval vec = apply(ctx, vector, v);
-        apply(ctx, write, cons(vec, scm_null));
-    } catch {
-        printf("%s: %s\n",
-                string_to_cstr(error_type(ctx->stack->err)),
-                string_to_cstr(error_message(ctx->stack->err)));
-    }
-
+    printf("Bye.\n");
     return 0;
 }
 
