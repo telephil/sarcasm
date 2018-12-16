@@ -56,6 +56,9 @@ void write(scmval p, scmval v, write_mode mode) {
             scm_printf(p, "#<primitive:%s>", prim_name(v));
             break;
         case SCM_TYPE_ERROR:
+            scm_putc(p, '[');
+            write(p, error_type(v), mode);
+            scm_puts(p, "] ");
             write(p, error_message(v), mode);
             break;
         case SCM_TYPE_INPUT_PORT:
