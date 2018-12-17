@@ -37,3 +37,13 @@ scmval dict_ref(scm_dict_t* d, scmval k) {
     return r;
 }
 
+scmval* dict_keys(scm_dict_t* d) {
+    int i = 0;
+    int size = kh_size(d);
+    scmval* keys = scm_new_array(size+1, scmval);
+    scmval k, v;
+    kh_foreach(d, k, v, keys[i++] = k);
+    keys[size] = scm_undef;
+    return keys;
+}
+
