@@ -40,6 +40,28 @@ static scmval scm_null_p(scm_ctx_t* ctx) {
     return scm_false;
 }
 
+static scmval scm_make_list(scm_ctx_t* ctx) {
+    scmval r, s, f;
+    s = arg_ref(ctx, 0);
+    f = arg_ref_opt(ctx, 1, scm_false);
+    r = scm_null;
+    for(int i = 0; i < fixnum_value(s); i++) {
+        r = cons(f, r);
+    }
+    return r;
+}
+
+static scmval scm_list(scm_ctx_t* ctx) {
+    int argc;
+    scmval *argv;
+    scmval r = scm_null;
+    arg_ref_list(ctx, &argc, &argv);
+    for(int i = argc - 1; i >= 0; i--) {
+        r = cons(argv[i], r);
+    }
+    return r;
+}
+
 static scmval scm_cons(scm_ctx_t* ctx) {
     scmval r, h, t;
     h = arg_ref(ctx, 0);
@@ -95,6 +117,8 @@ void init_pair(scm_ctx_t* ctx) {
     define(ctx, "pair?", scm_pair_p, arity_exactly(1), 1, any_c);
     define(ctx, "list?", scm_list_p, arity_exactly(1), 1, any_c);
     define(ctx, "null?", scm_null_p, arity_exactly(1), 1, any_c);
+    define(ctx, "make-list", scm_make_list, arity_or(1, 2), 2, fixnum_c, any_c);
+    define(ctx, "list", scm_list, arity_at_least(0), 1, any_c);
     define(ctx, "cons", scm_cons, arity_exactly(2), 2, any_c, any_c);
     define(ctx, "car", scm_car, arity_exactly(1), 1, list_c);
     define(ctx, "cdr", scm_cdr, arity_exactly(1), 1, list_c);
