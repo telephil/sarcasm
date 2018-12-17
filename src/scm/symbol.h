@@ -14,6 +14,10 @@ define_contract(symbol_c, "symbol", is_symbol);
 // accessors
 static inline scm_string_t* get_symbol(scmval v) { return (scm_string_t*)v.o; }
 
+// initialization
+void init_symbol(scm_ctx_t*);
+
 // standard library
 scmval intern(scm_ctx_t*, const char*);
+
 
