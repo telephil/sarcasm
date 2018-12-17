@@ -6,7 +6,7 @@
 static scmval read_error_type;
 static scmval scm_close_paren;
 static scmval scm_dot;
-static scmval scm_quote;
+scmval scm_quote;
 static scmval scm_quasiquote;
 static scmval scm_unquote;
 static scmval scm_unquote_splicing;
@@ -77,6 +77,10 @@ static scmval read_aux(scm_ctx_t* ctx, scmval p, bool in_list) {
             break;
         case '"':
             v = read_string(ctx, p);
+            break;
+        case '\'':
+            v = read_aux(ctx, p, false);
+            v = cons(scm_quote, cons(v, scm_null));
             break;
         case '#':
             c = scm_getc(p);
