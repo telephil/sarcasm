@@ -53,7 +53,10 @@ void write(scmval p, scmval v, write_mode mode) {
             scm_puts(p, "#<environment>");
             break;
         case SCM_TYPE_PRIM:
-            scm_printf(p, "#<primitive:%s>", prim_name(v));
+            scm_printf(p, "#<primitive:%s>", string_value(prim_name(v)));
+            break;
+        case SCM_TYPE_CLOSURE:
+            scm_printf(p, "#<closure:%p>", get_closure(v));
             break;
         case SCM_TYPE_ERROR:
             scm_putc(p, '[');
