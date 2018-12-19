@@ -23,6 +23,15 @@ scmval make_primv(const char* name, scm_prim_fun fun, arity_t arity, int n, va_l
     return make_ptr(SCM_TYPE_PRIM, prim);
 }
 
+scmval make_closure(scm_fixnum_t argc, scmval* argv, scmval env, scmval body) {
+    scm_closure_t* closure = scm_new(scm_closure_t);
+    closure->argc = argc;
+    closure->argv = argv;
+    closure->env  = env;
+    closure->body = body;
+    return make_ptr(SCM_TYPE_CLOSURE, closure);
+}
+
 // arity
 static scmval arity_error(scmval v, int argc) {
     arity_t arity = prim_arity(v);
