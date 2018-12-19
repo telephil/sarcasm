@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -std=c11 -Wall -Werror -pedantic `pkg-config --cflags bdw-gc` -g -Ilinenoise
+CFLAGS = -std=c11 -Wall -Werror -pedantic `pkg-config --cflags bdw-gc` -g
 LDFLAGS = `pkg-config --libs bdw-gc` -lcord -lreadline
 
 TARGET  = scm
