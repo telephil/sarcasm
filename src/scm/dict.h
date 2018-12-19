@@ -6,5 +6,5 @@ scm_dict_t* make_dict();
 // accessors
 void dict_set(scm_dict_t*, scmval, scmval);
 scmval dict_ref(scm_dict_t*, scmval);
-scmval* dict_keys(scm_dict_t*);
+void dict_keys(scm_dict_t*, scm_fixnum_t*, scmval**);
 

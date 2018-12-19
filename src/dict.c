@@ -37,13 +37,13 @@ scmval dict_ref(scm_dict_t* d, scmval k) {
     return r;
 }
 
-scmval* dict_keys(scm_dict_t* d) {
+void dict_keys(scm_dict_t* d, scm_fixnum_t* size, scmval** keys) {
     int i = 0;
-    int size = kh_size(d);
-    scmval* keys = scm_new_array(size+1, scmval);
+    int s = kh_size(d);
+    scmval* res = scm_new_array(s, scmval);
     scmval k, v;
-    kh_foreach(d, k, v, keys[i++] = k);
-    keys[size] = scm_undef;
-    return keys;
+    kh_foreach(d, k, v, res[i++] = k);
+    *size = s;
+    *keys = res;
 }
 
