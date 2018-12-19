@@ -6,7 +6,7 @@ scm_ctx_t* init_context() {
     scm_ctx_t* ctx = scm_new(scm_ctx_t);
     ctx->symbols  = make_dict();
     ctx->globals  = make_dict();
-    ctx->toplevel = make_env();
+    ctx->toplevel = make_env(scm_undef);
     ctx->stack = NULL;
     return ctx;
 }
