@@ -9,7 +9,7 @@ scmval make_env(scmval n) {
 }
 
 // utilities
-void define(const char* name, subr fun, arity_t arity) {
+void define(const char* name, subr_f fun, arity_t arity) {
     scmval s = make_subr(name, fun, arity);
     dict_set(scm_context.globals, intern(name), s);
 }
