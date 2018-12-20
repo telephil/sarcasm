@@ -63,12 +63,12 @@ static scmval scm_open_input_string(scmval v) {
     return  make_string_input_port(v);
 }
 
-static scmval scm_open_input_file(scmval v) {
+scmval scm_open_input_file(scmval v) {
     check_arg("open-input-file", string_c, v);
     return make_file_input_port_from_filename(v);
 }
 
-static scmval scm_close_input_port(scmval p) {
+scmval scm_close_input_port(scmval p) {
     check_arg("close-input-port", input_port_c, p);
     port_close(p);
     return scm_undef;

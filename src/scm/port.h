@@ -86,7 +86,9 @@ static inline void   port_puts(scmval p, scmval v) { get_port(p)->vtable->puts(p
 static inline void   port_flush(scmval p) { get_port(p)->vtable->flush(p); }
 
 // standard library
-void init_port();
+void   init_port();
+scmval scm_open_input_file(scmval);
+scmval scm_close_input_port(scmval);
 //
 // utilities
 scmval scm_current_output_port();
@@ -101,3 +103,4 @@ void        scm_puts(scmval, CORD);
 void        scm_printf(scmval, CORD, ...);
 
 scmval open_input_string(const char*);
+
