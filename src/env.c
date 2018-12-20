@@ -9,15 +9,12 @@ scmval make_env(scmval n) {
 }
 
 // utilities
-void define(scm_ctx_t* ctx, const char* name, scm_prim_fun fun, arity_t arity, int n, ...) {
-    va_list ap;
-    va_start(ap, n);
-    scmval prim = make_primv(name, fun, arity, n, ap);
-    va_end(ap);
-    dict_set(ctx->globals, intern(ctx, name), prim);
+void define(const char* name, subr_f fun, arity_t arity) {
+    scmval s = make_subr(name, fun, arity);
+    dict_set(scm_context.globals, intern(name), s);
 }
 
-scmval lookup(scm_ctx_t* ctx, scmval e, scmval s) {
+scmval lookup(scmval e, scmval s) {
     scmval v;
     while(!is_undef(e)) {
         v = dict_ref(env_bindings(e), s);
@@ -26,10 +23,10 @@ scmval lookup(scm_ctx_t* ctx, scmval e, scmval s) {
         e = env_next(e);
     }
 
-    return dict_ref(ctx->globals, s);
+    return dict_ref(scm_context.globals, s);
 }
 
-void bind(scm_ctx_t* ctx, scmval e, scmval s, scmval v) {
+void bind(scmval e, scmval s, scmval v) {
     dict_set(env_bindings(e), s, v);
 }
 

@@ -17,37 +17,33 @@ static inline scmval error_type(scmval v) { return get_error(v)->type; }
 static inline scmval error_message(scmval v) { return get_error(v)->message; }
 
 // standard library
-void init_errors(scm_ctx_t*);
+void init_errors();
+void raise(scmval);
 
-static inline scmval verror(scmval type, const char* format, va_list ap) {
+static inline void error(scmval type, const char* format, ...) {
     char* buf;
-    vasprintf(&buf, format, ap);
-    return make_error(type, make_string(buf));
-}
-
-static inline scmval error(scmval type, const char* format, ...) {
-    scmval e;
     va_list ap;
     va_start(ap, format);
-    e = verror(type, format, ap);
+    vasprintf(&buf, format, ap);
     va_end(ap);
-    return e;
+    scmval e = make_error(type, make_string(buf));
+    raise(e);
 }
 
 // exceptions
-#define try(C) if(!setjmp(C->err_buf))
-#define catch else
-void throw(scm_ctx_t*, scmval);
+#define with_error_handler(F)               \
+    if(setjmp(scm_context.err_buf)) {    \
+        F(scm_context.err);              \
+    } else                                  
 
 // common error types
+extern scmval type_error_type;
 extern scmval range_error_type;
 extern scmval arity_error_type;
-extern scmval contract_error_type;
 
-static inline scmval range_error(const char* name, int index, int size) {
-    scmval e = error(range_error_type,
-                     "%s: index out of range (index: %d - valid range: [0;%d])",
-                     name, index, size);
-    return e;
+static inline void range_error(const char* name, int index, int size) {
+    error(range_error_type,
+          "%s: index out of range (index: %d - valid range: [0;%d])",
+          name, index, size-1);
 }
 

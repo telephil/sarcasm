@@ -11,30 +11,24 @@ scmval make_symbol(const char* s) {
 }
 
 // standard library
-scmval intern(scm_ctx_t* ctx, const char* name) {
+scmval intern(const char* name) {
     scmval r, s;
     s = make_symbol(name);
-    r = dict_ref(ctx->symbols, s);
+    r = dict_ref(scm_context.symbols, s);
     if(is_undef(r)) {
-        dict_set(ctx->symbols, s, s);
+        dict_set(scm_context.symbols, s, s);
         r = s;
     }
     return r;
 }
 
 // standard library
-static scmval scm_symbol_p(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
-    if(is_symbol(v))
-        return scm_true;
-    return scm_false;
+static scmval scm_symbol_p(scmval v) {
+    return scm_bool(is_symbol(v));
 }
 
-static scmval scm_symbol_equal_p(scm_ctx_t* ctx) {
-    int argc;
-    scmval *argv;
-    arg_ref_list(ctx, &argc, &argv);
+static scmval scm_symbol_equal_p(scmfix argc, scmval* argv) {
+    check_args("symbol=?", symbol_c, argc, argv);
     scmval s = argv[0];
     for(int i = 1; i < argc; i++) {
         if(!is_eq(s, argv[i]))
@@ -43,26 +37,24 @@ static scmval scm_symbol_equal_p(scm_ctx_t* ctx) {
     return scm_true;
 }
 
-static scmval scm_symbol_to_string(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
+static scmval scm_symbol_to_string(scmval v) {
+    check_arg("symbol->string", symbol_c, v);
     v.type = SCM_TYPE_STRING; // cheapest conversion ever
     return v;
 }
 
-static scmval scm_string_to_symbol(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
+static scmval scm_string_to_symbol(scmval v) {
+    check_arg("string->symbol", string_c, v);
     v.type = SCM_TYPE_SYMBOL;
     return v;
 }
 
 // initialization
-void init_symbol(scm_ctx_t* ctx) {
-    define(ctx, "symbol?", scm_symbol_p, arity_exactly(1), 1, any_c);
-    define(ctx, "symbol=?", scm_symbol_equal_p, arity_at_least(2), 1, symbol_c);
-    define(ctx, "symbol->string", scm_symbol_to_string, arity_exactly(1), 1, symbol_c);
-    define(ctx, "string->symbol", scm_string_to_symbol, arity_exactly(1), 1, string_c);
+void init_symbol() {
+    define("symbol?", scm_symbol_p, arity_exactly(1));
+    define("symbol=?", scm_symbol_equal_p, arity_at_least(2));
+    define("symbol->string", scm_symbol_to_string, arity_exactly(1));
+    define("string->symbol", scm_string_to_symbol, arity_exactly(1));
     
     scm_undef = make_val(SCM_TYPE_UNDEF);
 }

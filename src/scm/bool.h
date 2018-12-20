@@ -4,6 +4,7 @@ extern scmval scm_false;
 
 // constructors
 scmval make_bool(scm_bool_t);
+static inline scmval scm_bool(bool b) { return b ? scm_true : scm_false; }
 
 // predicates
 static inline bool is_bool(scmval v) { return type_of(v) == SCM_TYPE_BOOL; }
@@ -17,7 +18,7 @@ define_contract(bool_c, "boolean", is_bool);
 static inline scm_bool_t bool_value(scmval v) { return v.b; }
 
 // standard library
-void init_bool(scm_ctx_t*);
+void init_bool();
 static inline bool is_eq(scmval x, scmval y) { return x.o == y.o; }
 bool is_eqv(scmval, scmval);
 bool is_equal(scmval, scmval);

@@ -45,58 +45,35 @@ bool is_equal(scmval x, scmval y) {
 }
 
 // standard library
-static scmval scm_boolean_p(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
-    if(is_bool(v))
-        return scm_true;
-    return scm_false;
+static scmval scm_boolean_p(scmval v) {
+    return scm_bool(is_bool(v));
 }
 
-static scmval scm_not(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
-    if(is_false(v))
-        return scm_true;
-    return scm_false;
+static scmval scm_not(scmval v) {
+    return scm_bool(is_false(v));
 }
 
-static scmval scm_eq(scm_ctx_t* ctx) {
-    scmval x, y;
-    x = arg_ref(ctx, 0);
-    y = arg_ref(ctx, 1);
-    if(is_eq(x, y))
-        return scm_true;
-    return scm_false;
+static scmval scm_eq(scmval x, scmval y) {
+    return scm_bool(is_eq(x, y));
 }
 
-static scmval scm_eqv(scm_ctx_t* ctx) {
-    scmval x, y;
-    x = arg_ref(ctx, 0);
-    y = arg_ref(ctx, 1);
-    if(is_eqv(x, y))
-        return scm_true;
-    return scm_false;
+static scmval scm_eqv(scmval x, scmval y) {
+    return scm_bool(is_eqv(x, y));
 }
 
-static scmval scm_equal(scm_ctx_t* ctx) {
-    scmval x, y;
-    x = arg_ref(ctx, 0);
-    y = arg_ref(ctx, 1);
-    if(is_equal(x, y))
-        return scm_true;
-    return scm_false;
+static scmval scm_equal(scmval x, scmval y) {
+    return scm_bool(is_equal(x, y));
 }
 
 // initialization
-void init_bool(scm_ctx_t* ctx) {
+void init_bool() {
     scm_true  = make_bool(true);
     scm_false = make_bool(false);
 
-    define(ctx, "boolean?", scm_boolean_p, arity_exactly(1), 1, any_c);
-    define(ctx, "not", scm_not, arity_exactly(1), 1, any_c);
-    define(ctx, "eq?", scm_eq, arity_exactly(2), 2, any_c, any_c);
-    define(ctx, "eqv?", scm_eqv, arity_exactly(2), 2, any_c, any_c);
-    define(ctx, "equal?", scm_equal, arity_exactly(2), 2, any_c, any_c);
+    define("boolean?", scm_boolean_p, arity_exactly(1));
+    define("not", scm_not, arity_exactly(1));
+    define("eq?", scm_eq, arity_exactly(2));
+    define("eqv?", scm_eqv, arity_exactly(2));
+    define("equal?", scm_equal, arity_exactly(2));
 }
 
