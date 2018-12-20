@@ -2,36 +2,41 @@
 #include <readline/history.h>
 #include "scm.h"
 
-void dstats() {
-    printf("\n** [heap: %zd] [free: %zd] [bytes-since-gc: %zd] [total: %zd]\n",
-            GC_get_heap_size(),
-            GC_get_free_bytes(),
-            GC_get_bytes_since_gc(),
-            GC_get_total_bytes());
-}
 
-static scm_ctx_t* scm_init() {
-    scm_ctx_t* ctx;
+static void repl();
 
+////////////////////////////////////////////////////////////////////////////////
+// I N I T I A L I Z A T I O N
+////////////////////////////////////////////////////////////////////////////////
+static void scm_init() {
     GC_INIT();
 
-    ctx = init_context();
-    init_errors(ctx);
-    init_bool(ctx);
-    init_char(ctx);
-    init_symbol(ctx);
-    init_pair(ctx);
-    init_vector(ctx);
-    init_port(ctx);
-    init_reader(ctx);
-    init_eval(ctx);
-
-    return ctx;
+    init_context();
+    init_errors();
+    init_bool();
+    init_char();
+    init_symbol();
+    init_pair();
+    init_vector();
+    init_port();
+    init_reader();
+    init_eval();
 }
 
-//
-// REPL
-//
+////////////////////////////////////////////////////////////////////////////////
+// M A I N
+////////////////////////////////////////////////////////////////////////////////
+int main(int argc, char* argv[]) {
+    scm_init();
+    printf("scm v0.1\n");
+    repl();
+    printf("Bye.\n");
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// R E P L
+////////////////////////////////////////////////////////////////////////////////
 static char** proc_names;
 
 static char* get_history_filename() {
@@ -60,10 +65,10 @@ static char** proc_name_completion_function(const char* text, int start, int end
     return rl_completion_matches(text, proc_name_generator);
 }
 
-static void init_completion(scm_ctx_t* ctx) {
-    scm_fixnum_t size;
+static void init_completion() {
+    scmfix  size;
     scmval* procs;
-    dict_keys(ctx->globals, &size, &procs);
+    dict_keys(scm_context.globals, &size, &procs);
     proc_names = calloc(size+1, sizeof(char*));
     for(int i = 0; i < size; i++) {
         proc_names[i] = strdup(string_to_cstr(procs[i]));
@@ -72,12 +77,17 @@ static void init_completion(scm_ctx_t* ctx) {
     rl_attempted_completion_function = proc_name_completion_function;
 }
 
-static void repl(scm_ctx_t* ctx) {
+static void default_error_handler(scmval err) {
+    write(scm_current_error_port(), err, scm_mode_display);
+    fprintf(stderr, "\n");
+}
+
+static void repl() {
     char* path = get_history_filename();
     char* line = NULL;
     scmval in, v;
     read_history(path);
-    init_completion(ctx);
+    init_completion();
     while(true) {
         line = readline("> ");
         if(!line)
@@ -85,32 +95,25 @@ static void repl(scm_ctx_t* ctx) {
         if(*line == ',' && *(line+1) == 'q')
             break;
         add_history(line);
-        try(ctx) {
+        with_error_handler(default_error_handler) {
             in = open_input_string(line);
-            v  = read(ctx, in);
-            v  = eval(ctx, v, ctx->toplevel);
+            v  = read(in);
+            v  = eval(v, scm_context.toplevel);
             if(!is_undef(v)) {
-                write(ctx->current_output_port, v, WRITE_MODE_WRITE);
+                write(scm_current_output_port(), v, scm_mode_write | scm_mode_pp_quote);
                 printf("\n");
             }
-        } catch {
-            write(ctx->current_error_port, ctx->err, WRITE_MODE_WRITE);
-            fprintf(stderr, "\n");
         }
         free(line);
     }
     write_history(path);
 }
 
-int main(int argc, char* argv[]) {
-    scm_ctx_t* ctx;
-
-    printf("scm v0.1\n");
-
-    ctx = scm_init();
-    repl(ctx);
-
-    printf("Bye.\n");
-    return 0;
+// MISC
+void dstats() {
+    printf("\n** [heap: %zd] [free: %zd] [bytes-since-gc: %zd] [total: %zd]\n",
+            GC_get_heap_size(),
+            GC_get_free_bytes(),
+            GC_get_bytes_since_gc(),
+            GC_get_total_bytes());
 }
-

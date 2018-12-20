@@ -15,8 +15,10 @@
 typedef struct scmval scmval;
 typedef bool scm_bool_t;
 typedef int64_t scm_fixnum_t;
+typedef scm_fixnum_t scmfix; // used a lot
 typedef double scm_flonum_t;
 typedef char scm_char_t;
+
 
 enum {
     SCM_TYPE_UNDEF,
@@ -31,11 +33,10 @@ enum {
     SCM_TYPE_PAIR,
     SCM_TYPE_VECTOR,
     SCM_TYPE_ENV,
-    SCM_TYPE_PRIM,
+    SCM_TYPE_SUBR,
     SCM_TYPE_CLOSURE,
     SCM_TYPE_ERROR,
-    SCM_TYPE_INPUT_PORT,
-    SCM_TYPE_OUTPUT_PORT
+    SCM_TYPE_PORT,
 };
 
 struct scmval {
@@ -69,12 +70,12 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/error.h"
 #include "scm/pair.h"
 #include "scm/vector.h"
-#include "scm/proc.h"
 #include "scm/port.h"
+#include "scm/proc.h"
 #include "scm/env.h"
 #include "scm/writer.h"
 #include "scm/reader.h"
 
 // utilities
-void init_eval(scm_ctx_t*);
-scmval eval(scm_ctx_t*, scmval, scmval);
+void init_eval();
+scmval eval(scmval, scmval);

@@ -12,12 +12,12 @@ static scmval scm_unquote;
 static scmval scm_unquote_splicing;
 
 // read helpers
-static scmval read_aux(scm_ctx_t*, scmval, bool);
-static scmval read_char(scm_ctx_t*, scmval);
-static scmval read_string(scm_ctx_t*, scmval);
-static scmval read_list(scm_ctx_t*, scmval);
-static scmval read_vector(scm_ctx_t*, scmval);
-static scmval read_any(scm_ctx_t*, scmval);
+static scmval read_aux(scmval, bool);
+static scmval read_char(scmval);
+static scmval read_string(scmval);
+static scmval read_list(scmval);
+static scmval read_vector(scmval);
+static scmval read_any(scmval);
 static scm_char_t skipws(scmval p);
 static bool is_delimiter(scm_char_t);
 static bool is_initial(scm_char_t);
@@ -28,32 +28,30 @@ static bool is_special_subsequent(scm_char_t);
 static bool is_valid_digit(scm_char_t, int);
 
 
-void init_reader(scm_ctx_t* ctx) {
-    scm_close_paren = intern(ctx, ")");
-    scm_dot         = intern(ctx, ".");
-    read_error_type = intern(ctx, "read-error");
-    scm_quote       = intern(ctx, "quote");
-    scm_quasiquote  = intern(ctx, "quasiquote");
-    scm_unquote     = intern(ctx, "unquote");
-    scm_unquote_splicing = intern(ctx, "unquote-splicing");
+void init_reader() {
+    scm_close_paren = intern(")");
+    scm_dot         = intern(".");
+    read_error_type = intern("read-error");
+    scm_quote       = intern("quote");
+    scm_quasiquote  = intern("quasiquote");
+    scm_unquote     = intern("unquote");
+    scm_unquote_splicing = intern("unquote-splicing");
 }
 
-void read_error(scm_ctx_t* ctx, scmval p, const char* message, ...) {
+static void read_error(scmval p, const char* message, ...) {
     char *buf;
-    scmval e;
     va_list ap;
     va_start(ap, message);
     vasprintf(&buf, message, ap);
     va_end(ap);
-    e = error(read_error_type, "%s (line: %d - pos: %d)", buf, port_line(p), port_pos(p));
-    throw(ctx, e);
+    error(read_error_type, "%s (line: %d - pos: %d)", buf, port_line(p), port_pos(p));
 }
 
-scmval read(scm_ctx_t* ctx, scmval p) {
-    return read_aux(ctx, p, false);
+scmval read(scmval p) {
+    return read_aux(p, false);
 }
 
-static scmval read_aux(scm_ctx_t* ctx, scmval p, bool in_list) {
+static scmval read_aux(scmval p, bool in_list) {
     scmval v = scm_undef;
     scm_char_t c;
 
@@ -63,23 +61,23 @@ static scmval read_aux(scm_ctx_t* ctx, scmval p, bool in_list) {
 
     switch(c) {
         case '(':
-            v = read_list(ctx, p);
+            v = read_list(p);
             break;
         case ')':
             if(!in_list) 
-                read_error(ctx, p, "unexpected ')' character");
+                read_error(p, "unexpected ')' character");
             v = scm_close_paren;
             break;
         case '.':
             if(!in_list)
-                read_error(ctx, p, "unexpected '.' character");
+                read_error(p, "unexpected '.' character");
             v = scm_dot;
             break;
         case '"':
-            v = read_string(ctx, p);
+            v = read_string(p);
             break;
         case '\'':
-            v = read_aux(ctx, p, false);
+            v = read_aux(p, false);
             v = cons(scm_quote, cons(v, scm_null));
             break;
         case '#':
@@ -92,10 +90,10 @@ static scmval read_aux(scm_ctx_t* ctx, scmval p, bool in_list) {
                     v = scm_false;
                     break;
                 case '\\':
-                    v = read_char(ctx, p);
+                    v = read_char(p);
                     break;
                 case '(':
-                    v = read_vector(ctx, p);
+                    v = read_vector(p);
                     break;
                 case 'b':
                 case 'o':
@@ -104,13 +102,13 @@ static scmval read_aux(scm_ctx_t* ctx, scmval p, bool in_list) {
                     scm_ungetc(p, c);
                     goto number_fallback;
                 default:
-                    read_error(ctx, p, "unexpected character '%c' after #", c);
+                    read_error(p, "unexpected character '%c' after #", c);
             }
             break;
         default:
 number_fallback:
             scm_ungetc(p, c);
-            v = read_any(ctx, p);
+            v = read_any(p);
             break;
     }
     return v;
@@ -164,7 +162,7 @@ static scmval read_number(scm_char_t* buf) {
     return scm_undef;
 }
 
-static scmval read_any(scm_ctx_t* ctx, scmval p) {
+static scmval read_any(scmval p) {
     scmval v = scm_undef;
     scm_char_t buf[MAX_TOK_SIZE], c;
     int size = 0;
@@ -176,7 +174,7 @@ static scmval read_any(scm_ctx_t* ctx, scmval p) {
         }
         buf[size++] = c;
         if(size > (MAX_TOK_SIZE - 1))
-            read_error(ctx, p, "token too long");
+            read_error(p, "token too long");
     }
     buf[size] = '\0';
     // Try to read number
@@ -193,16 +191,16 @@ static scmval read_any(scm_ctx_t* ctx, scmval p) {
             }
         }
         if(is_identifier)
-            v = intern(ctx, buf);
+            v = intern(buf);
     } else if(is_peculiar_identifier(buf[0])) {
-        v = intern(ctx, buf);
+        v = intern(buf);
     } else {
-        read_error(ctx, p, "unrecognized token '%s'", buf);
+        read_error(p, "unrecognized token '%s'", buf);
     }
     return v;
 }
 
-static scmval read_char(scm_ctx_t* ctx, scmval p) {
+static scmval read_char(scmval p) {
     scmval v;
     scm_char_t buf[MAX_TOK_SIZE], c;
     int i = 0;
@@ -216,7 +214,7 @@ static scmval read_char(scm_ctx_t* ctx, scmval p) {
         }
         buf[i++] = c;
         if(i > (MAX_TOK_SIZE - 1))
-            read_error(ctx, p, "token too long while reading char");
+            read_error(p, "token too long while reading char");
     }
     buf[i] = '\0';
     c = buf[0];
@@ -240,13 +238,13 @@ static scmval read_char(scm_ctx_t* ctx, scmval p) {
         else if(c == 'v' && !strncmp(buf, "vtab", i))
             c = 0xb;
         else
-            read_error(ctx, p, "invalid character name '%s'", buf);
+            read_error(p, "invalid character name '%s'", buf);
         v = make_char(c);
     }
     return v;
 }
 
-static scmval read_string(scm_ctx_t* ctx, scmval p) {
+static scmval read_string(scmval p) {
     scmval v;
     scm_char_t c, *buf;
     int len = MAX_TOK_SIZE, i = 0;
@@ -254,7 +252,7 @@ static scmval read_string(scm_ctx_t* ctx, scmval p) {
     while(true) {
         c = scm_getc(p);
         if(c == EOF) {
-            read_error(ctx, p, "unexpected end of file while reading string");
+            read_error(p, "unexpected end of file while reading string");
         } else if(c == '"') {
             break;
         } else if(c == '\\') {
@@ -268,7 +266,7 @@ static scmval read_string(scm_ctx_t* ctx, scmval p) {
                 case '"': c = '"';  break;
                 case '\\': c = '\\'; break;
                 default:
-                   read_error(ctx, p, "invalid escaped character '%c' in string", c);
+                   read_error(p, "invalid escaped character '%c' in string", c);
             }
         }
         if((i+1) >= len) {
@@ -282,28 +280,28 @@ static scmval read_string(scm_ctx_t* ctx, scmval p) {
     return v;
 }
 
-static scmval read_list(scm_ctx_t* ctx, scmval p) {
+static scmval read_list(scmval p) {
     scmval h, t;
     scmval v;
     h = t = scm_null;
-    v = read_aux(ctx, p, true);
+    v = read_aux(p, true);
     while(!is_eq(v, scm_close_paren)) {
         if(is_eof(v))
-            read_error(ctx, p, "unexpected end of file while reading list");
+            read_error(p, "unexpected end of file while reading list");
         if(is_eq(v, scm_dot)) {
-            v = read_aux(ctx, p, true);
+            v = read_aux(p, true);
             if(is_eof(v))
-                read_error(ctx, p, "unexpected end of file after . in list");
+                read_error(p, "unexpected end of file after . in list");
             if(is_eq(v, scm_close_paren))
-                read_error(ctx, p, "unexpected ) after . in list");
+                read_error(p, "unexpected ) after . in list");
             if(is_null(h))
-                read_error(ctx, p, "unexpected . in empty list");
+                read_error(p, "unexpected . in empty list");
             setcdr(t, v);
-            v = read_aux(ctx, p, true);
+            v = read_aux(p, true);
             if(is_eof(v))
-                read_error(ctx, p, "unexpected end of file in dotted list - expected )");
+                read_error(p, "unexpected end of file in dotted list - expected )");
             if(!is_eq(v, scm_close_paren))
-                read_error(ctx, p, "unexpected value in dotted list - expected )");
+                read_error(p, "unexpected value in dotted list - expected )");
             return h;
         }
         scmval c = cons(v, scm_null);
@@ -313,20 +311,20 @@ static scmval read_list(scm_ctx_t* ctx, scmval p) {
             setcdr(t, c);
             t = c;
         }            
-        v = read_aux(ctx, p, true);
+        v = read_aux(p, true);
     }
     return h;
 }
 
-static scmval read_vector(scm_ctx_t* ctx, scmval p) {
+static scmval read_vector(scmval p) {
     scmval h, t;
     scmval v;
     int size = 0;
     h = t = scm_null;
-    v = read_aux(ctx, p, true);
+    v = read_aux(p, true);
     while(!is_eq(v, scm_close_paren)) {
         if(is_eof(v))
-            read_error(ctx, p, "unexpected end of file while reading vector");
+            read_error(p, "unexpected end of file while reading vector");
         scmval c = cons(v, scm_null);
         if(is_null(h)) {
             h = t = c;
@@ -335,7 +333,7 @@ static scmval read_vector(scm_ctx_t* ctx, scmval p) {
             t = c;
         }
         ++size;
-        v = read_aux(ctx, p, true);
+        v = read_aux(p, true);
     }
     v = make_vector_from_list(size, h);
     return v;

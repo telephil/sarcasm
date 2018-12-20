@@ -22,7 +22,7 @@ define_contract(list_c, "list", is_pair);
 static inline scm_pair_t* get_pair(scmval v) { return (scm_pair_t*)v.o; }
 
 // standard lib
-void init_pair(scm_ctx_t*);
+void init_pair();
 
 static inline scmval car(scmval v) { return get_pair(v)->car; }
 static inline scmval cdr(scmval v) { return get_pair(v)->cdr; }

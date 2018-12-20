@@ -7,4 +7,4 @@ define_contract(char_c, "character", is_char);
 // accessor
 static inline scm_char_t char_value(scmval v) { return v.c; }
 // standard library
-void init_char(scm_ctx_t*);
+void init_char();

@@ -12,17 +12,13 @@ scmval make_pair(scmval car, scmval cdr) {
 }
 
 // standard library
-static scmval scm_pair_p(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
+static scmval scm_pair_p(scmval v) {
     if(is_pair(v) && !is_null(v))
         return scm_true;
     return scm_false;
 }
 
-static scmval scm_list_p(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
+static scmval scm_list_p(scmval v) {
     for( ; !is_null(v); v = cdr(v)) {
         if(!is_pair(v)) {
             return scm_false;
@@ -31,79 +27,58 @@ static scmval scm_list_p(scm_ctx_t* ctx) {
     return scm_true;
 }
 
-static scmval scm_null_p(scm_ctx_t* ctx) {
-    scmval v;
-    v = arg_ref(ctx, 0);
-    if(is_null(v)) {
-        return scm_true;
-    }
-    return scm_false;
+static scmval scm_null_p(scmval v) {
+    return scm_bool(is_null(v));
 }
 
-static scmval scm_make_list(scm_ctx_t* ctx) {
-    scmval r, s, f;
-    s = arg_ref(ctx, 0);
-    f = arg_ref_opt(ctx, 1, scm_false);
-    r = scm_null;
+static scmval scm_make_list(scmval s, scmval f) {
+    check_arg("make-list", fixnum_c, s);
+    opt_arg(f, scm_false);
+    scmval r = scm_null;
     for(int i = 0; i < fixnum_value(s); i++) {
         r = cons(f, r);
     }
     return r;
 }
 
-static scmval scm_list(scm_ctx_t* ctx) {
-    int argc;
-    scmval *argv;
+static scmval scm_list(scmfix argc, scmval* argv) {
     scmval r = scm_null;
-    arg_ref_list(ctx, &argc, &argv);
     for(int i = argc - 1; i >= 0; i--) {
         r = cons(argv[i], r);
     }
     return r;
 }
 
-static scmval scm_cons(scm_ctx_t* ctx) {
-    scmval r, h, t;
-    h = arg_ref(ctx, 0);
-    t = arg_ref(ctx, 1);
-    r = make_pair(h, t);
-    return r;
+static scmval scm_cons(scmval h, scmval t) {
+    return make_pair(h, t);
 }
 
-static scmval scm_car(scm_ctx_t* ctx) {
-    scmval r, l;
-    l = arg_ref(ctx, 0);
-    r = car(l);
-    return r;
+static scmval scm_car(scmval l) {
+    check_arg("car", list_c, l);
+    return car(l);
 }
 
-static scmval scm_cdr(scm_ctx_t* ctx) {
-    scmval r, l;
-    l = arg_ref(ctx, 0);
-    r = cdr(l);
-    return r;
+static scmval scm_cdr(scmval l) {
+    check_arg("cdr", list_c, l);
+    return cdr(l);
 }
 
-static scmval scm_setcar(scm_ctx_t* ctx) {
-    scmval l, v;
-    l = arg_ref(ctx, 0);
-    v = arg_ref(ctx, 1);
+static scmval scm_setcar(scmval l, scmval v) {
+    check_arg("set-car!", list_c, l);
     setcar(l, v);
     return scm_undef;
 }
 
-static scmval scm_setcdr(scm_ctx_t* ctx) {
-    scmval l, v;
-    l = arg_ref(ctx, 0);
-    v = arg_ref(ctx, 1);
+static scmval scm_setcdr(scmval l, scmval v) {
+    check_arg("set-cdr!", list_c, l);
     setcdr(l, v);
     return scm_undef;
 }
 
-static scmval scm_length(scm_ctx_t* ctx) {
-    scmval r, l;
-    scm_fixnum_t i;
-    l = arg_ref(ctx, 0);
+static scmval scm_length(scmval l) {
+    check_arg("length", list_c, l);
+    scmval r;
+    scmfix i;
     for(i = 0; !is_null(l); i++, l = cdr(l))
         ;
     r = make_fixnum(i);
@@ -111,19 +86,19 @@ static scmval scm_length(scm_ctx_t* ctx) {
 }
 
 // initialization
-void init_pair(scm_ctx_t* ctx) {
+void init_pair() {
     scm_null  = make_val(SCM_TYPE_NULL);
 
-    define(ctx, "pair?", scm_pair_p, arity_exactly(1), 1, any_c);
-    define(ctx, "list?", scm_list_p, arity_exactly(1), 1, any_c);
-    define(ctx, "null?", scm_null_p, arity_exactly(1), 1, any_c);
-    define(ctx, "make-list", scm_make_list, arity_or(1, 2), 2, fixnum_c, any_c);
-    define(ctx, "list", scm_list, arity_at_least(0), 1, any_c);
-    define(ctx, "cons", scm_cons, arity_exactly(2), 2, any_c, any_c);
-    define(ctx, "car", scm_car, arity_exactly(1), 1, list_c);
-    define(ctx, "cdr", scm_cdr, arity_exactly(1), 1, list_c);
-    define(ctx, "set-car!", scm_setcar, arity_exactly(2), 2, list_c, any_c);
-    define(ctx, "set-cdr!", scm_setcdr, arity_exactly(2), 2, list_c, any_c);
-    define(ctx, "length", scm_length, arity_exactly(1), 1, list_c);
+    define("pair?", scm_pair_p, arity_exactly(1));
+    define("list?", scm_list_p, arity_exactly(1));
+    define("null?", scm_null_p, arity_exactly(1));
+    define("make-list", scm_make_list, arity_or(1, 2));
+    define("list", scm_list, arity_at_least(0));
+    define("cons", scm_cons, arity_exactly(2));
+    define("car", scm_car, arity_exactly(1));
+    define("cdr", scm_cdr, arity_exactly(1));
+    define("set-car!", scm_setcar, arity_exactly(2));
+    define("set-cdr!", scm_setcdr, arity_exactly(2));
+    define("length", scm_length, arity_exactly(1));
 }
 

@@ -3,7 +3,7 @@
 // globals
 scmval range_error_type;
 scmval arity_error_type;
-scmval contract_error_type;
+scmval type_error_type;
 
 // constructor
 scmval make_error(scmval type, scmval message) {
@@ -14,15 +14,15 @@ scmval make_error(scmval type, scmval message) {
 }
 
 // standard library
-void throw(scm_ctx_t* ctx, scmval e) {
-    set_error(ctx, e);
-    longjmp(ctx->err_buf, 1);
+void raise(scmval e) {
+    set_error(e);
+    longjmp(scm_context.err_buf, 1);
 }
 
 // initialization
-void init_errors(scm_ctx_t* ctx) {
-    range_error_type = intern(ctx, "range-error");
-    arity_error_type = intern(ctx, "arity-error");
-    contract_error_type = intern(ctx, "contract-error");
+void init_errors() {
+    type_error_type  = intern("type-error");
+    range_error_type = intern("range-error");
+    arity_error_type = intern("arity-error");
 }
 

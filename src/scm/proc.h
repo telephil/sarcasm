@@ -1,48 +1,60 @@
-typedef struct scm_prim scm_prim_t;
+typedef struct scm_subr scm_subr_t;
 typedef struct scm_closure scm_closure_t;
 
-typedef scmval (*scm_prim_fun)(scm_ctx_t*);
+typedef scmval (*subr_f)();
 
-// primitive
-struct scm_prim {
-    scmval name;
-    scm_prim_fun fun;
+// subritive
+struct scm_subr {
+    scmval  name;
+    subr_f  f;
     arity_t arity;
-    contract_t* contracts;
-    int contract_count;
 };
 
 // closure
 struct scm_closure {
-    scm_fixnum_t argc;
-    scmval*      argv;
-    scmval       env;
-    scmval       body;
+    scmval  name;
+    scmfix  argc;
+    scmval* argv;
+    scmval  env;
+    scmval  body;
 };
 
 // constructor
-scmval make_prim(const char*, scm_prim_fun, arity_t, int, ...);
-scmval make_primv(const char*, scm_prim_fun, arity_t, int, va_list);
-scmval make_closure(scm_fixnum_t, scmval*, scmval, scmval);
+scmval make_subr(const char*, subr_f, arity_t);
+scmval make_closure(scmval, scmfix, scmval*, scmval, scmval);
 
 // predicate
-static inline bool is_prim(scmval v) { return type_of(v) == SCM_TYPE_PRIM; }
+static inline bool is_subr(scmval v) { return type_of(v) == SCM_TYPE_SUBR; }
 static inline bool is_closure(scmval v) { return type_of(v) == SCM_TYPE_CLOSURE; }
-static inline bool is_callable(scmval v) { return is_prim(v) || is_closure(v); }
+static inline bool is_callable(scmval v) { return is_subr(v) || is_closure(v); }
 
 // accessors
-static inline scm_prim_t* get_prim(scmval v) { return (scm_prim_t*)v.o; }
-static inline scmval prim_name(scmval v) { return get_prim(v)->name; }
-static inline scm_prim_fun prim_fun(scmval v) { return get_prim(v)->fun; }
-static inline arity_t prim_arity(scmval v) { return get_prim(v)->arity; }
-static inline contract_t* prim_contracts(scmval v) { return get_prim(v)->contracts; }
-static inline int prim_contract_count(scmval v) { return get_prim(v)->contract_count; }
+static inline scm_subr_t*   get_subr(scmval v) { return (scm_subr_t*)v.o; }
+static inline scmval        subr_name(scmval v) { return get_subr(v)->name; }
+static inline arity_t       subr_arity(scmval v) { return get_subr(v)->arity; }
+#define funcall0(v)         get_subr(v)->f()
+#define funcall(v,...)      get_subr(v)->f(__VA_ARGS__)
 
 static inline scm_closure_t* get_closure(scmval v) { return (scm_closure_t*)v.o; }
-static inline scm_fixnum_t   closure_argc(scmval v) { return get_closure(v)->argc; }
+static inline scmval         closure_name(scmval v) { return get_closure(v)->name; }
+static inline scmfix         closure_argc(scmval v) { return get_closure(v)->argc; }
 static inline scmval*        closure_argv(scmval v) { return get_closure(v)->argv; }
 static inline scmval         closure_env(scmval v)  { return get_closure(v)->env; }
 static inline scmval         closure_body(scmval v) { return get_closure(v)->body; }
 
+// utils
+#define opt_arg(ARG,OPT) ARG = is_undef(ARG) ? OPT : ARG
+#define check_arg(N,C,V) if(!C.pred(V)) (type_error(N,C,V))
+#define check_args(N,C,AC,AV) for(int i = 0; i < AC; i++) { if(!C.pred(AV[i])) (type_error(N,C,AV[i])); }
+
 // standard library
-scmval apply(scm_ctx_t*, scmval, scmval);
+void check_arity(scmval, scmfix);
+scmfix argc_from_arity(scmval, scmfix);
+scmval apply_funcall(scmval, scmfix, scmval*);
+
+static inline void type_error(const char* name, contract_t c, scmval r) {
+    error(type_error_type,
+          "%s: contract violation (expected %s but received %s)",
+          name, c.name, string_value(scm_to_string(r)));
+}
+

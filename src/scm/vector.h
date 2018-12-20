@@ -19,7 +19,7 @@ static inline bool is_vector(scmval v) { return type_of(v) == SCM_TYPE_VECTOR; }
 define_contract(vector_c, "vector", is_vector);
 
 // standard lib
-void init_vector(scm_ctx_t*);
+void init_vector();
 
 static inline size_t vector_size(scmval v) { return get_vector(v)->size; }
 static inline scmval vector_ref(scmval v, int i) { return get_vector(v)->elts[i]; }

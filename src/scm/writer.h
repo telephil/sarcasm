@@ -1,9 +1,7 @@
-enum write_mode { 
-    WRITE_MODE_WRITE,
-    WRITE_MODE_DISPLAY
+enum {
+    scm_mode_write      = 1<<0,
+    scm_mode_display    = 1<<1,
+    scm_mode_pp_quote   = 1<<2
 };
-
-typedef enum write_mode write_mode;
-
 // write : port? any?
-void write(scmval, scmval, write_mode);
+void write(scmval, scmval, scmfix);

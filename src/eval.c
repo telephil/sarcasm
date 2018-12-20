@@ -1,92 +1,143 @@
 #include "scm.h"
 
+static scmval scm_apply;
 static scmval scm_define;
 static scmval scm_lambda;
 static scmval scm_if;
 static scmval scm_set;
 
-void init_eval(scm_ctx_t* ctx) {
-    scm_define = intern(ctx, "define");
-    scm_if = intern(ctx, "if");
-    scm_set = intern(ctx, "set!");
-    scm_lambda = intern(ctx, "lambda");
+static void   list_to_args(scmval, scmfix*, scmval**);
+static scmval define_closure(scmfix, scmval*, scmval);
+static scmval define_symbol(scmfix, scmval*, scmval);
+static scmval eval_subr(scmval, scmfix, scmval*, scmval);
+static scmval eval_closure(scmval, scmfix, scmval*, scmval);
+
+////////////////////////////////////////////////////////////////////////////////
+// I N I T I A L I Z A T I O N
+////////////////////////////////////////////////////////////////////////////////
+void init_eval() {
+    scm_apply   = intern("apply");
+    scm_define  = intern("define");
+    scm_if      = intern("if");
+    scm_set     = intern("set!");
+    scm_lambda  = intern("lambda");
 }
 
-// (map (eval v e))
-scmval map_eval(scm_ctx_t* ctx, scmval v, scmval e) {
-    if(is_null(v))
-        return scm_null;
-    scmval r = eval(ctx, car(v), e);
-    return cons(r, map_eval(ctx, cdr(v), e));
-}
+#define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }
 
-#define dbg(P,V) { printf(">>> " P ": '"); write(ctx->current_output_port, V, WRITE_MODE_WRITE); printf("'\n"); }
-
-scmval eval(scm_ctx_t* ctx, scmval v, scmval e) {
+////////////////////////////////////////////////////////////////////////////////
+// E V A L U A T I O N
+////////////////////////////////////////////////////////////////////////////////
+scmval eval(scmval v, scmval e) {
     scmval r = v;
-
+loop:
     if(is_symbol(v)) {
-        r = lookup(ctx, e, v);
+        r = lookup(e, v);
         if(is_undef(r))
-            throw(ctx, error(intern(ctx, "error"), "undefined symbol '%s'", string_value(v)));
+            error(intern("error"), "undefined symbol '%s'", string_value(v));
     } else if(is_pair(v) && !is_null(v)) {
+        scmfix  argc;
+        scmval* argv;
+        list_to_args(cdr(v), &argc, &argv);
         scmval s = car(v);
         if(is_eq(s, scm_define)) {
-            scmval k = cadr(v);
-            if(is_pair(k)) { // (define (name <args>)...
-                scmval n = car(k);
-                scmval a = cdr(k);
-                scmval b = caddr(v);
-                scmval *argv = NULL;
-                scm_fixnum_t argc = list_length(a);
-                if(argc > 0) {
-                    argv = scm_new_array(argc, scmval);
-                    int i = 0;
-                    for(scmval l = a; !is_null(l); l = cdr(l)) {
-                        argv[i++] = car(l);
-                    }
-                }
-                r = make_closure(argc, argv, make_env(e), b);
-                dict_set(ctx->globals, n, r);
+            if(is_pair(argv[0])) { // (define (name <args>)...
+                r = define_closure(argc, argv, e);
             } else { // (define name...
-                scmval a = eval(ctx, caddr(v), e);
-                dict_set(ctx->globals, k, a);
-                r = a;
+                r = define_symbol(argc, argv, e);
             }
         } else if(is_eq(s, scm_if)) {
-            scmval test = cadr(v);
-            scmval t = caddr(v);
-            scmval f = cadddr(v);
-            if(!is_false(eval(ctx, test, e)))
-                r = eval(ctx, t, e);
-            else
-                r = eval(ctx, f, e);
+            scmval test = eval(argv[0], e);
+            v = is_true(test) ? argv[1] : argv[2];
+            goto loop;
         } else if(is_eq(s, scm_quote)) {
-            r = cadr(v);
+            r = argv[0];
+        } else if(is_eq(s, scm_apply)) {
+            v = cons(argv[0], eval(argv[1], e));
+            goto loop;
         } else {
-            scmval f = is_callable(s) ? s : eval(ctx, s, e);
-            if(is_prim(f)) {
-                scmval a = map_eval(ctx, cdr(v), e);
-                r = apply(ctx, f, a);
+            scmval f = is_callable(s) ? s : eval(s, e);
+            if(is_subr(f)) {
+                r = eval_subr(f, argc, argv, e);
             } else if(is_closure(f)) {
-                scm_fixnum_t argc = closure_argc(f);
-                scm_fixnum_t largc = list_length(cdr(v));
-                if(argc != largc) {
-                    throw(ctx, error(intern(ctx, "eval"),
-                                "invalid argument count (expected: %d but received: %d)", argc, largc));
-                }
-                scmval *argv = closure_argv(f);
-                scmval largv = cdr(v);
-                scmval env = make_env(closure_env(f));
-                for(int i = 0; i < argc; i++, largv = cdr(largv)) {
-                    scmval a = eval(ctx, car(largv), e);
-                    bind(ctx, env, argv[i], a);
-                }
-                r = eval(ctx, closure_body(f), env);
+                r = eval_closure(f, argc, argv, e);
             }
         }
     }
-
     return r;
+}
+
+static scmval eval_subr(scmval s, scmfix argc, scmval* argv, scmval e) {
+    scmval r = scm_undef;
+    check_arity(s, argc);
+    scmfix new_argc = argc_from_arity(s, argc);
+    if(argc > 0) {
+        scmval* new_argv = scm_new_array(new_argc, scmval);
+        for(int i = 0; i < new_argc; i++) {
+            new_argv[i] = (i < argc)
+                ? eval(argv[i], e)
+                : scm_undef;
+        }
+        r = apply_funcall(s, new_argc, new_argv);
+    } else {
+        r = funcall0(s);
+    }
+    return r;
+}
+
+static scmval eval_closure(scmval f, scmfix argc, scmval* argv, scmval e) {
+    scmfix ac = closure_argc(f);
+    if(ac != argc) 
+        error(arity_error_type, "%s expect %d arguments but received %d", 
+                                is_undef(closure_name(f)) ? "anonymous closure" : string_value(closure_name(f)),
+                                ac, argc);
+    scmval *av = closure_argv(f);
+    scmval env = make_env(closure_env(f));
+    for(int i = 0; i < argc; i++) {
+        scmval arg = eval(argv[i], e);
+        bind(env, av[i], arg);
+    }
+    return eval(closure_body(f), env);
+}
+
+static scmval define_closure(scmfix argc, scmval* argv, scmval e) {
+    if(argc != 2) error(arity_error_type, "define expects 2 arguments but received %d", argc);
+    scmval  name = car(argv[0]);
+    scmval  args = cdr(argv[0]);
+    scmval  body = argv[1];
+    scmfix  ac   = list_length(args);
+    scmval* av = NULL;
+    scmfix  i = 0;
+    if(ac > 0) { 
+        av = scm_new_array(ac, scmval);
+        for(scmval l = args; !is_null(l); l = cdr(l)) {
+            check_arg("define", symbol_c, car(l));
+            av[i++] = car(l);
+        }
+    }
+    scmval c = make_closure(make_string(string_value(name)), ac, av, make_env(e), body);
+    dict_set(scm_context.globals, name, c);
+    return c;
+}
+
+static scmval define_symbol(scmfix argc, scmval* argv, scmval e) {
+    if(argc != 2) error(arity_error_type, "define expects 2 arguments but received %d", argc);
+    scmval name = argv[0];
+    scmval body = eval(argv[1], e);
+    dict_set(scm_context.globals, name, body);
+    return body;
+}
+
+static void list_to_args(scmval l, scmfix* argc, scmval** argv) {
+    scmfix ac = list_length(l);
+    if(ac > 0) {
+        scmfix  i  = 0;
+        scmval *av = scm_new_array(ac, scmval);
+        for( ; !is_null(l); l = cdr(l)) {
+            av[i++] = car(l);
+        }
+        *argv = av;
+    }
+    *argc = ac;
 }
 
