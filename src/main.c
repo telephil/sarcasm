@@ -29,6 +29,7 @@ static void scm_init() {
 int main(int argc, char* argv[]) {
     scm_init();
     printf("scm v0.1\n");
+    load("./scheme/list.scm");
     repl();
     printf("Bye.\n");
     return 0;
