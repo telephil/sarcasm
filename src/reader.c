@@ -408,3 +408,14 @@ static bool is_valid_digit(scm_char_t c, int base) {
     return valid;
 }
 
+void load(const char* path) {
+    scmval p = scm_open_input_file(make_string(path));
+    while(true) {
+        scmval v = read(p);
+        if(is_eof(v))
+            break;
+        eval(v, scm_context.toplevel);
+    }
+    scm_close_input_port(p);
+}
+
