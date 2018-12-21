@@ -18,5 +18,6 @@ define_contract(string_c, "string", is_string);
 
 // accessors
 static inline scm_string_t* get_string(scmval v) { return (scm_string_t*)v.o; }
-static inline CORD string_value(scmval v) { return get_string(v)->value; }
-static inline char* string_to_cstr(scmval v) { return CORD_to_char_star(string_value(v)); }
+static inline CORD          string_value(scmval v) { return get_string(v)->value; }
+static inline scmfix        string_length(scmval v) { return CORD_len(string_value(v)); }
+static inline char*         string_to_cstr(scmval v) { return CORD_to_char_star(string_value(v)); }

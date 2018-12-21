@@ -14,6 +14,7 @@
 // type aliases
 typedef struct scmval scmval;
 typedef bool scm_bool_t;
+typedef uint8_t scmbyte;
 typedef int64_t scm_fixnum_t;
 typedef scm_fixnum_t scmfix; // used a lot
 typedef double scm_flonum_t;
@@ -32,6 +33,7 @@ enum {
     SCM_TYPE_SYMBOL,
     SCM_TYPE_PAIR,
     SCM_TYPE_VECTOR,
+    SCM_TYPE_BYTEVECTOR,
     SCM_TYPE_ENV,
     SCM_TYPE_SUBR,
     SCM_TYPE_CLOSURE,
@@ -70,6 +72,7 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/error.h"
 #include "scm/pair.h"
 #include "scm/vector.h"
+#include "scm/bytevector.h"
 #include "scm/port.h"
 #include "scm/proc.h"
 #include "scm/env.h"

@@ -18,6 +18,7 @@ static void scm_init() {
     init_symbol();
     init_pair();
     init_vector();
+    init_bytevector();
     init_port();
     init_reader();
     init_eval();
