@@ -17,6 +17,7 @@ static scmval read_char(scmval);
 static scmval read_string(scmval);
 static scmval read_list(scmval);
 static scmval read_vector(scmval);
+static scmval read_bytevector(scmval);
 static scmval read_any(scmval);
 static scm_char_t skipws(scmval p);
 static bool is_delimiter(scm_char_t);
@@ -94,6 +95,13 @@ static scmval read_aux(scmval p, bool in_list) {
                     break;
                 case '(':
                     v = read_vector(p);
+                    break;
+                case 'u':
+                    c = scm_getc(p);
+                    if(c != '8') read_error(p, "unexpected sequence '#u%c'", c);
+                    c = scm_getc(p);
+                    if(c != '(') read_error(p, "unexpected character '%c' while parsing bytevector", c);
+                    v = read_bytevector(p);
                     break;
                 case 'b':
                 case 'o':
@@ -336,6 +344,31 @@ static scmval read_vector(scmval p) {
         v = read_aux(p, true);
     }
     v = make_vector_from_list(size, h);
+    return v;
+}
+
+static scmval read_bytevector(scmval p) {
+    scmval h, t;
+    scmval v;
+    int size = 0;
+    h = t = scm_null;
+    v = read_aux(p, true);
+    while(!is_eq(v, scm_close_paren)) {
+        if(is_eof(v))
+            read_error(p, "unexpected end of file while reading bytevector");
+        if(!is_byte(v))
+            read_error(p, "invalid byte %s found while reading bytevector", string_value(scm_to_string(v)));
+        scmval c = cons(v, scm_null);
+        if(is_null(h)) {
+            h = t = c;
+        } else {
+            setcdr(t, c);
+            t = c;
+        }
+        ++size;
+        v = read_aux(p, true);
+    }
+    v = make_bytevector_from_list(size, h);
     return v;
 }
 

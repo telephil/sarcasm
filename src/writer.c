@@ -3,6 +3,7 @@
 static void write_char(scmval, scmval, scmfix);
 static void write_pair(scmval, scmval, scmfix);
 static void write_vector(scmval, scmval, scmfix);
+static void write_bytevector(scmval, scmval, scmfix);
 
 void write(scmval p, scmval v, scmfix flags) {
     switch(type_of(v)) {
@@ -48,6 +49,9 @@ void write(scmval p, scmval v, scmfix flags) {
             break;
         case SCM_TYPE_VECTOR:
             write_vector(p, v, flags);
+            break;
+        case SCM_TYPE_BYTEVECTOR:
+            write_bytevector(p, v, flags);
             break;
         case SCM_TYPE_ENV:
             scm_puts(p, "#<environment>");
@@ -119,6 +123,15 @@ static void write_vector(scmval p, scmval v, scmfix flags) {
             scm_putc(p, ' ');
         }
         write(p, vector_ref(v, i), flags);
+    }
+    scm_putc(p, ')');
+}
+
+static void write_bytevector(scmval p, scmval v, scmfix flags) {
+    scm_puts(p, "#u8(");
+    for(int i = 0; i < bytevector_size(v); i++) {
+        if(i > 0) scm_putc(p, ' ');
+        write(p, bytevector_ref(v, i), flags);
     }
     scm_putc(p, ')');
 }
