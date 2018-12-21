@@ -47,3 +47,9 @@ static inline void range_error(const char* name, int index, int size) {
           name, index, size-1);
 }
 
+static inline void range_error2(const char* name, int index, int low, int high) {
+    error(range_error_type,
+          "%s: index out of range (index: %d - valid range: [%d;%d])",
+          name, index, low, high-1);
+}
+
