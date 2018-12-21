@@ -15,6 +15,7 @@ static void scm_init() {
     init_errors();
     init_bool();
     init_char();
+    init_string();
     init_symbol();
     init_pair();
     init_vector();
