@@ -46,7 +46,7 @@ static inline scmval         closure_body(scmval v) { return get_closure(v)->bod
 #define opt_arg(ARG,OPT) ARG = is_undef(ARG) ? OPT : ARG
 #define check_arg(N,C,V) if(!C.pred(V)) (type_error(N,C,V))
 #define check_args(N,C,AC,AV) for(int i = 0; i < AC; i++) { if(!C.pred(AV[i])) (type_error(N,C,AV[i])); }
-#define check_range(N,V,L,H) if((V) < (L) || (V) >= (H)) range_error2(N, (V), (L), (H))
+#define check_range(N,V,L,H) if((V) < (L) || (V) >= (H)) range_error(N, (V), (L), (H))
 
 // standard library
 void check_arity(scmval, scmfix);

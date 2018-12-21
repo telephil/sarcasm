@@ -52,8 +52,7 @@ static scmval scm_bytevector_length(scmval b) {
 static scmval scm_bytevector_ref(scmval b, scmval k) {
     check_arg("bytevector-u8-ref", bytevector_c, b);
     check_arg("bytevector-u8-ref", fixnum_c, k);
-    if(fixnum_value(k) < 0 || fixnum_value(k) >= bytevector_size(b))
-        range_error("bytevector-u8-ref", fixnum_value(k), bytevector_size(b));
+    check_range("bytevector-u8-ref", fixnum_value(k), 0, bytevector_size(b));
     return bytevector_ref(b, fixnum_value(k));
 }
 
@@ -61,8 +60,7 @@ static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
     check_arg("bytevector-u8-set!", bytevector_c, b);
     check_arg("bytevector-u8-set!", fixnum_c, k);
     check_arg("bytevector-u8-set!", byte_c, byte);
-    if(fixnum_value(k) < 0 || fixnum_value(k) >= bytevector_size(b))
-        range_error("bytevector-u8-set!", fixnum_value(k), bytevector_size(b));
+    check_range("bytevector-u8-set!", fixnum_value(k), 0, bytevector_size(b));
     bytevector_set(b, fixnum_value(k), byte);
     return scm_undef;
 }
@@ -73,10 +71,8 @@ static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
     check_arg("bytevector-copy", bytevector_c, b);
     check_arg("bytevector-copy", fixnum_c, start);
     check_arg("bytevector-copy", fixnum_c, end);
-    if(fixnum_value(start) < 0 || fixnum_value(start) > bytevector_size(b))
-        range_error("bytevector-copy", fixnum_value(start), bytevector_size(b));
-    if(fixnum_value(end) < fixnum_value(start) || fixnum_value(end) > bytevector_size(b))
-        range_error("bytevector-copy", fixnum_value(end), bytevector_size(b));
+    check_range("bytevector-copy", fixnum_value(start), 0, bytevector_size(b));
+    check_range("bytevector-copy", fixnum_value(end), fixnum_value(start), bytevector_size(b));
     scm_bytevector_t* copy = scm_new(scm_bytevector_t);
     copy->size = fixnum_value(end) - fixnum_value(start);
     copy->elts = scm_new_array(copy->size, scmbyte);
@@ -92,12 +88,9 @@ static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval sta
     check_arg("bytevector-copy!", bytevector_c, from);
     check_arg("bytevector-copy!", fixnum_c, start);
     check_arg("bytevector-copy!", fixnum_c, end);
-    if(fixnum_value(at) < 0 || fixnum_value(at) > bytevector_size(to))
-        range_error("bytevector-copy!", fixnum_value(at), bytevector_size(to));
-    if(fixnum_value(start) < 0 || fixnum_value(start) > bytevector_size(from))
-        range_error("bytevector-copy!", fixnum_value(start), bytevector_size(from));
-    if(fixnum_value(end) < fixnum_value(start) || fixnum_value(end) > bytevector_size(from))
-        range_error("bytevector-copy!", fixnum_value(end), bytevector_size(from));
+    check_range("bytevector-copy!", fixnum_value(at), 0, bytevector_size(to));
+    check_range("bytevector-copy!", fixnum_value(start), 0, bytevector_size(from));
+    check_range("bytevector-copy!", fixnum_value(end), fixnum_value(start), bytevector_size(from));
     if((bytevector_size(to) - fixnum_value(at)) < (fixnum_value(end) - fixnum_value(start)))
         error(range_error_type, "bytevector-copy!: cannot fit %d elements in %s starting at index %d", 
                 (fixnum_value(end)-fixnum_value(start)), string_value(scm_to_string(to)), fixnum_value(at));
@@ -132,10 +125,8 @@ static scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
     check_arg("utf8->string", bytevector_c, b);
     check_arg("utf8->string", fixnum_c, start);
     check_arg("utf8->string", fixnum_c, end);
-    if(fixnum_value(start) < 0 || fixnum_value(start) > bytevector_size(b))
-        range_error("utf8->string", fixnum_value(start), bytevector_size(b));
-    if(fixnum_value(end) < fixnum_value(start) || fixnum_value(end) > bytevector_size(b))
-        range_error("utf8->string", fixnum_value(end), bytevector_size(b));
+    check_range("utf8->string", fixnum_value(start), 0, bytevector_size(b));
+    check_range("utf8->string", fixnum_value(end), fixnum_value(start), bytevector_size(b));
     scmfix size = (fixnum_value(end)-fixnum_value(start)) + 1;
     scm_char_t* s = scm_new_array(size, scm_char_t);
     memcpy(s, get_bytevector(b)->elts + fixnum_value(start), size);
@@ -149,10 +140,8 @@ static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
     check_arg("string->utf8", string_c, s);
     check_arg("string->utf8", fixnum_c, start);
     check_arg("string->utf8", fixnum_c, end);
-    if(fixnum_value(start) < 0 || fixnum_value(start) > string_length(s))
-        range_error("string->utf8", fixnum_value(start), string_length(s));
-    if(fixnum_value(end) < fixnum_value(start) || fixnum_value(end) > string_length(s))
-        range_error("string->utf8", fixnum_value(end), string_length(s));
+    check_range("string->utf8", fixnum_value(start), 0, string_length(s));
+    check_range("string->utf8", fixnum_value(end), fixnum_value(start), string_length(s));
     scm_bytevector_t* b = scm_new(scm_bytevector_t);
     b->size = fixnum_value(end) - fixnum_value(start);
     b->elts = scm_new_array(b->size, scmbyte);

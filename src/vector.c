@@ -49,8 +49,7 @@ static scmval scm_vector_ref(scmval v, scmval i) {
     check_arg("vector-ref", vector_c, v);
     check_arg("vector-ref", fixnum_c, i);
     scmval r;
-    if(fixnum_value(i) < 0 || fixnum_value(i) >= vector_size(v))
-        range_error("vector-ref", fixnum_value(i), vector_size(v));
+    check_range("vector-ref", fixnum_value(i), 0, vector_size(v));
     r = vector_ref(v, fixnum_value(i));
     return r;
 }
@@ -58,8 +57,7 @@ static scmval scm_vector_ref(scmval v, scmval i) {
 static scmval scm_vector_set(scmval v, scmval i, scmval x) {
     check_arg("vector-set!", vector_c, v);
     check_arg("vector-set!", fixnum_c, i);
-    if(fixnum_value(i) < 0 || fixnum_value(i) >= vector_size(v))
-        range_error("vector-set!", fixnum_value(i), vector_size(v));
+    check_range("vector-set!", fixnum_value(i), 0, vector_size(v));
     vector_set(v, fixnum_value(i), x);
     return scm_undef;
 }
