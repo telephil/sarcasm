@@ -40,6 +40,14 @@ bool is_equal(scmval x, scmval y) {
                 return false;
         }
         return true;
+    } else if(is_bytevector(x)) {
+        if(bytevector_size(x) != bytevector_size(y))
+            return false;
+        for(int i =0; i < bytevector_size(x); i++) {
+            if(!is_eq(bytevector_ref(x, i), bytevector_ref(y, i)))
+                return false;
+        }
+        return true;
     }
     return false;
 }
