@@ -117,7 +117,7 @@ static scmval define_closure(scmfix argc, scmval* argv, scmval e) {
     }
     scmval c = make_closure(make_string(string_value(name)), ac, av, make_env(e), body);
     dict_set(scm_context.globals, name, c);
-    return c;
+    return scm_undef;
 }
 
 static scmval define_symbol(scmfix argc, scmval* argv, scmval e) {
@@ -125,7 +125,7 @@ static scmval define_symbol(scmfix argc, scmval* argv, scmval e) {
     scmval name = argv[0];
     scmval body = eval(argv[1], e);
     dict_set(scm_context.globals, name, body);
-    return body;
+    return scm_undef;
 }
 
 static void list_to_args(scmval l, scmfix* argc, scmval** argv) {
