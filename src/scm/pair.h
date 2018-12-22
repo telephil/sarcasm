@@ -38,6 +38,11 @@ static inline scmval cons(scmval car, scmval cdr) { return make_pair(car, cdr); 
 
 static inline size_t list_length(scmval v) {
     size_t l;
-    for(l = 0; !is_null(v); l++, v = cdr(v)) {}
+    for(l = 0; !is_null(v); l++, v = cdr(v)) {
+        if(!is_pair(cdr(v))) {
+            l += 2;
+            break;
+        }
+    }
     return l;
 } 
