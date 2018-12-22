@@ -115,14 +115,31 @@ static scmval eval_closure(scmval f, int argc, scmval* argv, scmval e) {
     int ac = closure_argc(f);
     scmval *av = closure_argv(f);
     scmval env = make_env(closure_env(f));
-    if(ac == -1) {
+    if(ac == -1) { // lambda arg
         scmval arglist = scm_null;
         for(int i = argc - 1; i >= 0; i--) {
             scmval arg = eval(argv[i], e);
             arglist = cons(arg, arglist);
         }
         bind(env, av[0], arglist);
-    } else {
+    } else if(ac < 0) { // lambda (<arg>... . <arg>)
+        int i   = 0;
+        int xac = abs(ac) - 1;
+        if(argc < xac)
+            error(arity_error_type, "%s expects at least %d arguments but received %d",
+                    is_undef(closure_name(f)) ? "anonymous closure" : c_str(closure_name(f)),
+                    xac, argc);
+        for(i = 0; i < xac; i++) {
+            scmval arg = eval(argv[i], e);
+            bind(env, av[i], arg);
+        }
+        scmval tail = scm_null;
+        for(int j = argc - 1; j >= xac; j--) {
+            scmval arg = eval(argv[j], e);
+            tail = cons(arg, tail);
+        }
+        bind(env, av[i], tail);
+    } else { // lambda (<arg>...)
         if(ac != argc) 
             error(arity_error_type, "%s expect %d arguments but received %d", 
                     is_undef(closure_name(f)) ? "anonymous closure" : c_str(closure_name(f)),
@@ -193,6 +210,11 @@ static void list_to_args(scmval l, int* argc, scmval** argv) {
         scmval *av = scm_new_array(ac, scmval);
         for( ; !is_null(l); l = cdr(l)) {
             av[i++] = car(l);
+            if(!is_pair(cdr(l))) {
+                av[i] = cdr(l);
+                ac = -ac;
+                break;
+            }
         }
         *argv = av;
     }
