@@ -41,6 +41,7 @@ static inline scmfix         closure_argc(scmval v) { return get_closure(v)->arg
 static inline scmval*        closure_argv(scmval v) { return get_closure(v)->argv; }
 static inline scmval         closure_env(scmval v)  { return get_closure(v)->env; }
 static inline scmval         closure_body(scmval v) { return get_closure(v)->body; }
+static inline void           set_closure_name(scmval v, scmval n) { get_closure(v)->name = n; }
 
 // utils
 #define opt_arg(ARG,OPT) ARG = is_undef(ARG) ? OPT : ARG
