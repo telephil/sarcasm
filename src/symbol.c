@@ -28,7 +28,7 @@ static scmval scm_symbol_p(scmval v) {
     return scm_bool(is_symbol(v));
 }
 
-static scmval scm_symbol_equal_p(scmfix argc, scmval* argv) {
+static scmval scm_symbol_equal_p(int argc, scmval* argv) {
     check_args("symbol=?", symbol_c, argc, argv);
     scmval s = argv[0];
     for(int i = 1; i < argc; i++) {

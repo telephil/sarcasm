@@ -5,7 +5,7 @@ scmval scm_true;
 scmval scm_false;
 
 // constructor
-scmval make_bool(scm_bool_t b) {
+scmval make_bool(bool b) {
     scmval v = make_val(SCM_TYPE_BOOL);
     v.b = b;
     return v;
@@ -20,7 +20,7 @@ bool is_eqv(scmval x, scmval y) {
         return true;
     bool r = false;
     if(is_string(x)) {
-        r = !CORD_cmp(string_value(x), string_value(y));
+        r = !CORD_cmp(c_str(x), c_str(y));
     }
     return r;
 }

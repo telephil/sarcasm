@@ -14,6 +14,7 @@ static void scm_init() {
     init_context();
     init_errors();
     init_bool();
+    init_number();
     init_char();
     init_string();
     init_symbol();
@@ -69,12 +70,12 @@ static char** proc_name_completion_function(const char* text, int start, int end
 }
 
 static void init_completion() {
-    scmfix  size;
+    int     size;
     scmval* procs;
     dict_keys(scm_context.globals, &size, &procs);
     proc_names = calloc(size+1, sizeof(char*));
     for(int i = 0; i < size; i++) {
-        proc_names[i] = strdup(string_to_cstr(procs[i]));
+        proc_names[i] = strdup(c_cstr(procs[i]));
     }
     proc_names[size] = NULL;
     rl_attempted_completion_function = proc_name_completion_function;

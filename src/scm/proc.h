@@ -13,7 +13,7 @@ struct scm_subr {
 // closure
 struct scm_closure {
     scmval  name;
-    scmfix  argc;
+    int     argc;
     scmval* argv;
     scmval  env;
     scmval  body;
@@ -21,7 +21,7 @@ struct scm_closure {
 
 // constructor
 scmval make_subr(const char*, subr_f, arity_t);
-scmval make_closure(scmval, scmfix, scmval*, scmval, scmval);
+scmval make_closure(scmval, int, scmval*, scmval, scmval);
 
 // predicate
 static inline bool is_subr(scmval v) { return type_of(v) == SCM_TYPE_SUBR; }
@@ -37,7 +37,7 @@ static inline arity_t       subr_arity(scmval v) { return get_subr(v)->arity; }
 
 static inline scm_closure_t* get_closure(scmval v) { return (scm_closure_t*)v.o; }
 static inline scmval         closure_name(scmval v) { return get_closure(v)->name; }
-static inline scmfix         closure_argc(scmval v) { return get_closure(v)->argc; }
+static inline int            closure_argc(scmval v) { return get_closure(v)->argc; }
 static inline scmval*        closure_argv(scmval v) { return get_closure(v)->argv; }
 static inline scmval         closure_env(scmval v)  { return get_closure(v)->env; }
 static inline scmval         closure_body(scmval v) { return get_closure(v)->body; }
@@ -50,13 +50,13 @@ static inline void           set_closure_name(scmval v, scmval n) { get_closure(
 #define check_range(N,V,L,H) if((V) < (L) || (V) >= (H)) range_error(N, (V), (L), (H))
 
 // standard library
-void check_arity(scmval, scmfix);
-scmfix argc_from_arity(scmval, scmfix);
-scmval apply_funcall(scmval, scmfix, scmval*);
+void check_arity(scmval, int);
+int argc_from_arity(scmval, int);
+scmval apply_funcall(scmval, int, scmval*);
 
 static inline void type_error(const char* name, contract_t c, scmval r) {
     error(type_error_type,
           "%s: contract violation (expected %s but received %s)",
-          name, c.name, string_value(scm_to_string(r)));
+          name, c.name, scm_to_cstr(r));
 }
 

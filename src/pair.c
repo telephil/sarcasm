@@ -35,13 +35,13 @@ static scmval scm_make_list(scmval s, scmval f) {
     check_arg("make-list", fixnum_c, s);
     opt_arg(f, scm_false);
     scmval r = scm_null;
-    for(int i = 0; i < fixnum_value(s); i++) {
+    for(int i = 0; i < c_fix(s); i++) {
         r = cons(f, r);
     }
     return r;
 }
 
-static scmval scm_list(scmfix argc, scmval* argv) {
+static scmval scm_list(int argc, scmval* argv) {
     scmval r = scm_null;
     for(int i = argc - 1; i >= 0; i--) {
         r = cons(argv[i], r);
@@ -77,12 +77,10 @@ static scmval scm_setcdr(scmval l, scmval v) {
 
 static scmval scm_length(scmval l) {
     check_arg("length", list_c, l);
-    scmval r;
-    scmfix i;
+    int i = 0;
     for(i = 0; !is_null(l); i++, l = cdr(l))
         ;
-    r = make_fixnum(i);
-    return r;
+    return scm_fix(i);
 }
 
 // initialization

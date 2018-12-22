@@ -3,13 +3,13 @@
 // constructor
 scmval make_subr(const char* name, subr_f fn, arity_t arity) {
     scm_subr_t* subr = scm_new(scm_subr_t);
-    subr->name  = make_string(name);
+    subr->name  = scm_str(name);
     subr->f     = fn;
     subr->arity = arity;
     return make_ptr(SCM_TYPE_SUBR, subr);
 }
 
-scmval make_closure(scmval name, scmfix argc, scmval* argv, scmval env, scmval body) {
+scmval make_closure(scmval name, int argc, scmval* argv, scmval env, scmval body) {
     scm_closure_t* closure = scm_new(scm_closure_t);
     closure->name = name;
     closure->argc = argc;
@@ -22,7 +22,7 @@ scmval make_closure(scmval name, scmfix argc, scmval* argv, scmval env, scmval b
 // arity
 static void arity_error(scmval v, int argc) {
     arity_t arity = subr_arity(v);
-    char* n = string_to_cstr(subr_name(v));
+    char* n = c_cstr(subr_name(v));
     char* m;
     switch(arity.type) {
         case ARITY_EXACTLY:
@@ -41,7 +41,7 @@ static void arity_error(scmval v, int argc) {
     error(arity_error_type, "%s expects %s but received %d", n, m, argc);
 }
 
-void check_arity(scmval v, scmfix argc) {
+void check_arity(scmval v, int argc) {
     bool match = false;
     arity_t arity = subr_arity(v);
     switch(arity.type) {
@@ -54,8 +54,8 @@ void check_arity(scmval v, scmfix argc) {
         arity_error(v, argc);
 }
 
-scmfix argc_from_arity(scmval subr, scmfix len) {
-    scmfix argc;
+int argc_from_arity(scmval subr, int len) {
+    int argc;
     arity_t arity = subr_arity(subr);
     switch(arity.type) {
         case ARITY_EXACTLY: // already checked
@@ -70,7 +70,7 @@ scmfix argc_from_arity(scmval subr, scmfix len) {
     return argc;
 }
 
-scmval apply_funcall(scmval s, scmfix argc, scmval* argv) {
+scmval apply_funcall(scmval s, int argc, scmval* argv) {
     scmval r = scm_undef;
     if(subr_arity(s).type == ARITY_AT_LEAST) {
         r = funcall(s, argc, argv);

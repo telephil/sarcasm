@@ -8,8 +8,8 @@
 
 #include "khash.h"
 
-#define kh_scm_str_hash(a) (kh_str_hash_func(string_to_cstr(a)))
-#define kh_scm_str_cmp(a, b) (kh_str_hash_equal(string_to_cstr(a), string_to_cstr(b)))
+#define kh_scm_str_hash(a) (kh_str_hash_func(c_cstr(a)))
+#define kh_scm_str_cmp(a, b) (kh_str_hash_equal(c_cstr(a), c_cstr(b)))
 
 KHASH_INIT(dict, scmval, scmval, 1, kh_scm_str_hash, kh_scm_str_cmp) //;
 
@@ -24,7 +24,7 @@ void dict_set(scm_dict_t* d, scmval k, scmval v) {
     it = kh_put(dict, d, k, &ret);
     // TODO ret
     kh_value(d, it) = v;
-//    printf("*** added symbol '%s' to globals\n", string_to_cstr(k));
+//    printf("*** added symbol '%s' to globals\n", c_cstr(k));
 }
 
 scmval dict_ref(scm_dict_t* d, scmval k) {
@@ -37,7 +37,7 @@ scmval dict_ref(scm_dict_t* d, scmval k) {
     return r;
 }
 
-void dict_keys(scm_dict_t* d, scm_fixnum_t* size, scmval** keys) {
+void dict_keys(scm_dict_t* d, int* size, scmval** keys) {
     int i = 0;
     int s = kh_size(d);
     scmval* res = scm_new_array(s, scmval);

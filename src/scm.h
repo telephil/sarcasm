@@ -13,13 +13,9 @@
 
 // type aliases
 typedef struct scmval scmval;
-typedef bool scm_bool_t;
-typedef uint8_t scmbyte;
-typedef int64_t scm_fixnum_t;
-typedef scm_fixnum_t scmfix; // used a lot
-typedef double scm_flonum_t;
-typedef char scm_char_t;
-
+typedef uint8_t byte;
+typedef int64_t fixnum;
+typedef double flonum;
 
 enum {
     SCM_TYPE_UNDEF,
@@ -45,10 +41,10 @@ enum {
 struct scmval {
     int type;
     union {
-        scm_bool_t b;
-        scm_fixnum_t i;
-        scm_flonum_t d;
-        scm_char_t c;
+        bool b;
+        fixnum i;
+        flonum d;
+        char c;
         void* o;
     };
 };

@@ -26,7 +26,7 @@ static inline void error(scmval type, const char* format, ...) {
     va_start(ap, format);
     vasprintf(&buf, format, ap);
     va_end(ap);
-    scmval e = make_error(type, make_string(buf));
+    scmval e = make_error(type, scm_str(buf));
     raise(e);
 }
 

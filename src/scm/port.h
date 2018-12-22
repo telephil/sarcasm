@@ -10,12 +10,12 @@ enum {
 };
 
 struct scm_port {
-    scmfix  flags;
+    short   flags;
     void*   data;
     char*   name;
     bool    open;
-    scmfix  line;
-    scmfix  pos;
+    fixnum  line;
+    fixnum  pos;
     scm_port_vtable_t* vtable;
 };
 
@@ -48,11 +48,11 @@ struct scm_port_vtable {
 extern scmval scm_eof;
 
 // constructor
-scmval make_port(scmfix, void*, char*, scm_port_vtable_t*);
+scmval make_port(short, void*, char*, scm_port_vtable_t*);
 
 // accessors
 static inline scm_port_t* get_port(scmval v) { return (scm_port_t*)v.o; }
-static inline scmfix      port_flags(scmval v) { return get_port(v)->flags; }
+static inline short       port_flags(scmval v) { return get_port(v)->flags; }
 static inline void*       port_data(scmval v) { return get_port(v)->data; }
 static inline char*       port_name(scmval v) { return get_port(v)->name; }
 static inline bool        is_port_open(scmval v) { return get_port(v)->open; }
@@ -94,11 +94,13 @@ scmval scm_close_input_port(scmval);
 scmval scm_current_output_port();
 scmval scm_current_error_port();
 scmval scm_to_string(scmval);
+static inline CORD scm_to_cstr(scmval v) { return c_str(scm_to_string(v)); }
+
 // C IO
-scm_char_t  scm_getc(scmval);
-scm_char_t  scm_peek(scmval);
-void        scm_ungetc(scmval, scm_char_t);
-void        scm_putc(scmval, scm_char_t);
+char  scm_getc(scmval);
+char  scm_peek(scmval);
+void        scm_ungetc(scmval, char);
+void        scm_putc(scmval, char);
 void        scm_puts(scmval, CORD);
 void        scm_printf(scmval, CORD, ...);
 

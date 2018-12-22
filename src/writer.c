@@ -1,11 +1,11 @@
 #include "scm.h"
 
-static void write_char(scmval, scmval, scmfix);
-static void write_pair(scmval, scmval, scmfix);
-static void write_vector(scmval, scmval, scmfix);
-static void write_bytevector(scmval, scmval, scmfix);
+static void write_char(scmval, scmval, short);
+static void write_pair(scmval, scmval, short);
+static void write_vector(scmval, scmval, short);
+static void write_bytevector(scmval, scmval, short);
 
-void write(scmval p, scmval v, scmfix flags) {
+void write(scmval p, scmval v, short flags) {
     switch(type_of(v)) {
         case SCM_TYPE_UNDEF:
             scm_puts(p, "#<undefined>");
@@ -23,29 +23,29 @@ void write(scmval p, scmval v, scmfix flags) {
             scm_puts(p, is_true(v) ? "#t" : "#f");
             break;
         case SCM_TYPE_FIXNUM:
-            scm_printf(p, "%lld", fixnum_value(v));
+            scm_printf(p, "%lld", c_fix(v));
             break;
         case SCM_TYPE_FLONUM:
-            scm_printf(p, "%lf", flonum_value(v));
+            scm_printf(p, "%lf", c_flo(v));
             break;
         case SCM_TYPE_CHAR:
             if(flags & scm_mode_write) {
                 write_char(p, v, flags);
             } else {
-                scm_putc(p, char_value(v));
+                scm_putc(p, c_char(v));
             }
             break;
         case SCM_TYPE_STRING:
             if(flags & scm_mode_write) {
                 scm_putc(p, '"');
-                scm_puts(p, string_value(v));
+                scm_puts(p, c_str(v));
                 scm_putc(p, '"');
             } else {
-                scm_puts(p, string_value(v));
+                scm_puts(p, c_str(v));
             }
             break;
         case SCM_TYPE_SYMBOL:
-            scm_puts(p, string_value(v));
+            scm_puts(p, c_str(v));
             break;
         case SCM_TYPE_PAIR:
             write_pair(p, v, flags);
@@ -60,13 +60,13 @@ void write(scmval p, scmval v, scmfix flags) {
             scm_puts(p, "#<environment>");
             break;
         case SCM_TYPE_SUBR:
-            scm_printf(p, "#<primitive:%s>", string_value(subr_name(v)));
+            scm_printf(p, "#<primitive:%s>", c_str(subr_name(v)));
             break;
         case SCM_TYPE_CLOSURE:
             if(is_undef(closure_name(v)))
                 scm_printf(p, "#<closure:%p>", get_closure(v));
             else
-                scm_printf(p, "#<closure:%s>", string_value(closure_name(v)));
+                scm_printf(p, "#<closure:%s>", c_str(closure_name(v)));
             break;
         case SCM_TYPE_ERROR:
             scm_putc(p, '[');
@@ -80,8 +80,8 @@ void write(scmval p, scmval v, scmfix flags) {
     }
 }
 
-static void write_char(scmval p, scmval v, scmfix flags) {
-    scm_char_t c = char_value(v);
+static void write_char(scmval p, scmval v, short flags) {
+    char c = c_char(v);
     scm_puts(p, "#\\");
     switch(c) {
         case '\a':  scm_puts(p, "alarm");       break;
@@ -96,7 +96,7 @@ static void write_char(scmval p, scmval v, scmfix flags) {
     }
 }
 
-static void write_pair(scmval p, scmval v, scmfix flags) {
+static void write_pair(scmval p, scmval v, short flags) {
     if(flags & scm_mode_pp_quote) {
         if(!is_null(v) && is_eq(car(v), scm_quote)) {
             scm_putc(p, '\'');
@@ -119,7 +119,7 @@ static void write_pair(scmval p, scmval v, scmfix flags) {
     scm_putc(p, ')');
 }
 
-static void write_vector(scmval p, scmval v, scmfix flags) {
+static void write_vector(scmval p, scmval v, short flags) {
     scm_puts(p, "#(");
     for(int i = 0; i < vector_size(v); i++) {
         if(i > 0) {
@@ -130,7 +130,7 @@ static void write_vector(scmval p, scmval v, scmfix flags) {
     scm_putc(p, ')');
 }
 
-static void write_bytevector(scmval p, scmval v, scmfix flags) {
+static void write_bytevector(scmval p, scmval v, short flags) {
     scm_puts(p, "#u8(");
     for(int i = 0; i < bytevector_size(v); i++) {
         if(i > 0) scm_putc(p, ' ');

@@ -19,14 +19,14 @@ static scmval read_list(scmval);
 static scmval read_vector(scmval);
 static scmval read_bytevector(scmval);
 static scmval read_any(scmval);
-static scm_char_t skipws(scmval p);
-static bool is_delimiter(scm_char_t);
-static bool is_initial(scm_char_t);
-static bool is_special_initial(scm_char_t);
-static bool is_peculiar_identifier(scm_char_t);
-static bool is_subsequent(scm_char_t);
-static bool is_special_subsequent(scm_char_t);
-static bool is_valid_digit(scm_char_t, int);
+static char skipws(scmval p);
+static bool is_delimiter(char);
+static bool is_initial(char);
+static bool is_special_initial(char);
+static bool is_peculiar_identifier(char);
+static bool is_subsequent(char);
+static bool is_special_subsequent(char);
+static bool is_valid_digit(char, int);
 
 
 void init_reader() {
@@ -54,7 +54,7 @@ scmval read(scmval p) {
 
 static scmval read_aux(scmval p, bool in_list) {
     scmval v = scm_undef;
-    scm_char_t c;
+    char c;
 
     c = skipws(p);
     if(c == EOF)
@@ -122,12 +122,12 @@ number_fallback:
     return v;
 }
 
-static scmval read_number(scm_char_t* buf) {
+static scmval read_number(char* buf) {
     int base = 10;
     bool dot = false;
     bool neg = false;
     bool is_int = true;
-    scm_char_t *p = buf, *q;
+    char *p = buf, *q;
 
     // base
     if(*p == '#') {
@@ -158,13 +158,13 @@ static scmval read_number(scm_char_t* buf) {
     }
 
     if(is_int) {
-        scm_fixnum_t l = strtol(p, NULL, base);
+        fixnum l = strtol(p, NULL, base);
         if(neg) l = -l;
-        return make_fixnum(l);
+        return scm_fix(l);
     } else {
-        scm_flonum_t f = strtod(p, NULL);
+        flonum f = strtod(p, NULL);
         if(neg) f = -f;
-        return make_flonum(f);
+        return scm_flo(f);
     }
 
     return scm_undef;
@@ -172,7 +172,7 @@ static scmval read_number(scm_char_t* buf) {
 
 static scmval read_any(scmval p) {
     scmval v = scm_undef;
-    scm_char_t buf[MAX_TOK_SIZE], c;
+    char buf[MAX_TOK_SIZE], c;
     int size = 0;
     while(true) {
         c = scm_getc(p);
@@ -210,7 +210,7 @@ static scmval read_any(scmval p) {
 
 static scmval read_char(scmval p) {
     scmval v;
-    scm_char_t buf[MAX_TOK_SIZE], c;
+    char buf[MAX_TOK_SIZE], c;
     int i = 0;
     while(true) {
         c = scm_getc(p);
@@ -254,9 +254,9 @@ static scmval read_char(scmval p) {
 
 static scmval read_string(scmval p) {
     scmval v;
-    scm_char_t c, *buf;
+    char c, *buf;
     int len = MAX_TOK_SIZE, i = 0;
-    buf = GC_MALLOC(len*sizeof(scm_char_t));
+    buf = GC_MALLOC(len*sizeof(char));
     while(true) {
         c = scm_getc(p);
         if(c == EOF) {
@@ -284,7 +284,7 @@ static scmval read_string(scmval p) {
         buf[i++] = c;
     }
     buf[i] = '\0';
-    v = make_string(buf);
+    v = scm_str(buf);
     return v;
 }
 
@@ -357,7 +357,7 @@ static scmval read_bytevector(scmval p) {
         if(is_eof(v))
             read_error(p, "unexpected end of file while reading bytevector");
         if(!is_byte(v))
-            read_error(p, "invalid byte %s found while reading bytevector", string_value(scm_to_string(v)));
+            read_error(p, "invalid byte %s found while reading bytevector", scm_to_cstr(v));
         scmval c = cons(v, scm_null);
         if(is_null(h)) {
             h = t = c;
@@ -372,8 +372,8 @@ static scmval read_bytevector(scmval p) {
     return v;
 }
 
-static scm_char_t skipws(scmval p) {
-    scm_char_t c;
+static char skipws(scmval p) {
+    char c;
     while(true) {
         c = scm_getc(p);
         if(c == EOF)
@@ -383,7 +383,7 @@ static scm_char_t skipws(scmval p) {
     }
 }
 
-static bool is_delimiter(scm_char_t c) {
+static bool is_delimiter(char c) {
     return isspace(c)
         || c == '('
         || c == ')'
@@ -392,12 +392,12 @@ static bool is_delimiter(scm_char_t c) {
         || c == 0;
 }
 
-static bool is_initial(scm_char_t c) {
+static bool is_initial(char c) {
     return isalpha(c)
         || is_special_initial(c);
 }
 
-static bool is_special_initial(scm_char_t c)
+static bool is_special_initial(char c)
 {
   return (c == '!' || c == '$' || c == '%' || c == '&' ||
           c == '*' || c == '/' || c == ':' || c == '<' ||
@@ -405,22 +405,22 @@ static bool is_special_initial(scm_char_t c)
           c == '_');
 }
 
-static bool is_peculiar_identifier(scm_char_t c)
+static bool is_peculiar_identifier(char c)
 {
     return c == '+' || c == '-';
 }
 
-static bool is_subsequent(scm_char_t c) 
+static bool is_subsequent(char c) 
 {
   return (is_initial(c) || isdigit(c) || is_special_subsequent(c));
 }
 
-static bool is_special_subsequent(scm_char_t c)
+static bool is_special_subsequent(char c)
 {
   return (c == '+' || c == '-' || c == '.' || c == '@');
 }
 
-static bool is_valid_digit(scm_char_t c, int base) {
+static bool is_valid_digit(char c, int base) {
     bool valid = false;
     switch(base) {
         case 2:
@@ -442,7 +442,7 @@ static bool is_valid_digit(scm_char_t c, int base) {
 }
 
 void load(const char* path) {
-    scmval p = scm_open_input_file(make_string(path));
+    scmval p = scm_open_input_file(scm_str(path));
     while(true) {
         scmval v = read(p);
         if(is_eof(v))

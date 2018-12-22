@@ -4,7 +4,7 @@
 scmval scm_eof;
 
 // constructors
-scmval make_port(scmfix flags, void* data, char* name, scm_port_vtable_t* vtable) {
+scmval make_port(short flags, void* data, char* name, scm_port_vtable_t* vtable) {
     scm_port_t* port = scm_new(scm_port_t);
     port->flags  = flags;
     port->data   = data;
@@ -19,10 +19,10 @@ scmval make_port(scmfix flags, void* data, char* name, scm_port_vtable_t* vtable
 // ports creation
 static scmval make_file_input_port(FILE*, char*);
 static scmval make_file_input_port_from_filename(scmval);
-static scmval make_string_input_port(scmval);
+static scmval scm_str_input_port(scmval);
 static scmval make_file_output_port(FILE*, char*);
 static scmval make_file_output_port_from_filename(scmval);
-static scmval make_string_output_port();
+static scmval scm_str_output_port();
 
 // port procedures
 static scmval scm_port_p(scmval v) {
@@ -60,7 +60,7 @@ scmval scm_current_error_port() {
 
 static scmval scm_open_input_string(scmval v) {
     check_arg("open-input-string", string_c, v);
-    return  make_string_input_port(v);
+    return  scm_str_input_port(v);
 }
 
 scmval scm_open_input_file(scmval v) {
@@ -80,7 +80,7 @@ static scmval scm_open_output_file(scmval v) {
 }
 
 static scmval scm_open_output_string() {
-    return make_string_output_port();
+    return scm_str_output_port();
 }
 
 static scmval scm_get_output_string(scmval p) {
@@ -112,9 +112,9 @@ static scmval scm_peek_char(scmval p) {
 static scmval scm_read_line(scmval p) {
     check_arg("read-line", input_port_c, p);
     int i = 0, len = 1024;
-    scm_char_t* buf, c;
+    char* buf, c;
     scmval v;
-    buf = scm_new_array(len, scm_char_t);
+    buf = scm_new_array(len, char);
     while(true) {
         c = scm_getc(p);
         if(c == EOF)
@@ -126,7 +126,7 @@ static scmval scm_read_line(scmval p) {
     if(i == 0 && c == EOF)
         return scm_eof;
     buf[i] = '\0';
-    v = make_string(buf);
+    v = scm_str(buf);
     return v;
 }
 
@@ -201,7 +201,7 @@ void init_port(scm_ctx_t* ctx) {
 // U T I L I T I E S
 ////////////////////////////////////////////////////////////////////////////////
 scmval open_input_string(const char* s) {
-    return make_string_input_port(make_string(s));
+    return scm_str_input_port(scm_str(s));
 }
 
 scmval scm_to_string(scmval v) {
@@ -211,32 +211,32 @@ scmval scm_to_string(scmval v) {
     return scm_get_output_string(p);
 }
 
-scm_char_t scm_getc(scmval p) {
+char scm_getc(scmval p) {
     scmval c = port_getc(p);
     if(is_eof(c))
         return EOF;
-    if(char_value(c) == '\n') port_line(p)++;
+    if(c_char(c) == '\n') port_line(p)++;
     port_pos(p)++;
-    return char_value(c);
+    return c_char(c);
 }
 
-void scm_ungetc(scmval p, scm_char_t c) {
+void scm_ungetc(scmval p, char c) {
     port_ungetc(p, make_char(c));
     if(c == '\n') port_line(p)--;
     port_pos(p)--;
 }
 
-scm_char_t scm_peek(scmval p) {
-    scm_char_t c = scm_getc(p);
+char scm_peek(scmval p) {
+    char c = scm_getc(p);
     port_ungetc(p, make_char(c));
     return c;
 }
-void scm_putc(scmval p, scm_char_t c) { 
+void scm_putc(scmval p, char c) { 
     port_putc(p, make_char(c)); 
 }
 
 void scm_puts(scmval p, CORD c) {
-    port_puts(p, make_string_from_cord(c)); 
+    port_puts(p, scm_str_from_cord(c)); 
 }
 
 void scm_printf(scmval p, CORD format, ...) {
@@ -273,7 +273,7 @@ static scmval file_ungetc(scmval p, scmval c) {
     FILE* fp = port_data(p);
     if(feof(fp))
         return scm_eof;
-    char ch = ungetc(char_value(c), fp);
+    char ch = ungetc(c_char(c), fp);
     return make_char(ch);
 }
 
@@ -285,12 +285,12 @@ static scmval file_char_ready(scmval p) {
 
 static void file_putc(scmval op, scmval v) {
     FILE* fp = port_data(op);
-    fputc(char_value(v), fp);
+    fputc(c_char(v), fp);
 }
 
 static void file_puts(scmval op, scmval v) {
     FILE* fp = port_data(op);
-    CORD_fprintf(fp, "%r", string_value(v));
+    CORD_fprintf(fp, "%r", c_str(v));
 }
 
 static void file_flush(scmval op) {
@@ -305,9 +305,9 @@ static scmval make_file_input_port(FILE* fp, char* name) {
 }
 
 static scmval make_file_input_port_from_filename(scmval f) {
-    FILE* fp = fopen(string_value(f), "r");
+    FILE* fp = fopen(c_str(f), "r");
     // XXX
-    return make_file_input_port(fp, string_to_cstr(f));
+    return make_file_input_port(fp, c_cstr(f));
 }
 
 static scmval make_file_output_port(FILE* fp, char* name) {
@@ -316,8 +316,8 @@ static scmval make_file_output_port(FILE* fp, char* name) {
 }
 
 static scmval make_file_output_port_from_filename(scmval f) {
-    FILE* fp = fopen(string_value(f), "w");
-    return make_file_output_port(fp, string_to_cstr(f));
+    FILE* fp = fopen(c_str(f), "w");
+    return make_file_output_port(fp, c_cstr(f));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -351,28 +351,28 @@ static scmval string_char_ready(scmval p) {
 
 static void string_putc(scmval p, scmval v) {
     scm_string_t* s = port_data(p);
-    CORD c = CORD_chars(char_value(v), 1);
+    CORD c = CORD_chars(c_char(v), 1);
     s->value = CORD_cat(s->value, c);
 }
 
 static void string_puts(scmval p, scmval v) {
     scm_string_t* s = port_data(p);
-    s->value = CORD_cat(s->value, string_value(v));
+    s->value = CORD_cat(s->value, c_str(v));
 }
 
 static void string_flush(scmval p) {
 }
 
-static scmval make_string_input_port(scmval s) {
+static scmval scm_str_input_port(scmval s) {
     static scm_port_vtable_t vtable = { string_close, string_getc, string_ungetc, string_char_ready, NULL, NULL, NULL };
     scm_input_string_t* in = scm_new(scm_input_string_t);
-    in->buf = CORD_to_const_char_star(string_value(s));
+    in->buf = CORD_to_const_char_star(c_str(s));
     in->idx = 0;
     in->len = strlen(in->buf);
     return make_port(scm_port_input | scm_port_string, in, "string", &vtable);
 }
 
-static scmval make_string_output_port() {
+static scmval scm_str_output_port() {
     static scm_port_vtable_t vtable = { string_close, NULL, NULL, NULL, string_putc, string_puts, string_flush };
     scm_string_t* s = scm_new(scm_string_t);
     s->value = NULL;

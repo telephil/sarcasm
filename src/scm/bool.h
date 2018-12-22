@@ -3,7 +3,7 @@ extern scmval scm_true;
 extern scmval scm_false;
 
 // constructors
-scmval make_bool(scm_bool_t);
+scmval make_bool(bool);
 static inline scmval scm_bool(bool b) { return b ? scm_true : scm_false; }
 
 // predicates
@@ -13,9 +13,6 @@ static inline bool is_false(scmval v) { return is_bool(v) && !v.b; }
 
 // contracts
 define_contract(bool_c, "boolean", is_bool);
-
-// accessors
-static inline scm_bool_t bool_value(scmval v) { return v.b; }
 
 // standard library
 void init_bool();

@@ -4,4 +4,4 @@ enum {
     scm_mode_pp_quote   = 1<<2
 };
 // write : port? any?
-void write(scmval, scmval, scmfix);
+void write(scmval, scmval, short);
