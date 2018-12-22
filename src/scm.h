@@ -55,6 +55,7 @@ struct scmval {
 
 #define scm_new(T) GC_MALLOC(sizeof(T))
 #define scm_new_array(S, T) GC_MALLOC(S*sizeof(T))
+#define scm_new_atomic(S, T) GC_MALLOC_ATOMIC(S*sizeof(T))
 #define scm_delete(P) GC_FREE(P)
 
 static inline int type_of(scmval v) { return v.type; }
