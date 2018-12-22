@@ -5,12 +5,14 @@ static scmval scm_define;
 static scmval scm_lambda;
 static scmval scm_if;
 static scmval scm_set;
+static scmval scm_begin;
 
 static void   list_to_args(scmval, scmfix*, scmval**);
 static scmval define_closure(scmfix, scmval*, scmval);
 static scmval define_symbol(scmfix, scmval*, scmval);
 static scmval eval_subr(scmval, scmfix, scmval*, scmval);
 static scmval eval_closure(scmval, scmfix, scmval*, scmval);
+static scmval eval_lambda(scmfix, scmval*, scmval);
 
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
@@ -21,9 +23,13 @@ void init_eval() {
     scm_if      = intern("if");
     scm_set     = intern("set!");
     scm_lambda  = intern("lambda");
+    scm_begin   = intern("begin");
 }
 
 #define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }
+#define COND if(false)
+#define CASE(SYMBOL) else if(is_eq(s, SYMBOL))
+#define DEFAULT else
 
 ////////////////////////////////////////////////////////////////////////////////
 // E V A L U A T I O N
@@ -40,22 +46,40 @@ loop:
         scmval* argv;
         list_to_args(cdr(v), &argc, &argv);
         scmval s = car(v);
-        if(is_eq(s, scm_define)) {
+        COND { }
+        CASE(scm_define) {
             if(is_pair(argv[0])) { // (define (name <args>)...
                 r = define_closure(argc, argv, e);
             } else { // (define name...
                 r = define_symbol(argc, argv, e);
             }
-        } else if(is_eq(s, scm_if)) {
+        }
+        CASE(scm_lambda) {
+            r = eval_lambda(argc, argv, e);
+        }
+        CASE(scm_if) {
             scmval test = eval(argv[0], e);
             v = is_true(test) ? argv[1] : argv[2];
             goto loop;
-        } else if(is_eq(s, scm_quote)) {
+        } 
+        CASE(scm_begin) {
+            if(argc == 0) {
+                r = scm_void;
+            } else {
+                for(int i = 0; i < argc - 1; i++)
+                    eval(argv[i], e);
+                v = argv[argc - 1];
+                goto loop;
+            }
+        }
+        CASE(scm_quote) {
             r = argv[0];
-        } else if(is_eq(s, scm_apply)) {
+        }
+        CASE(scm_apply) {
             v = cons(argv[0], eval(argv[1], e));
             goto loop;
-        } else {
+        }
+        DEFAULT {
             scmval f = is_callable(s) ? s : eval(s, e);
             if(is_subr(f)) {
                 r = eval_subr(f, argc, argv, e);
@@ -63,6 +87,8 @@ loop:
                 r = eval_closure(f, argc, argv, e);
             }
         }
+    } else { // immediate
+        r = v;
     }
     return r;
 }
@@ -100,6 +126,21 @@ static scmval eval_closure(scmval f, scmfix argc, scmval* argv, scmval e) {
     return eval(closure_body(f), env);
 }
 
+static scmval eval_lambda(scmfix argc, scmval* argv, scmval e) {
+    if(argc < 2) error(arity_error_type, "lambda expects at least 2 arguments but received %d", argc);
+    if(!is_pair(argv[0])) error(type_error_type, "unimplemented varargs lambda");
+    scmfix ac;
+    scmval* av;
+    list_to_args(argv[0], &ac, &av);
+    check_args("lambda", symbol_c, ac, av);
+    scmval body = scm_null;
+    for(int i = argc - 1; i >= 1; i--) {
+        body = cons(argv[i], body);
+    }
+    body = cons(scm_begin, body);
+    return make_closure(scm_undef, ac, av, make_env(e), body);
+}
+
 static scmval define_closure(scmfix argc, scmval* argv, scmval e) {
     if(argc != 2) error(arity_error_type, "define expects 2 arguments but received %d", argc);
     scmval  name = car(argv[0]);
@@ -125,6 +166,8 @@ static scmval define_symbol(scmfix argc, scmval* argv, scmval e) {
     scmval name = argv[0];
     scmval body = eval(argv[1], e);
     dict_set(scm_context.globals, name, body);
+    if(is_closure(body))
+        set_closure_name(body, name);
     return scm_undef;
 }
 
