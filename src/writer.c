@@ -10,6 +10,9 @@ void write(scmval p, scmval v, scmfix flags) {
         case SCM_TYPE_UNDEF:
             scm_puts(p, "#<undefined>");
             break;
+        case SCM_TYPE_VOID:
+            scm_puts(p, "#<void>");
+            break;
         case SCM_TYPE_NULL:
             scm_puts(p, "()");
             break;

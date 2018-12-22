@@ -23,6 +23,7 @@ typedef char scm_char_t;
 
 enum {
     SCM_TYPE_UNDEF,
+    SCM_TYPE_VOID,
     SCM_TYPE_NULL,
     SCM_TYPE_EOF,
     SCM_TYPE_BOOL,

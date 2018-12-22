@@ -1,5 +1,6 @@
 // globals 
 extern scmval scm_undef;
+extern scmval scm_void;
 
 // constructors
 scmval make_symbol(const char*);

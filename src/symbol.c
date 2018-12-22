@@ -2,6 +2,7 @@
 
 // globals
 scmval scm_undef;
+scmval scm_void;
 
 // constructor
 scmval make_symbol(const char* s) {
@@ -57,5 +58,6 @@ void init_symbol() {
     define("string->symbol", scm_string_to_symbol, arity_exactly(1));
     
     scm_undef = make_val(SCM_TYPE_UNDEF);
+    scm_void  = make_val(SCM_TYPE_VOID);
 }
 
