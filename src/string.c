@@ -19,7 +19,7 @@ static scmval scm_string_p(scmval v) {
     return scm_bool(is_string(v));
 }
 
-static scmval scm_scm_str(scmval k, scmval c) {
+static scmval scm_make_string(scmval k, scmval c) {
     opt_arg(c, make_char(' '));
     check_arg("make-string", fixnum_c, k);
     check_arg("make-string", char_c, c);
@@ -79,29 +79,29 @@ static int CORD_cmpi(CORD x, CORD y) {
     return 0; // never reached
 }
 
-#define scm_str_comparator(NAME, CNAME, PRED, CMP)  \
-    static scmval CNAME(int argc, scmval* argv) {    \
+#define make_string_comparator(NAME, CNAME, PRED, CMP)  \
+    static scmval CNAME(int argc, scmval* argv) {       \
         check_args(NAME, string_c, argc, argv);         \
         CORD r, r1;                                     \
-        r = c_str(argv[0]);                      \
+        r = c_str(argv[0]);                             \
         for(int i = 1; i < argc; i++) {                 \
-            r1 = c_str(argv[i]);                 \
+            r1 = c_str(argv[i]);                        \
             if(!(CMP(r,r1) PRED 0)) return scm_false;   \
             r = r1;                                     \
         }                                               \
         return scm_true;                                \
     }
 
-scm_str_comparator("string=?",      scm_string_eq_p,    ==, CORD_cmp)
-scm_str_comparator("string<?",      scm_string_lt_p,    <,  CORD_cmp)
-scm_str_comparator("string>?",      scm_string_gt_p,    >,  CORD_cmp)
-scm_str_comparator("string<=?",     scm_string_le_p,    <=, CORD_cmp)
-scm_str_comparator("string>=?",     scm_string_ge_p,    >=, CORD_cmp)
-scm_str_comparator("string-ci=?",   scm_string_ci_eq_p, ==, CORD_cmpi)
-scm_str_comparator("string-ci<?",   scm_string_ci_lt_p, <,  CORD_cmpi)
-scm_str_comparator("string-ci>?",   scm_string_ci_gt_p, >,  CORD_cmpi)
-scm_str_comparator("string-ci<=?",  scm_string_ci_le_p, <=, CORD_cmpi)
-scm_str_comparator("string-ci>=?",  scm_string_ci_ge_p, >=, CORD_cmpi)
+make_string_comparator("string=?",      scm_string_eq_p,    ==, CORD_cmp)
+make_string_comparator("string<?",      scm_string_lt_p,    <,  CORD_cmp)
+make_string_comparator("string>?",      scm_string_gt_p,    >,  CORD_cmp)
+make_string_comparator("string<=?",     scm_string_le_p,    <=, CORD_cmp)
+make_string_comparator("string>=?",     scm_string_ge_p,    >=, CORD_cmp)
+make_string_comparator("string-ci=?",   scm_string_ci_eq_p, ==, CORD_cmpi)
+make_string_comparator("string-ci<?",   scm_string_ci_lt_p, <,  CORD_cmpi)
+make_string_comparator("string-ci>?",   scm_string_ci_gt_p, >,  CORD_cmpi)
+make_string_comparator("string-ci<=?",  scm_string_ci_le_p, <=, CORD_cmpi)
+make_string_comparator("string-ci>=?",  scm_string_ci_ge_p, >=, CORD_cmpi)
 
 #undef scm_str_comparator
 
@@ -220,7 +220,7 @@ static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, 
 
 void init_string() {
     define("string?",           scm_string_p,           arity_exactly(1));
-    define("make-string",       scm_scm_str,        arity_or(1, 2));
+    define("make-string",       scm_make_string,        arity_or(1, 2));
     define("string",            scm_string,             arity_at_least(1));
     define("string-length",     scm_string_length,      arity_exactly(1));
     define("string-ref",        scm_string_ref,         arity_exactly(2));
