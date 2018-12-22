@@ -67,14 +67,14 @@ static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
 
 static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
     opt_arg(start, make_fixnum(0));
-    opt_arg(end, make_fixnum(bytevector_size(b)));
+    opt_arg(end, make_fixnum(bytevector_size(b) - 1));
     check_arg("bytevector-copy", bytevector_c, b);
     check_arg("bytevector-copy", fixnum_c, start);
     check_arg("bytevector-copy", fixnum_c, end);
     check_range("bytevector-copy", fixnum_value(start), 0, bytevector_size(b));
     check_range("bytevector-copy", fixnum_value(end), fixnum_value(start), bytevector_size(b));
     scm_bytevector_t* copy = scm_new(scm_bytevector_t);
-    copy->size = fixnum_value(end) - fixnum_value(start);
+    copy->size = fixnum_value(end) - fixnum_value(start) + 1;
     copy->elts = scm_new_array(copy->size, scmbyte);
     memcpy(copy->elts, get_bytevector(b)->elts+fixnum_value(start), copy->size);
     return make_ptr(SCM_TYPE_BYTEVECTOR, copy);
@@ -82,7 +82,7 @@ static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
 
 static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval start, scmval end) {
     opt_arg(start, make_fixnum(0));
-    opt_arg(end, make_fixnum(bytevector_size(from)));
+    opt_arg(end, make_fixnum(bytevector_size(from) - 1));
     check_arg("bytevector-copy!", bytevector_c, to);
     check_arg("bytevector-copy!", fixnum_c, at);
     check_arg("bytevector-copy!", bytevector_c, from);
@@ -96,7 +96,7 @@ static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval sta
                 (fixnum_value(end)-fixnum_value(start)), string_value(scm_to_string(to)), fixnum_value(at));
     memcpy(get_bytevector(to)->elts + fixnum_value(at),
            get_bytevector(from)->elts + fixnum_value(start),
-           fixnum_value(end) - fixnum_value(start));
+           fixnum_value(end) - fixnum_value(start) + 1);
     return scm_undef;
 }
 
