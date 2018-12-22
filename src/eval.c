@@ -113,26 +113,41 @@ static scmval eval_subr(scmval s, int argc, scmval* argv, scmval e) {
 
 static scmval eval_closure(scmval f, int argc, scmval* argv, scmval e) {
     int ac = closure_argc(f);
-    if(ac != argc) 
-        error(arity_error_type, "%s expect %d arguments but received %d", 
-                                is_undef(closure_name(f)) ? "anonymous closure" : c_str(closure_name(f)),
-                                ac, argc);
     scmval *av = closure_argv(f);
     scmval env = make_env(closure_env(f));
-    for(int i = 0; i < argc; i++) {
-        scmval arg = eval(argv[i], e);
-        bind(env, av[i], arg);
+    if(ac == -1) {
+        scmval arglist = scm_null;
+        for(int i = argc - 1; i >= 0; i--) {
+            scmval arg = eval(argv[i], e);
+            arglist = cons(arg, arglist);
+        }
+        bind(env, av[0], arglist);
+    } else {
+        if(ac != argc) 
+            error(arity_error_type, "%s expect %d arguments but received %d", 
+                    is_undef(closure_name(f)) ? "anonymous closure" : c_str(closure_name(f)),
+                    ac, argc);
+        for(int i = 0; i < argc; i++) {
+            scmval arg = eval(argv[i], e);
+            bind(env, av[i], arg);
+        }
     }
     return eval(closure_body(f), env);
 }
 
 static scmval eval_lambda(int argc, scmval* argv, scmval e) {
     if(argc < 2) error(arity_error_type, "lambda expects at least 2 arguments but received %d", argc);
-    if(!is_pair(argv[0])) error(type_error_type, "unimplemented varargs lambda");
     int     ac;
     scmval* av;
-    list_to_args(argv[0], &ac, &av);
-    check_args("lambda", symbol_c, ac, av);
+    if(is_pair(argv[0])) {
+        list_to_args(argv[0], &ac, &av);
+        check_args("lambda", symbol_c, ac, av);
+    } else {
+        check_arg("lambda", symbol_c, argv[0]);
+        ac = -1;
+        av = scm_new_array(1, scmval);
+        av[0] = argv[0];
+    }
     scmval body = scm_null;
     for(int i = argc - 1; i >= 1; i--) {
         body = cons(argv[i], body);
