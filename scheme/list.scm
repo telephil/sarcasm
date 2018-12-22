@@ -18,3 +18,48 @@
 (define (caaddr lst) (car (car (cdr (cdr lst)))))
 (define (cadadr lst) (car (cdr (car (cdr lst)))))
 
+(define (foldl step initial lst)
+  (if (null? lst)
+      initial
+      (foldl step (step (car lst) initial) (cdr lst))))
+
+(define (reverse lst)
+  (foldl cons '() lst))
+
+(define (last lst)
+  (if (null? lst)
+      '()
+      (if (null? (cdr lst))
+          (car lst)
+          (last (cdr lst)))))
+
+(define (last-pair lst)
+  (if (null? lst)
+      '()
+      (if (null? (cdr lst))
+          lst
+          (last-pair (cdr lst)))))
+
+(define member
+  (lambda (obj lst)
+    (if (null? lst)
+        #f
+        (if (equal? obj (car lst))
+            lst
+            (member obj (cdr lst))))))
+
+(define memq
+  (lambda (obj lst)
+    (if (null? lst)
+        #f
+        (if (eq? obj (car lst))
+            lst
+            (memq obj (cdr lst))))))
+
+(define memv
+  (lambda (obj lst)
+    (if (null? lst)
+        #f
+        (if (eqv? obj (car lst))
+            lst
+            (memq obj (cdr lst))))))
