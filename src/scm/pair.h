@@ -30,11 +30,13 @@ static inline void setcar(scmval v, scmval c) { get_pair(v)->car = c; }
 static inline void setcdr(scmval v, scmval c) { get_pair(v)->cdr = c; }
 static inline scmval cons(scmval car, scmval cdr) { return make_pair(car, cdr); }
 
+#define caar(V) car(car(V))
 #define cadr(V) car(cdr(V))
-#define caddr(V) car(cdr(cdr(V)))
-#define cadddr(V) car(cdr(cdr(cdr(V))))
+#define cdar(V) cdr(car(V))
 #define cddr(V) cdr(cdr(V))
+#define caddr(V) car(cdr(cdr(V)))
 #define cdddr(V) cdr(cdr(cdr(V)))
+#define cadddr(V) car(cdr(cdr(cdr(V))))
 
 static inline size_t list_length(scmval v) {
     size_t l;
