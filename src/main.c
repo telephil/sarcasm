@@ -114,7 +114,7 @@ static void repl() {
         with_error_handler(default_error_handler) {
             v = read_from_string(line);
             v = eval(v, scm_context.toplevel);
-            if(!is_undef(v)) {
+            if(!(is_undef(v) || is_void(v))) {
                 write(scm_current_output_port(), v, scm_mode_write | scm_mode_pp_quote);
                 scm_printf(scm_current_output_port(), "\n");
             }
