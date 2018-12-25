@@ -2,7 +2,6 @@
 #include <readline/history.h>
 #include "scm.h"
 
-
 static void repl();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,17 +21,30 @@ static void scm_init() {
     init_vector();
     init_bytevector();
     init_port();
+    init_syntax();
     init_reader();
     init_eval();
 }
 
+static void scm_load_base() {
+    static const char* files[] = {
+        "./scheme/list.scm",
+        "./scheme/syntax.scm",
+        NULL
+    };
+    for(int i = 0; files[i] != NULL; i++) {
+        load(files[i]);
+    }
+}
+
+static void default_error_handler(scmval err);
 ////////////////////////////////////////////////////////////////////////////////
 // M A I N
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
     scm_init();
+    scm_load_base();
     printf("scm v0.1\n");
-    load("./scheme/list.scm");
     repl();
     printf("Bye.\n");
     return 0;
@@ -89,7 +101,7 @@ static void default_error_handler(scmval err) {
 static void repl() {
     char* path = get_history_filename();
     char* line = NULL;
-    scmval in, v;
+    scmval v;
     read_history(path);
     init_completion();
     while(true) {
@@ -100,12 +112,11 @@ static void repl() {
             break;
         add_history(line);
         with_error_handler(default_error_handler) {
-            in = open_input_string(line);
-            v  = read(in);
-            v  = eval(v, scm_context.toplevel);
+            v = read_from_string(line);
+            v = eval(v, scm_context.toplevel);
             if(!is_undef(v)) {
                 write(scm_current_output_port(), v, scm_mode_write | scm_mode_pp_quote);
-                printf("\n");
+                scm_printf(scm_current_output_port(), "\n");
             }
         }
         free(line);

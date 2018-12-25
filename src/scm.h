@@ -34,6 +34,7 @@ enum {
     SCM_TYPE_ENV,
     SCM_TYPE_SUBR,
     SCM_TYPE_CLOSURE,
+    SCM_TYPE_SYNTAX,
     SCM_TYPE_ERROR,
     SCM_TYPE_PORT,
 };
@@ -73,6 +74,7 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/bytevector.h"
 #include "scm/port.h"
 #include "scm/proc.h"
+#include "scm/syntax.h"
 #include "scm/env.h"
 #include "scm/writer.h"
 #include "scm/reader.h"
@@ -80,3 +82,5 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 // utilities
 void init_eval();
 scmval eval(scmval, scmval);
+
+#define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }

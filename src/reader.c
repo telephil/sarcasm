@@ -52,6 +52,14 @@ scmval read(scmval p) {
     return read_aux(p, false);
 }
 
+scmval read_from_string(const char* s) {
+    scmval p = open_input_string(s);
+    scmval v = read(p);
+    scm_close_input_port(p);
+    return v;
+}
+
+
 static scmval read_aux(scmval p, bool in_list) {
     scmval v = scm_undef;
     char c;
@@ -70,9 +78,16 @@ static scmval read_aux(scmval p, bool in_list) {
             v = scm_close_paren;
             break;
         case '.':
-            if(!in_list)
+            if(scm_peek(p) == '.') {// ellipsis ?
+                scm_getc(p);
+                c = scm_getc(p);
+                if(c != '.') read_error(p, "unexpected '%c' while reading ...");
+                v = scm_ellipsis;
+            } else if(!in_list) {
                 read_error(p, "unexpected '.' character");
-            v = scm_dot;
+            } else {
+                v = scm_dot;
+            }
             break;
         case '"':
             v = read_string(p);

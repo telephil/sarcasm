@@ -2,6 +2,8 @@
 
 static scmval scm_apply;
 static scmval scm_define;
+static scmval scm_define_syntax;
+static scmval scm_syntax_rules;
 static scmval scm_lambda;
 static scmval scm_if;
 static scmval scm_set;
@@ -10,6 +12,7 @@ static scmval scm_begin;
 static void   list_to_args(scmval, int*, scmval**);
 static scmval define_closure(int, scmval*, scmval);
 static scmval define_symbol(int, scmval*, scmval);
+static scmval define_syntax(int, scmval*, scmval);
 static scmval eval_subr(scmval, int, scmval*, scmval);
 static scmval eval_closure(scmval, int, scmval*, scmval);
 static scmval eval_lambda(int, scmval*, scmval);
@@ -18,16 +21,17 @@ static scmval eval_lambda(int, scmval*, scmval);
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
 void init_eval() {
-    scm_apply   = intern("apply");
-    scm_define  = intern("define");
-    scm_if      = intern("if");
-    scm_set     = intern("set!");
-    scm_lambda  = intern("lambda");
-    scm_begin   = intern("begin");
+    scm_apply           = intern("apply");
+    scm_define          = intern("define");
+    scm_define_syntax   = intern("define-syntax");
+    scm_syntax_rules    = intern("syntax-rules");
+    scm_if              = intern("if");
+    scm_set             = intern("set!");
+    scm_lambda          = intern("lambda");
+    scm_begin           = intern("begin");
 }
 
-#define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }
-#define COND if(false)
+#define COND if(false) {}
 #define CASE(SYMBOL) else if(is_eq(s, SYMBOL))
 #define DEFAULT else
 
@@ -46,7 +50,7 @@ loop:
         scmval* argv;
         list_to_args(cdr(v), &argc, &argv);
         scmval s = car(v);
-        COND { }
+        COND 
         CASE(scm_define) {
             if(is_pair(argv[0])) { // (define (name <args>)...
                 r = define_closure(argc, argv, e);
@@ -54,7 +58,9 @@ loop:
                 r = define_symbol(argc, argv, e);
             }
         }
-        CASE(scm_lambda) {
+        CASE(scm_define_syntax) {
+            r = define_syntax(argc, argv, e);
+        } CASE(scm_lambda) {
             r = eval_lambda(argc, argv, e);
         }
         CASE(scm_if) {
@@ -85,6 +91,9 @@ loop:
                 r = eval_subr(f, argc, argv, e);
             } else if(is_closure(f)) {
                 r = eval_closure(f, argc, argv, e);
+            } else if(is_syntax(f)) {
+                list_to_args(v, &argc, &argv); // FIXME
+                r = expand(f, argc, argv);
             }
         }
     } else { // immediate
@@ -200,6 +209,25 @@ static scmval define_symbol(int argc, scmval* argv, scmval e) {
     dict_set(scm_context.globals, name, body);
     if(is_closure(body))
         set_closure_name(body, name);
+    return scm_undef;
+}
+
+static scmval define_syntax(int argc, scmval* argv, scmval e) {
+    if(argc != 2) error(arity_error_type, "define-syntax expects 2 arguments but received %d", argc);
+    scmval name = argv[0];
+    scmval rule_list = argv[1];
+    if(!is_pair(rule_list))
+        error(syntax_error_type, "define-syntax: expected a list of syntax-rules but received %s", scm_to_cstr(argv[1]));
+    if(!is_eq(car(rule_list), scm_syntax_rules))
+        error(syntax_error_type, "define-syntax: expected syntax-rules but got %s", scm_to_cstr(car(rule_list)));
+    if(!is_pair(cadr(rule_list)))
+        error(syntax_error_type, "define-syntax: expected a list of literals but got %s", scm_to_cstr(cadr(rule_list)));
+    for(scmval rules = cddr(rule_list); !is_null(rules); rules = cdr(rules)) {
+        if(!is_pair(car(rules)) || list_length(car(rules)) != 2)
+            error(syntax_error_type, "define-syntax: syntax rule should be a list with two elements but got %s", scm_to_cstr(car(rules)));
+    }
+    scmval syntax = make_syntax(name, cadr(rule_list), cddr(rule_list));
+    dict_set(scm_context.globals, name, syntax);
     return scm_undef;
 }
 
