@@ -8,14 +8,22 @@ static scmval scm_lambda;
 static scmval scm_if;
 static scmval scm_set;
 static scmval scm_begin;
+static scmval app_error_type;
 
 static void   list_to_args(scmval, int*, scmval**);
-static scmval define_closure(int, scmval*, scmval);
-static scmval define_symbol(int, scmval*, scmval);
-static scmval define_syntax(int, scmval*, scmval);
-static scmval eval_subr(scmval, int, scmval*, scmval);
-static scmval eval_closure(scmval, int, scmval*, scmval);
-static scmval eval_lambda(int, scmval*, scmval);
+static scmval stx_define(scmval, scmval);
+static scmval stx_define_syntax(scmval, scmval);
+static scmval stx_if(scmval, scmval);
+static scmval stx_lambda(scmval, scmval);
+static scmval apply_subr(scmval, scmval, scmval);
+static scmval apply_closure(scmval, scmval, scmval);
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+static scmval scm_void_subr(int argc, scmval *argv) {
+    return scm_void;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
@@ -29,6 +37,9 @@ void init_eval() {
     scm_set             = intern("set!");
     scm_lambda          = intern("lambda");
     scm_begin           = intern("begin");
+    app_error_type      = intern("application-error");
+
+    define("void", scm_void_subr, arity_at_least(0));
 }
 
 #define COND if(false) {}
@@ -41,59 +52,46 @@ void init_eval() {
 scmval eval(scmval v, scmval e) {
     scmval r = v;
 loop:
-    if(is_symbol(v)) {
+    if(is_null(v)) {
+        error(syntax_error_type, "unquoted empty list is not a valid expression");
+    } else if(is_symbol(v)) {
         r = lookup(e, v);
         if(is_undef(r))
             error(intern("error"), "undefined symbol '%s'", c_str(v));
-    } else if(is_pair(v) && !is_null(v)) {
-        int     argc;
-        scmval* argv;
-        list_to_args(cdr(v), &argc, &argv);
+    } else if(is_pair(v)) {
         scmval s = car(v);
         COND 
         CASE(scm_define) {
-            if(is_pair(argv[0])) { // (define (name <args>)...
-                r = define_closure(argc, argv, e);
-            } else { // (define name...
-                r = define_symbol(argc, argv, e);
-            }
+            r = stx_define(cdr(v), e);
         }
         CASE(scm_define_syntax) {
-            r = define_syntax(argc, argv, e);
-        } CASE(scm_lambda) {
-            r = eval_lambda(argc, argv, e);
+            r = stx_define_syntax(cdr(v), e);
+        }
+        CASE(scm_lambda) {
+            r = stx_lambda(cdr(v), e);
         }
         CASE(scm_if) {
-            scmval test = eval(argv[0], e);
-            v = is_true(test) ? argv[1] : argv[2];
+            v = stx_if(cdr(v), e);
             goto loop;
-        } 
-        CASE(scm_begin) {
-            if(argc == 0) {
-                r = scm_void;
-            } else {
-                for(int i = 0; i < argc - 1; i++)
-                    eval(argv[i], e);
-                v = argv[argc - 1];
-                goto loop;
-            }
         }
         CASE(scm_quote) {
-            r = argv[0];
+            r = cadr(v);
         }
         CASE(scm_apply) {
-            v = cons(argv[0], eval(argv[1], e));
+            v = cons(cadr(v), eval(caddr(v), e));
             goto loop;
         }
         DEFAULT {
-            scmval f = is_callable(s) ? s : eval(s, e);
+            scmval f = is_callable(car(v)) ? car(v) : eval(car(v), e);
             if(is_subr(f)) {
-                r = eval_subr(f, argc, argv, e);
+                r = apply_subr(f, cdr(v), e);
             } else if(is_closure(f)) {
-                r = eval_closure(f, argc, argv, e);
+                v = apply_closure(f, cdr(v), e);
+                goto loop;
             } else if(is_syntax(f)) {
-                list_to_args(v, &argc, &argv); // FIXME
-                r = expand(f, argc, argv);
+                v = expand(f, v);
+                //dbg("E(v)", v);
+                goto loop;
             }
         }
     } else { // immediate
@@ -102,28 +100,34 @@ loop:
     return r;
 }
 
-static scmval eval_subr(scmval s, int argc, scmval* argv, scmval e) {
+static scmval apply_subr(scmval subr, scmval arglist, scmval env) {
     scmval r = scm_undef;
-    check_arity(s, argc);
-    int new_argc = argc_from_arity(s, argc);
-    if(argc > 0) {
+    int     argc;
+    scmval* argv;
+    list_to_args(arglist, &argc, &argv);
+    check_arity(subr, argc);
+    int new_argc = argc_from_arity(subr, argc);
+    if(new_argc > 0) {
         scmval* new_argv = scm_new_array(new_argc, scmval);
         for(int i = 0; i < new_argc; i++) {
             new_argv[i] = (i < argc)
-                ? eval(argv[i], e)
+                ? eval(argv[i], env)
                 : scm_undef;
         }
-        r = apply_funcall(s, new_argc, new_argv);
+        r = apply_funcall(subr, new_argc, new_argv);
     } else {
-        r = funcall0(s);
+        r = funcall0(subr);
     }
     return r;
 }
 
-static scmval eval_closure(scmval f, int argc, scmval* argv, scmval e) {
-    int ac = closure_argc(f);
-    scmval *av = closure_argv(f);
-    scmval env = make_env(closure_env(f));
+static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
+    int     argc;
+    scmval* argv;
+    list_to_args(arglist, &argc, &argv);
+    int ac = closure_argc(closure);
+    scmval *av = closure_argv(closure);
+    scmval env = make_env(closure_env(closure));
     if(ac == -1) { // lambda arg
         scmval arglist = scm_null;
         for(int i = argc - 1; i >= 0; i--) {
@@ -136,7 +140,7 @@ static scmval eval_closure(scmval f, int argc, scmval* argv, scmval e) {
         int xac = abs(ac) - 1;
         if(argc < xac)
             error(arity_error_type, "%s expects at least %d arguments but received %d",
-                    is_undef(closure_name(f)) ? "anonymous closure" : c_str(closure_name(f)),
+                    is_undef(closure_name(closure)) ? "anonymous closure" : c_str(closure_name(closure)),
                     xac, argc);
         for(i = 0; i < xac; i++) {
             scmval arg = eval(argv[i], e);
@@ -151,42 +155,47 @@ static scmval eval_closure(scmval f, int argc, scmval* argv, scmval e) {
     } else { // lambda (<arg>...)
         if(ac != argc) 
             error(arity_error_type, "%s expect %d arguments but received %d", 
-                    is_undef(closure_name(f)) ? "anonymous closure" : c_str(closure_name(f)),
+                    is_undef(closure_name(closure)) ? "anonymous closure" : c_str(closure_name(closure)),
                     ac, argc);
         for(int i = 0; i < argc; i++) {
             scmval arg = eval(argv[i], e);
             bind(env, av[i], arg);
         }
     }
-    return eval(closure_body(f), env);
+    for(scmval exprs = closure_body(closure); !is_null(exprs); exprs = cdr(exprs)) {
+        scmval expr = car(exprs);
+        if(is_null(cdr(exprs)))
+            return expr;
+        eval(expr, env);
+    }
+    return scm_undef; // not reached
 }
 
-static scmval eval_lambda(int argc, scmval* argv, scmval e) {
-    if(argc < 2) error(arity_error_type, "lambda expects at least 2 arguments but received %d", argc);
+static scmval stx_lambda(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2) error(arity_error_type, "lambda expects at least 2 arguments but received %d", len);
+    scmval arglist = car(expr);
     int     ac;
     scmval* av;
-    if(is_pair(argv[0])) {
-        list_to_args(argv[0], &ac, &av);
+    if(is_pair(arglist)) {
+        list_to_args(arglist, &ac, &av); // FIXME dotted arg list
         check_args("lambda", symbol_c, ac, av);
     } else {
-        check_arg("lambda", symbol_c, argv[0]);
+        check_arg("lambda", symbol_c, arglist);
         ac = -1;
         av = scm_new_array(1, scmval);
-        av[0] = argv[0];
+        av[0] = arglist;
     }
-    scmval body = scm_null;
-    for(int i = argc - 1; i >= 1; i--) {
-        body = cons(argv[i], body);
-    }
-    body = cons(scm_begin, body);
-    return make_closure(scm_undef, ac, av, make_env(e), body);
+    scmval body = cdr(expr);
+    return make_closure(scm_undef, ac, av, make_env(env), body);
 }
 
-static scmval define_closure(int argc, scmval* argv, scmval e) {
-    if(argc != 2) error(arity_error_type, "define expects 2 arguments but received %d", argc);
-    scmval  name = car(argv[0]);
-    scmval  args = cdr(argv[0]);
-    scmval  body = argv[1];
+static void define_closure(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2) error(arity_error_type, "define expects at least 2 arguments but received %d", len);
+    scmval  name = caar(expr);
+    scmval  args = cdar(expr); 
+    scmval  body = cdr(expr);
     int     ac   = list_length(args);
     scmval* av = NULL;
     int     i = 0;
@@ -197,27 +206,36 @@ static scmval define_closure(int argc, scmval* argv, scmval e) {
             av[i++] = car(l);
         }
     }
-    scmval c = make_closure(scm_str(c_str(name)), ac, av, make_env(e), body);
+    scmval c = make_closure(scm_str(c_str(name)), ac, av, make_env(env), body);
     dict_set(scm_context.globals, name, c);
-    return scm_undef;
 }
 
-static scmval define_symbol(int argc, scmval* argv, scmval e) {
-    if(argc != 2) error(arity_error_type, "define expects 2 arguments but received %d", argc);
-    scmval name = argv[0];
-    scmval body = eval(argv[1], e);
+static void define_symbol(scmval expr, scmval e) {
+    int len = list_length(expr);
+    if(len != 2) error(arity_error_type, "define expects 2 arguments but received %d", len);
+    scmval name = car(expr);
+    scmval body = eval(cadr(expr), e);
     dict_set(scm_context.globals, name, body);
     if(is_closure(body))
         set_closure_name(body, name);
+}
+
+static scmval stx_define(scmval expr, scmval env) {
+    if(is_pair(car(expr))) { // (define (name <args>)...
+        define_closure(expr, env);
+    } else { // (define name...
+        define_symbol(expr, env);
+    }
     return scm_undef;
 }
 
-static scmval define_syntax(int argc, scmval* argv, scmval e) {
-    if(argc != 2) error(arity_error_type, "define-syntax expects 2 arguments but received %d", argc);
-    scmval name = argv[0];
-    scmval rule_list = argv[1];
+static scmval stx_define_syntax(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len != 2) error(arity_error_type, "define-syntax expects 2 arguments but received %d", len);
+    scmval name = car(expr);
+    scmval rule_list = cadr(expr);
     if(!is_pair(rule_list))
-        error(syntax_error_type, "define-syntax: expected a list of syntax-rules but received %s", scm_to_cstr(argv[1]));
+        error(syntax_error_type, "define-syntax: expected a list of syntax-rules but received %s", scm_to_cstr(rule_list));
     if(!is_eq(car(rule_list), scm_syntax_rules))
         error(syntax_error_type, "define-syntax: expected syntax-rules but got %s", scm_to_cstr(car(rule_list)));
     if(!is_pair(cadr(rule_list)))
@@ -229,6 +247,15 @@ static scmval define_syntax(int argc, scmval* argv, scmval e) {
     scmval syntax = make_syntax(name, cadr(rule_list), cddr(rule_list));
     dict_set(scm_context.globals, name, syntax);
     return scm_undef;
+}
+
+static scmval stx_if(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2 || len > 3) error(syntax_error_type, "invalid syntax %s", scm_to_cstr(expr));
+    scmval test = eval(car(expr), env);
+    scmval consequent = cadr(expr);
+    scmval alternate  = (len == 3) ? caddr(expr) : scm_void;
+    return !is_false(test) ? consequent : alternate;
 }
 
 static void list_to_args(scmval l, int* argc, scmval** argv) {

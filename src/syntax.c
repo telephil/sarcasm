@@ -18,12 +18,12 @@ scmval make_syntax(scmval name, scmval literals, scmval rules) {
     return make_ptr(SCM_TYPE_SYNTAX, syntax);
 }
 
-static scmval find_matching_rule(scmval syn, int argc, scmval* argv);
-static scm_dict_t* pattern_bind_vars(scmval, int, scmval*);
+static scmval find_matching_rule(scmval, scmval);
+static scm_dict_t* pattern_bind_vars(scmval, scmval);
 static scmval template_instantiate(scmval, scm_dict_t*);
 
-scmval expand(scmval syn, int argc, scmval* argv) {
-    scmval rule = find_matching_rule(syn, argc, argv);
+scmval expand(scmval syn, scmval expr) {
+    scmval rule = find_matching_rule(syn, expr);
     if(is_undef(rule))
         error(syntax_error_type, "could not find syntax rule to match arguments");
     scmval pattern  = car(rule);
@@ -38,18 +38,18 @@ scmval expand(scmval syn, int argc, scmval* argv) {
     // apply template
     scmval result = scm_undef;
     // XXX is it really necessary ?
-    if(!is_eq(car(pattern), scm_underscore) && !is_eq(car(pattern), argv[0])) {
-        error(syntax_error_type, "pattern does not match expression %s", scm_to_cstr(argv[0]));
+    if(!is_eq(car(pattern), scm_underscore) && !is_eq(car(pattern), car(expr))) {
+        error(syntax_error_type, "pattern does not match expression %s", scm_to_cstr(car(expr)));
     }
     if(is_null(cdr(pattern))) {
         result = template;
     } else if(is_symbol(template)) {
         if(is_eq(cadr(pattern), template))
-            result = argv[1];
+            result = cadr(expr);
         else
             result = template;
     } else if(is_pair(template)) {
-        scm_dict_t* dict = pattern_bind_vars(pattern, argc, argv);
+        scm_dict_t* dict = pattern_bind_vars(pattern, cdr(expr));
         result = template_instantiate(template, dict);
     } else {
         error(syntax_error_type, "unhandled template type %s", scm_to_cstr(template));
@@ -87,19 +87,16 @@ static scmval template_instantiate(scmval template, scm_dict_t* vars) {
     return head;
 }
 
-static scm_dict_t* pattern_bind_vars(scmval pattern, int argc, scmval* argv) {
+static scm_dict_t* pattern_bind_vars(scmval pattern, scmval arglist) {
     scm_dict_t* dict = make_dict();
-    int index = 1;
     for(scmval pvar = cdr(pattern); !is_null(pvar); pvar = cdr(pvar)) {
         scmval val = scm_null;
         if(is_eq(car(pvar), scm_ellipsis)) {
-            if(index < argc) {
-                for(int i = argc - 1; i >= index; i--) {
-                    val = cons(argv[i], val);
-                }
-            }
+            if(!is_null(arglist))
+                val = arglist;
         } else {
-            val = argv[index++];
+            val = car(arglist);
+            arglist = cdr(arglist);
         }
         dict_set(dict, car(pvar), val);
     }
@@ -123,7 +120,8 @@ static bool pattern_match(scmval pattern, int argc) {
     return false;
 }
 
-static scmval find_matching_rule(scmval syn, int argc, scmval* argv) {
+static scmval find_matching_rule(scmval syn, scmval expr) {
+    int argc = list_length(expr);
     for(scmval rules = syntax_rules(syn); !is_null(rules); rules = cdr(rules)) {
         scmval rule = car(rules);
         scmval pattern = car(rule);
