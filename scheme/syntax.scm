@@ -1,5 +1,6 @@
 (define-syntax begin
   (syntax-rules ()
+    ((begin) (void))
     ((begin expr ...) ((lambda () expr ...)))))
 
 (define-syntax and
