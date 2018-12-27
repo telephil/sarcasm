@@ -2,6 +2,7 @@
 
 static scmval scm_apply;
 static scmval scm_define;
+static scmval scm_set;
 static scmval scm_define_syntax;
 static scmval scm_syntax_rules;
 static scmval scm_lambda;
@@ -13,6 +14,7 @@ static scmval app_error_type;
 static void   list_to_args(scmval, int*, scmval**);
 static scmval stx_define(scmval, scmval);
 static scmval stx_define_syntax(scmval, scmval);
+static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
 static scmval apply_subr(scmval, scmval, scmval);
@@ -66,6 +68,9 @@ loop:
         }
         CASE(scm_define_syntax) {
             r = stx_define_syntax(cdr(v), e);
+        }
+        CASE(scm_set) {
+            r = stx_set(cdr(v), e);
         }
         CASE(scm_lambda) {
             r = stx_lambda(cdr(v), e);
@@ -246,6 +251,17 @@ static scmval stx_define_syntax(scmval expr, scmval env) {
     }
     scmval syntax = make_syntax(name, cadr(rule_list), cddr(rule_list));
     dict_set(scm_context.globals, name, syntax);
+    return scm_undef;
+}
+
+static scmval stx_set(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len != 2) error(syntax_error_type, "invalid set! syntax");
+    if(!is_symbol(car(expr)))
+        error(syntax_error_type, "set!: expected symbol but got %s", scm_to_cstr(car(expr)));
+    if(is_undef(lookup(env, car(expr))))
+        error(syntax_error_type, "set!: symbol %s is not defined", scm_to_cstr(car(expr)));
+    dict_set(scm_context.globals, car(expr), eval(cadr(expr), env));
     return scm_undef;
 }
 
