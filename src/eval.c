@@ -102,6 +102,9 @@ loop:
                 r = apply_subr(f, cdr(v), e);
             } else if(is_closure(f)) {
                 v = apply_closure(f, cdr(v), e);
+                // result is a cons (<env> . <tailexpr>)
+                e = car(v);
+                v = cdr(v);
                 goto loop;
             } else if(is_syntax(f)) {
                 v = expand(f, v);
@@ -180,7 +183,7 @@ static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
     for(scmval exprs = closure_body(closure); !is_null(exprs); exprs = cdr(exprs)) {
         scmval expr = car(exprs);
         if(is_null(cdr(exprs)))
-            return expr;
+            return cons(env, expr);
         eval(expr, env);
     }
     return scm_undef; // not reached
@@ -202,7 +205,7 @@ static scmval stx_lambda(scmval expr, scmval env) {
         av[0] = arglist;
     }
     scmval body = cdr(expr);
-    return make_closure(scm_undef, ac, av, make_env(env), body);
+    return make_closure(scm_undef, ac, av, env, body);
 }
 
 static void define_closure(scmval expr, scmval env) {
@@ -221,7 +224,7 @@ static void define_closure(scmval expr, scmval env) {
             av[i++] = car(l);
         }
     }
-    scmval c = make_closure(scm_str(c_str(name)), ac, av, make_env(env), body);
+    scmval c = make_closure(scm_str(c_str(name)), ac, av, env, body);
     dict_set(scm_context.globals, name, c);
 }
 
