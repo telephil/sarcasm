@@ -14,9 +14,10 @@ scmval make_pair(scmval car, scmval cdr);
 // predicates
 static inline bool is_null(scmval v) { return type_of(v) == SCM_TYPE_NULL; }
 static inline bool is_pair(scmval v) { return is_null(v) || (type_of(v) == SCM_TYPE_PAIR); }
+static inline bool is_list(scmval v) { return type_of(v) == SCM_TYPE_PAIR; }
 
 // contracts
-define_contract(list_c, "list", is_pair);
+define_contract(list_c, "list", is_list);
 
 // accessors
 static inline scm_pair_t* get_pair(scmval v) { return (scm_pair_t*)v.o; }
