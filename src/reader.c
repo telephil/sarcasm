@@ -154,7 +154,7 @@ static scmval read_number(char* buf) {
     int base = 10;
     bool dot = false;
     bool neg = false;
-    bool is_int = true;
+    bool is_int = false;
     char *p = buf, *q;
 
     // base
@@ -175,6 +175,9 @@ static scmval read_number(char* buf) {
             neg = true;
         p++;
     }
+    if(!*p)
+        return scm_undef;
+    is_int = true;
     for(q = p; *q; q++) {
         if(*q == '.') {
             if(dot) return scm_undef; // already found a dot
