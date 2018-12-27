@@ -157,6 +157,14 @@ static scmval read_number(char* buf) {
     bool is_int = false;
     char *p = buf, *q;
 
+    // constants
+    if(strncmp(buf, "+nan.0", 6) == 0)
+        return scm_nan;
+    else if(strncmp(buf, "+inf.0", 6) == 0)
+        return scm_pos_inf;
+    else if(strncmp(buf, "-inf.0", 6) == 0)
+        return scm_neg_inf;
+
     // base
     if(*p == '#') {
         p++;
@@ -218,8 +226,9 @@ static scmval read_any(scmval p) {
     buf[size] = '\0';
     // Try to read number
     v = read_number(buf);
-    if(!is_undef(v))
+    if(!is_undef(v)) {
         return v;
+    }
     // Check if identifier
     if(is_initial(buf[0])) {
         bool is_identifier = true;
