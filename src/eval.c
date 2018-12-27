@@ -17,6 +17,7 @@ static scmval stx_define_syntax(scmval, scmval);
 static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
+static scmval stx_quasiquote(scmval, scmval);
 static scmval apply_subr(scmval, scmval, scmval);
 static scmval apply_closure(scmval, scmval, scmval);
 
@@ -81,6 +82,15 @@ loop:
         }
         CASE(scm_quote) {
             r = cadr(v);
+        }
+        CASE(scm_quasiquote) {
+            r = stx_quasiquote(cdr(v), e);
+        }
+        CASE(scm_unquote) {
+            error(syntax_error_type, "unquote: not in quasiquote");
+        }
+        CASE(scm_unquote_splicing) {
+            error(syntax_error_type, "unquote-splicing: not in quasiquote");
         }
         CASE(scm_apply) {
             v = cons(cadr(v), eval(caddr(v), e));
@@ -263,6 +273,37 @@ static scmval stx_set(scmval expr, scmval env) {
         error(syntax_error_type, "set!: symbol %s is not defined", scm_to_cstr(car(expr)));
     dict_set(scm_context.globals, car(expr), eval(cadr(expr), env));
     return scm_undef;
+}
+
+static scmval quasiquote(scmval expr, scmval env) {
+    if(is_null(expr) || !is_pair(expr))
+        return expr;
+    scmval result = scm_null;
+    if(is_eq(car(expr), scm_unquote)) {
+        result = eval(cadr(expr), env);
+    } else if(is_pair(car(expr)) && is_eq(caar(expr), scm_unquote_splicing)) {
+        scmval rest = cdr(expr);
+        scmval tail = scm_null;
+        expr = car(expr);
+        result = eval(cadr(expr), env);
+        for(tail = result; !is_null(cdr(tail)); tail = cdr(tail)) {
+        }
+        rest = quasiquote(rest, env);
+        if(is_null(result))
+            return rest;
+        setcdr(tail, rest);
+    } else {
+        scmval head = quasiquote(car(expr), env);
+        scmval tail = quasiquote(cdr(expr), env);
+        result = cons(head, tail);
+    }
+    return result;
+}
+
+static scmval stx_quasiquote(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len != 1) error(syntax_error_type, "invalid quasiquote syntax");
+    return quasiquote(car(expr), env);
 }
 
 static scmval stx_if(scmval expr, scmval env) {

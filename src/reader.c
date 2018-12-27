@@ -7,9 +7,9 @@ static scmval read_error_type;
 static scmval scm_close_paren;
 static scmval scm_dot;
 scmval scm_quote;
-static scmval scm_quasiquote;
-static scmval scm_unquote;
-static scmval scm_unquote_splicing;
+scmval scm_quasiquote;
+scmval scm_unquote;
+scmval scm_unquote_splicing;
 
 // read helpers
 static scmval read_aux(scmval, bool);
@@ -63,6 +63,7 @@ scmval read_from_string(const char* s) {
 static scmval read_aux(scmval p, bool in_list) {
     scmval v = scm_undef;
     char c;
+    bool splicing = false;
 
     c = skipws(p);
     if(c == EOF)
@@ -95,6 +96,18 @@ static scmval read_aux(scmval p, bool in_list) {
         case '\'':
             v = read_aux(p, false);
             v = cons(scm_quote, cons(v, scm_null));
+            break;
+        case '`':
+            v = read_aux(p, false);
+            v = cons(scm_quasiquote, cons(v, scm_null));
+            break;
+        case ',':
+            if(scm_peek(p) == '@') {
+                scm_getc(p);
+                splicing = true;
+            }
+            v = read_aux(p, false);
+            v = cons(splicing ? scm_unquote_splicing : scm_unquote, cons(v, scm_null));
             break;
         case '#':
             c = scm_getc(p);
