@@ -18,6 +18,16 @@
 (define (caaddr lst) (car (car (cdr (cdr lst)))))
 (define (cadadr lst) (car (cdr (car (cdr lst)))))
 
+(define (list-ref lst k)
+  (if (zero? k)
+      (car lst)
+      (list-ref (cdr lst) (- k 1))))
+
+(define (list-tail lst k)
+  (if (zero? k)
+      lst
+      (list-tail (cdr lst) (- k 1))))
+
 (define (foldl step initial lst)
   (if (null? lst)
       initial
