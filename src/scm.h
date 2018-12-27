@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <math.h>
 #include <gc/gc.h>
 #include <gc/cord.h>
 

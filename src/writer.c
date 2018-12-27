@@ -26,7 +26,15 @@ void write(scmval p, scmval v, short flags) {
             scm_printf(p, "%lld", c_fix(v));
             break;
         case SCM_TYPE_FLONUM:
-            scm_printf(p, "%lf", c_flo(v));
+            if(is_nan(v)) {
+                scm_puts(p, "+nan.0");
+            } else if(is_pos_inf(v)) {
+                scm_puts(p, "+inf.0");
+            } else if(is_neg_inf(v)) {
+                scm_puts(p, "-inf.0");
+            } else {
+                scm_printf(p, "%lf", c_flo(v));
+            }
             break;
         case SCM_TYPE_CHAR:
             if(flags & scm_mode_write) {
