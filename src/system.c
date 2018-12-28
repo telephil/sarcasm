@@ -115,13 +115,11 @@ static scmval scm_getenv_vars() {
 }
 
 static scmval scm_current_second() {
-    /*
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     // TAI is 37s ahead of UTC (thanks Wikipedia)
-    flonum res = 37 + ts.tv_sec + 0.000000001*ts.tv_nsec;
-    */
-    return scm_flo(0); // FIXME: need a higher OS version
+    flonum res = 37.0 + ts.tv_sec + 0.000000001*ts.tv_nsec;
+    return scm_flo(res);
 }
 
 static scmval scm_features() {
