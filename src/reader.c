@@ -65,11 +65,22 @@ static scmval read_aux(scmval p, bool in_list) {
     char c;
     bool splicing = false;
 
+start_read:
     c = skipws(p);
     if(c == EOF)
         return scm_eof;
 
     switch(c) {
+        case ';':
+            while(true) {
+                c = scm_getc(p);
+                if(c == EOF)
+                    return scm_eof;
+                if(c == '\n')
+                    break;
+            }
+            goto start_read;
+            break;
         case '(':
             v = read_list(p);
             break;
@@ -112,6 +123,31 @@ static scmval read_aux(scmval p, bool in_list) {
         case '#':
             c = scm_getc(p);
             switch(c) {
+                case '|': 
+                    {
+                        int nest = 1;
+                        while(true) {
+                            c = scm_getc(p);
+                            switch(c) {
+                                case EOF:
+                                    read_error(p, "unexpected end of file while reading nested comment");
+                                    break;
+                                case '|':
+                                    if(scm_peek(p) == '#') {
+                                        scm_getc(p); // eat #
+                                        --nest;
+                                        if(nest == 0) goto start_read;
+                                    }
+                                    break;
+                                case '#':
+                                    if(scm_peek(p) == '|') {
+                                        scm_getc(p); // eat |
+                                        ++nest;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
                 case 't':
                     v = scm_true;
                     break;
