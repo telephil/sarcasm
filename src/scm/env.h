@@ -10,6 +10,8 @@ scmval make_env(scmval);
 
 // predicates
 static inline bool is_env(scmval v) { return type_of(v) == SCM_TYPE_ENV; }
+// contract
+define_contract(env_c,  "environment",  is_env);
 
 // accessors
 static inline scm_env_t* get_env(scmval v) { return (scm_env_t*)v.o; }

@@ -517,14 +517,3 @@ static bool is_valid_digit(char c, int base) {
     return valid;
 }
 
-void load(const char* path) {
-    scmval p = scm_open_input_file(scm_str(path));
-    while(true) {
-        scmval v = read(p);
-        if(is_eof(v))
-            break;
-        eval(v, scm_context.toplevel);
-    }
-    scm_close_input_port(p);
-}
-

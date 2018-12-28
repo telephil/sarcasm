@@ -12,6 +12,17 @@
 #include <gc/gc.h>
 #include <gc/cord.h>
 
+#define IMPLEMENTATION_NAME     "sarcasm"
+#define IMPLEMENTATION_VERSION  "0.1"
+
+#if defined(__linux__)
+    #define PLATFORM    "linux"
+#elif defined(__APPLE__)
+    #define PLATFORM    "darwin"
+#else
+    #define PLATFORM    "unknown"
+#endif
+
 // type aliases
 typedef struct scmval scmval;
 typedef uint8_t byte;
@@ -79,6 +90,7 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/env.h"
 #include "scm/writer.h"
 #include "scm/reader.h"
+#include "scm/system.h"
 
 // utilities
 void init_eval();

@@ -7,7 +7,7 @@ static void repl();
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
-static void scm_init() {
+static void scm_init(int argc, char* argv[]) {
     GC_INIT();
 
     init_context();
@@ -24,6 +24,7 @@ static void scm_init() {
     init_syntax();
     init_reader();
     init_eval();
+    init_system(argc, argv);
 }
 
 static void scm_load_base() {
@@ -33,7 +34,7 @@ static void scm_load_base() {
         NULL
     };
     for(int i = 0; files[i] != NULL; i++) {
-        load(files[i]);
+        load(files[i], scm_context.toplevel);
     }
 }
 
@@ -42,7 +43,7 @@ static void default_error_handler(scmval err);
 // M A I N
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
-    scm_init();
+    scm_init(argc, argv);
     scm_load_base();
     printf("scm v0.1\n");
     repl();
