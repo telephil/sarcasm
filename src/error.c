@@ -1,6 +1,8 @@
 #include "scm.h"
 
 // globals
+scmval   scm_g_lasterr;
+jmp_buf  scm_g_errbuf;
 scmval range_error_type;
 scmval arity_error_type;
 scmval type_error_type;
@@ -15,8 +17,8 @@ scmval make_error(scmval type, scmval message) {
 
 // standard library
 void raise(scmval e) {
-    set_error(e);
-    longjmp(scm_context.err_buf, 1);
+    scm_g_lasterr = e;
+    longjmp(scm_g_errbuf, 1);
 }
 
 // initialization

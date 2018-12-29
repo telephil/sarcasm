@@ -45,6 +45,9 @@ struct scm_port_vtable {
 };
 
 // globals
+extern scmval scm_g_current_output_port;
+extern scmval scm_g_current_error_port;
+extern scmval scm_g_current_input_port;
 extern scmval scm_eof;
 
 // constructor

@@ -1,5 +1,7 @@
 #include "scm.h"
 
+static scm_dict_t* scm_g_symbols;
+
 // globals
 scmval scm_undef;
 scmval scm_void;
@@ -15,9 +17,9 @@ scmval make_symbol(const char* s) {
 scmval intern(const char* name) {
     scmval r, s;
     s = make_symbol(name);
-    r = dict_ref(scm_context.symbols, s);
+    r = dict_ref(scm_g_symbols, s);
     if(is_undef(r)) {
-        dict_set(scm_context.symbols, s, s);
+        dict_set(scm_g_symbols, s, s);
         r = s;
     }
     return r;
@@ -52,6 +54,8 @@ static scmval scm_string_to_symbol(scmval v) {
 
 // initialization
 void init_symbol(scmval env) {
+    scm_g_symbols = make_dict();
+
     define(env, "symbol?", scm_symbol_p, arity_exactly(1));
     define(env, "symbol=?", scm_symbol_equal_p, arity_at_least(2));
     define(env, "symbol->string", scm_symbol_to_string, arity_exactly(1));

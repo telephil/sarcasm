@@ -83,7 +83,6 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/arity.h"
 #include "scm/contract.h"
 #include "scm/dict.h"
-#include "scm/context.h"
 #include "scm/bool.h"
 #include "scm/number.h"
 #include "scm/char.h"

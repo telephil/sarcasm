@@ -1,6 +1,9 @@
 #include "scm.h"
 
 // globals
+scmval scm_g_current_output_port;
+scmval scm_g_current_error_port;
+scmval scm_g_current_input_port;
 scmval scm_eof;
 
 // constructors
@@ -47,15 +50,15 @@ static scmval scm_port_open_p(scmval v) {
 }
 
 static scmval scm_current_input_port() {
-    return scm_context.current_input_port;
+    return scm_g_current_input_port;
 }
 
 scmval scm_current_output_port() {
-    return scm_context.current_output_port;
+    return scm_g_current_output_port;
 }
 
 scmval scm_current_error_port() {
-    return scm_context.current_error_port;
+    return scm_g_current_error_port;
 }
 
 static scmval scm_open_input_string(scmval v) {
@@ -168,9 +171,9 @@ static scmval scm_flush_output_port(scmval p) {
 void init_port(scmval env) {
     scm_eof   = make_val(SCM_TYPE_EOF);
 
-    scm_context.current_output_port = make_file_output_port(stdout, "stdout");
-    scm_context.current_error_port  = make_file_output_port(stderr, "stderr");
-    scm_context.current_input_port  = make_file_input_port(stdin, "stdin");
+    scm_g_current_output_port = make_file_output_port(stdout, "stdout");
+    scm_g_current_error_port  = make_file_output_port(stderr, "stderr");
+    scm_g_current_input_port  = make_file_input_port(stdin, "stdin");
 
     define(env, "port?", scm_port_p, arity_exactly(1));
     define(env, "input-port?", scm_input_port_p, arity_exactly(1));

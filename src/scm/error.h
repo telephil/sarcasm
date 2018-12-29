@@ -5,6 +5,10 @@ struct scm_error {
     scmval message;
 };
 
+// globals
+extern scmval   scm_g_lasterr;
+extern jmp_buf  scm_g_errbuf;
+
 // constructor
 scmval make_error(scmval type, scmval message);
 
@@ -32,8 +36,8 @@ static inline void error(scmval type, const char* format, ...) {
 
 // exceptions
 #define with_error_handler(F)               \
-    if(setjmp(scm_context.err_buf)) {    \
-        F(scm_context.err);              \
+    if(setjmp(scm_g_errbuf)) {    \
+        F(scm_g_lasterr);              \
     } else                                  
 
 // common error types

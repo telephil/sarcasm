@@ -12,13 +12,12 @@ static void scm_init(int argc, char* argv[]) {
 
     scmval env = make_env(scm_undef);
 
-    init_context();
+    init_symbol(env);
     init_errors(env);
     init_bool(env);
     init_number(env);
     init_char(env);
     init_string(env);
-    init_symbol(env);
     init_pair(env);
     init_vector(env);
     init_bytevector(env);
