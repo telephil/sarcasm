@@ -2,7 +2,8 @@
 (scheme cxr) library
 |#
 (define-library (scheme cxr)
-  (import (scheme base))
+;  (import (scheme base))
+  (import (sarcasm core))
   (export caar cadr cdar cddr
           caaar caadr cadar cdaar caddr cdadr cddar cdddr
           cddddr cadddr cdaddr cddadr cdddar caaddr cadadr)                

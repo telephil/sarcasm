@@ -3,6 +3,7 @@
 #include "scm.h"
 
 static void repl();
+static void default_error_handler(scmval err);
 
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
@@ -31,14 +32,11 @@ static void scm_init(int argc, char* argv[]) {
     // load scheme defined procedures / syntax
     load("./lib/sarcasm/init.scm", env);
     // create core library
-    scmval corelib = make_core_library(env);
+    make_core_library(env);
     // then create standard environments
     post_init_env();
-
-    printf("; loaded library: %s\n", scm_to_cstr(library_name(corelib)));
 }
 
-static void default_error_handler(scmval err);
 ////////////////////////////////////////////////////////////////////////////////
 // M A I N
 ////////////////////////////////////////////////////////////////////////////////

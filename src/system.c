@@ -10,15 +10,17 @@ static scmval commandline;
 ////////////////////////////////////////////////////////////////////////////////
 // HELPERS
 ////////////////////////////////////////////////////////////////////////////////
-void load(const char* path, scmval env) {
+scmval load(const char* path, scmval env) {
+    scmval r = scm_undef;
     scmval p = scm_open_input_file(scm_str(path));
     while(true) {
         scmval v = read(p);
         if(is_eof(v))
             break;
-        eval(v, env);
+        r = eval(v, env);
     }
     scm_close_input_port(p);
+    return r;
 }
 
 static void set_features() {

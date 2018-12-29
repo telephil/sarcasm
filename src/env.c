@@ -53,7 +53,7 @@ static inline void import_lib(scmval env, scmval lib) {
 scmval scm_environment(int argc, scmval* argv) {
     scmval env = make_env(scm_undef);
     for(int i = 0; i < argc; i++) {
-        scmval lib = load_library(argv[i]);
+        scmval lib = load_library(argv[i], env);
         if(is_undef(lib))
             error(intern("error"), "library '%s' not found", scm_to_cstr(argv[i]));
         import_lib(env, lib);
@@ -87,8 +87,9 @@ void init_env(scmval env) {
 }
 
 void post_init_env() {
-    scmval args[] = { read_from_string("(sarcasm core)") };
+    scmval args[] = { read_from_string("(sarcasm core)"),
+                      read_from_string("(scheme cxr)") };
     scm_g_report_environment        = scm_environment(1, args); // FIXME
-    scm_g_interaction_environment   = scm_environment(1, args);
+    scm_g_interaction_environment   = scm_environment(2, args);
     scm_g_null_environment          = make_env(scm_undef);
 }

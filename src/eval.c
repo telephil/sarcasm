@@ -10,11 +10,15 @@ static scmval scm_if;
 static scmval scm_set;
 static scmval scm_begin;
 static scmval scm_define_library;
+static scmval scm_import;
+static scmval scm_export;
+static scmval scm_include;
 static scmval app_error_type;
 
 static void   list_to_args(scmval, int*, scmval**);
 static scmval stx_define(scmval, scmval);
 static scmval stx_define_syntax(scmval, scmval);
+static scmval stx_define_library(scmval, scmval);
 static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
@@ -42,6 +46,9 @@ void init_eval(scmval env) {
     scm_lambda          = intern("lambda");
     scm_begin           = intern("begin");
     scm_define_library  = intern("define-library");
+    scm_import          = intern("import");
+    scm_export          = intern("export");
+    scm_include         = intern("include");
     app_error_type      = intern("application-error");
 
     define(env, "void", scm_void_subr, arity_at_least(0));
@@ -67,7 +74,7 @@ loop:
         scmval s = car(v);
         COND 
         CASE(scm_define_library) {
-            r = define_library(cdr(v));
+            r = stx_define_library(cdr(v), e);
         }
         CASE(scm_define) {
             r = stx_define(cdr(v), e);
@@ -271,6 +278,46 @@ static scmval stx_define_syntax(scmval expr, scmval env) {
     set(env, name, syntax);
     return scm_undef;
 }
+
+static scmval stx_define_library(scmval expr, scmval env) {
+    scmval name = car(expr);
+    if(!is_list(expr)) error(syntax_error_type, "define-library: %s is not a valid library name", scm_to_cstr(name));
+    // XXX check identifier + numbers
+    scmval exports  = scm_null;
+    scmval imports  = scm_null;
+    scmval includes = scm_null;
+    scmval body     = scm_null;
+    foreach(obj, cdr(expr)) {
+        if(!is_list(obj))
+            error(syntax_error_type, "define-library: %s is not a valid library declaration", scm_to_cstr(name));
+        if(is_eq(car(obj), scm_export)) {
+            exports = cdr(obj);
+        } else if(is_eq(car(obj), scm_import)) {
+            imports = cons(cadr(obj), imports);
+        } else if(is_eq(car(obj), scm_include)) {
+            includes = cons(cdr(obj), includes);
+        } else if(is_eq(car(obj), scm_begin)) {
+            body = cdr(obj);
+        }
+    }
+    int argc = list_length(imports), i = 0;
+    scmval* argv = scm_new_array(argc, scmval);
+    foreach(import, imports) {
+        argv[i++] = import;
+    }
+    scmval libenv = scm_environment(argc, argv);
+    foreach(expr, body) {
+        eval(expr, libenv);
+    }
+    scmval library = make_library(name);
+    dict_copy(library_symbols(library), env_globals(libenv));
+    foreach(export, exports) {
+        library_add_export(library, export);
+    }
+    register_library(library);
+    return library;
+}
+
 
 static scmval stx_set(scmval expr, scmval env) {
     int len = list_length(expr);

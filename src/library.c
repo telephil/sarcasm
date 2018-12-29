@@ -15,15 +15,19 @@ scmval make_library(scmval name) {
     return make_ptr(SCM_TYPE_LIBRARY, lib);
 }
 
+void register_library(scmval library) {
+    library_cache = cons(library, library_cache);
+}
+
 static void env_copy_callback(scmval key, scmval val, scmval lib) {
     dict_set(library_symbols(lib), key, val);
     library_add_export(lib, key);
 }
 
 scmval make_core_library(scmval env) {
-    scmval corelib = make_library(cons(intern("sarcasm"), cons(intern("core"), scm_null)));
+    scmval corelib = make_library(read_from_string("(sarcasm core)"));
     dict_foreach(env_globals(env), env_copy_callback, corelib);
-    library_cache = cons(corelib, library_cache);
+    register_library(corelib);
     return corelib;
 }
 
@@ -35,7 +39,7 @@ static scmval find_in_cache(scmval name) {
     return scm_undef;
 }
 
-scmval load_library(scmval name) {
+scmval load_library(scmval name, scmval env) {
     scmval lib = find_in_cache(name);
     if(!is_undef(lib))
         return lib;
@@ -48,34 +52,8 @@ scmval load_library(scmval name) {
     }
     scm_puts(p, ".scm");
     scmval s = scm_get_output_string(p);
-    printf("lib '%s' => '%s'\n", scm_to_cstr(name), c_str(s));
-
-    return scm_undef;
-}
-
-scmval define_library(scmval expr) {
-    scmval name = car(expr);
-    if(!is_list(expr)) error(syntax_error_type, "%s is not a valid library name", scm_to_cstr(name));
-    // XXX check identifier + numbers
-    scmval exports  = scm_null;
-    scmval imports  = scm_null;
-    scmval includes = scm_null;
-    scmval body     = scm_null;
-    for(scmval obj, lst = cdr(expr); !is_null(lst) && !is_undef(obj = car(lst)); lst = cdr(lst)) {
-        if(!is_list(obj))
-            error(syntax_error_type, "%s is not a valid library declaration", scm_to_cstr(name));
-        if(is_eq(car(obj), scm_export)) {
-            exports = cons(cdr(obj), body);
-        } else if(is_eq(car(obj), scm_import)) {
-            imports = cons(cdr(obj), imports);
-        } else if(is_eq(car(obj), scm_include)) {
-            includes = cons(cdr(obj), includes);
-        } else if(is_eq(car(obj), scm_begin)) {
-            body = cons(cdr(obj), body);
-        }
-    }
-    scmval library = make_library(name);
-    return library;
+    lib = load(c_str(s), env);
+    return lib;
 }
 
 void init_library(scmval env) {

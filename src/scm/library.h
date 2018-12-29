@@ -21,6 +21,5 @@ static inline void           library_add_export(scmval obj, scmval sym) {
 // initialization
 void init_library();
 // standard library
-scmval load_library(scmval);
-scmval define_library(scmval);
-
+scmval load_library(scmval, scmval);
+void   register_library(scmval);
