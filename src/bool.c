@@ -74,14 +74,14 @@ static scmval scm_equal(scmval x, scmval y) {
 }
 
 // initialization
-void init_bool() {
+void init_bool(scmval env) {
     scm_true  = make_bool(true);
     scm_false = make_bool(false);
 
-    define("boolean?", scm_boolean_p, arity_exactly(1));
-    define("not", scm_not, arity_exactly(1));
-    define("eq?", scm_eq, arity_exactly(2));
-    define("eqv?", scm_eqv, arity_exactly(2));
-    define("equal?", scm_equal, arity_exactly(2));
+    define(env, "boolean?", scm_boolean_p, arity_exactly(1));
+    define(env, "not", scm_not, arity_exactly(1));
+    define(env, "eq?", scm_eq, arity_exactly(2));
+    define(env, "eqv?", scm_eqv, arity_exactly(2));
+    define(env, "equal?", scm_equal, arity_exactly(2));
 }
 

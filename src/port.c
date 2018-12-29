@@ -79,11 +79,11 @@ static scmval scm_open_output_file(scmval v) {
     return make_file_output_port_from_filename(v);
 }
 
-static scmval scm_open_output_string() {
+scmval scm_open_output_string() {
     return scm_str_output_port();
 }
 
-static scmval scm_get_output_string(scmval p) {
+scmval scm_get_output_string(scmval p) {
     check_arg("get-output-string", output_string_port_c, p);
     scm_string_t* s = port_data(p);
     return make_ptr(SCM_TYPE_STRING, s);
@@ -165,36 +165,36 @@ static scmval scm_flush_output_port(scmval p) {
     return scm_undef;
 }
 
-void init_port(scm_ctx_t* ctx) {
+void init_port(scmval env) {
     scm_eof   = make_val(SCM_TYPE_EOF);
 
     scm_context.current_output_port = make_file_output_port(stdout, "stdout");
     scm_context.current_error_port  = make_file_output_port(stderr, "stderr");
     scm_context.current_input_port  = make_file_input_port(stdin, "stdin");
 
-    define("port?", scm_port_p, arity_exactly(1));
-    define("input-port?", scm_input_port_p, arity_exactly(1));
-    define("output-port?", scm_output_port_p, arity_exactly(1));
-    define("eof-object?", scm_eof_p, arity_exactly(1));
-    define("port-open?", scm_port_open_p, arity_exactly(1));
-    define("current-input-port", scm_current_input_port, arity_exactly(0));
-    define("current-output-port", scm_current_output_port, arity_exactly(0));
-    define("current-error-port", scm_current_error_port, arity_exactly(0));
-    define("open-input-string", scm_open_input_string, arity_exactly(1));
-    define("open-input-file", scm_open_input_file, arity_exactly(1));
-    define("close-input-port", scm_close_input_port, arity_exactly(1));
-    define("open-output-string", scm_open_output_string, arity_exactly(0));
-    define("get-output-string", scm_get_output_string, arity_exactly(1));
-    define("open-output-file", scm_open_output_file, arity_exactly(1));
-    define("close-output-port", scm_close_output_port, arity_exactly(1));
-    define("read-char", scm_read_char, arity_exactly(1));
-    define("peek-char", scm_peek_char, arity_exactly(1));
-    define("read-line", scm_read_line, arity_exactly(1));
-    define("write", scm_write, arity_or(1, 2));
-    define("write-char", scm_write_char, arity_or(1, 2));
-    define("display", scm_display, arity_or(1, 2));
-    define("newline", scm_newline, arity_or(0, 1));
-    define("flush-output-port", scm_flush_output_port, arity_or(0, 1));
+    define(env, "port?", scm_port_p, arity_exactly(1));
+    define(env, "input-port?", scm_input_port_p, arity_exactly(1));
+    define(env, "output-port?", scm_output_port_p, arity_exactly(1));
+    define(env, "eof-object?", scm_eof_p, arity_exactly(1));
+    define(env, "port-open?", scm_port_open_p, arity_exactly(1));
+    define(env, "current-input-port", scm_current_input_port, arity_exactly(0));
+    define(env, "current-output-port", scm_current_output_port, arity_exactly(0));
+    define(env, "current-error-port", scm_current_error_port, arity_exactly(0));
+    define(env, "open-input-string", scm_open_input_string, arity_exactly(1));
+    define(env, "open-input-file", scm_open_input_file, arity_exactly(1));
+    define(env, "close-input-port", scm_close_input_port, arity_exactly(1));
+    define(env, "open-output-string", scm_open_output_string, arity_exactly(0));
+    define(env, "get-output-string", scm_get_output_string, arity_exactly(1));
+    define(env, "open-output-file", scm_open_output_file, arity_exactly(1));
+    define(env, "close-output-port", scm_close_output_port, arity_exactly(1));
+    define(env, "read-char", scm_read_char, arity_exactly(1));
+    define(env, "peek-char", scm_peek_char, arity_exactly(1));
+    define(env, "read-line", scm_read_line, arity_exactly(1));
+    define(env, "write", scm_write, arity_or(1, 2));
+    define(env, "write-char", scm_write_char, arity_or(1, 2));
+    define(env, "display", scm_display, arity_or(1, 2));
+    define(env, "newline", scm_newline, arity_or(0, 1));
+    define(env, "flush-output-port", scm_flush_output_port, arity_or(0, 1));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

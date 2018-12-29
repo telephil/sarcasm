@@ -23,4 +23,4 @@ static inline char*         c_cstr(scmval v) { return CORD_to_char_star(c_str(v)
 static inline size_t        string_length(scmval v) { return CORD_len(c_str(v)); }
 
 // standard library
-void init_string();
+void init_string(scmval);

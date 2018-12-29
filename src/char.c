@@ -86,27 +86,27 @@ static inline scmval scm_char_downcase(scmval v) {
     return make_char(tolower(c_char(v)));
 }
 
-void init_char() {
-    define("char?", scm_char_p, arity_exactly(1));
-    define("char=?",  scm_char_eq_p, arity_at_least(2));
-    define("char<?",  scm_char_lt_p, arity_at_least(2));
-    define("char>?",  scm_char_gt_p, arity_at_least(2));
-    define("char<=?", scm_char_le_p, arity_at_least(2));
-    define("char>=?", scm_char_ge_p, arity_at_least(2));
-    define("char-ci=?",  scm_char_ci_eq_p, arity_at_least(2));
-    define("char-ci<?",  scm_char_ci_lt_p, arity_at_least(2));
-    define("char-ci>?",  scm_char_ci_gt_p, arity_at_least(2));
-    define("char-ci<=?", scm_char_ci_le_p, arity_at_least(2));
-    define("char-ci>=?", scm_char_ci_ge_p, arity_at_least(2));
-    define("char-alphabetic?", scm_char_alphabetic_p, arity_exactly(1));
-    define("char-numeric?", scm_char_numeric_p, arity_exactly(1));
-    define("char-whitespace?", scm_char_whitespace_p, arity_exactly(1));
-    define("char-upper-case?", scm_char_upper_p, arity_exactly(1));
-    define("char-lower-case?", scm_char_lower_p, arity_exactly(1));
-    define("digit-value", scm_char_digit_value, arity_exactly(1));
-    define("char->integer", scm_char_to_integer, arity_exactly(1));
-    define("integer->char", scm_integer_to_char, arity_exactly(1));
-    define("char-upcase", scm_char_upcase, arity_exactly(1));
-    define("char-downcase", scm_char_downcase, arity_exactly(1));
+void init_char(scmval env) {
+    define(env, "char?", scm_char_p, arity_exactly(1));
+    define(env, "char=?",  scm_char_eq_p, arity_at_least(2));
+    define(env, "char<?",  scm_char_lt_p, arity_at_least(2));
+    define(env, "char>?",  scm_char_gt_p, arity_at_least(2));
+    define(env, "char<=?", scm_char_le_p, arity_at_least(2));
+    define(env, "char>=?", scm_char_ge_p, arity_at_least(2));
+    define(env, "char-ci=?",  scm_char_ci_eq_p, arity_at_least(2));
+    define(env, "char-ci<?",  scm_char_ci_lt_p, arity_at_least(2));
+    define(env, "char-ci>?",  scm_char_ci_gt_p, arity_at_least(2));
+    define(env, "char-ci<=?", scm_char_ci_le_p, arity_at_least(2));
+    define(env, "char-ci>=?", scm_char_ci_ge_p, arity_at_least(2));
+    define(env, "char-alphabetic?", scm_char_alphabetic_p, arity_exactly(1));
+    define(env, "char-numeric?", scm_char_numeric_p, arity_exactly(1));
+    define(env, "char-whitespace?", scm_char_whitespace_p, arity_exactly(1));
+    define(env, "char-upper-case?", scm_char_upper_p, arity_exactly(1));
+    define(env, "char-lower-case?", scm_char_lower_p, arity_exactly(1));
+    define(env, "digit-value", scm_char_digit_value, arity_exactly(1));
+    define(env, "char->integer", scm_char_to_integer, arity_exactly(1));
+    define(env, "integer->char", scm_integer_to_char, arity_exactly(1));
+    define(env, "char-upcase", scm_char_upcase, arity_exactly(1));
+    define(env, "char-downcase", scm_char_downcase, arity_exactly(1));
 }
 

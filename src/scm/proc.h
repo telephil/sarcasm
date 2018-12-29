@@ -26,7 +26,11 @@ scmval make_closure(scmval, int, scmval*, scmval, scmval);
 // predicate
 static inline bool is_subr(scmval v) { return type_of(v) == SCM_TYPE_SUBR; }
 static inline bool is_closure(scmval v) { return type_of(v) == SCM_TYPE_CLOSURE; }
+static inline bool is_procedure(scmval v) { return is_subr(v) || is_closure(v); }
 static inline bool is_callable(scmval v) { return is_subr(v) || is_closure(v); }
+
+// contract
+define_contract(procedure_c, "procedure", is_procedure);
 
 // accessors
 static inline scm_subr_t*   get_subr(scmval v) { return (scm_subr_t*)v.o; }

@@ -86,9 +86,11 @@ static inline void   port_puts(scmval p, scmval v) { get_port(p)->vtable->puts(p
 static inline void   port_flush(scmval p) { get_port(p)->vtable->flush(p); }
 
 // standard library
-void   init_port();
-scmval scm_open_input_file(scmval);
+void   init_port(scmval);
 scmval scm_close_input_port(scmval);
+scmval scm_open_input_file(scmval);
+scmval scm_open_output_string();
+scmval scm_get_output_string(scmval);
 //
 // utilities
 scmval scm_current_output_port();
@@ -99,10 +101,10 @@ static inline CORD scm_to_cstr(scmval v) { return c_str(scm_to_string(v)); }
 // C IO
 char  scm_getc(scmval);
 char  scm_peek(scmval);
-void        scm_ungetc(scmval, char);
-void        scm_putc(scmval, char);
-void        scm_puts(scmval, CORD);
-void        scm_printf(scmval, CORD, ...);
+void  scm_ungetc(scmval, char);
+void  scm_putc(scmval, char);
+void  scm_puts(scmval, CORD);
+void  scm_printf(scmval, CORD, ...);
 
 scmval open_input_string(const char*);
 

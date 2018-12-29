@@ -17,7 +17,7 @@ static inline scmval error_type(scmval v) { return get_error(v)->type; }
 static inline scmval error_message(scmval v) { return get_error(v)->message; }
 
 // standard library
-void init_errors();
+void init_errors(scmval);
 void raise(scmval);
 
 static inline void error(scmval type, const char* format, ...) {

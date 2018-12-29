@@ -47,3 +47,12 @@ void dict_keys(scm_dict_t* d, int* size, scmval** keys) {
     *keys = res;
 }
 
+void dict_copy(scm_dict_t* dest, scm_dict_t* src) {
+    scmval k, v;
+    kh_foreach(src, k, v, dict_set(dest, k, v));
+}
+
+void dict_foreach(scm_dict_t* dict, void(*callback)(scmval,scmval,scmval), scmval data) {
+    scmval k, v;
+    kh_foreach(dict, k, v, callback(k, v, data));
+}

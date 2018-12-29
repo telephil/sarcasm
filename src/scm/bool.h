@@ -15,7 +15,7 @@ static inline bool is_false(scmval v) { return is_bool(v) && !v.b; }
 define_contract(bool_c, "boolean", is_bool);
 
 // standard library
-void init_bool();
+void init_bool(scmval);
 static inline bool is_eq(scmval x, scmval y) { return x.o == y.o; }
 bool is_eqv(scmval, scmval);
 bool is_equal(scmval, scmval);

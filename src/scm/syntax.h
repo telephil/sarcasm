@@ -26,5 +26,5 @@ static inline scmval        syntax_literals(scmval v) { return get_syntax(v)->li
 static inline scmval        syntax_rules(scmval v) { return get_syntax(v)->rules; }
 
 // standard library
-void init_syntax();
+void init_syntax(scmval);
 scmval expand(scmval, scmval);

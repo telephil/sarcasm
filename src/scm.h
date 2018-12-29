@@ -15,12 +15,20 @@
 #define IMPLEMENTATION_NAME     "sarcasm"
 #define IMPLEMENTATION_VERSION  "0.1"
 
-#if defined(__linux__)
-    #define PLATFORM    "linux"
-#elif defined(__APPLE__)
-    #define PLATFORM    "darwin"
+#if defined(__x86_64__)
+    #define ARCH        "x86-64"
+#elif defined(__i386__)
+    #define ARCH        "i386"
 #else
-    #define PLATFORM    "unknown"
+    #define ARCH        "unknown-arch"
+#endif
+
+#if defined(__linux__)
+    #define OS  "linux"
+#elif defined(__APPLE__)
+    #define OS  "darwin"
+#else
+    #define OS  "unknown-platform"
 #endif
 
 // type aliases
@@ -49,6 +57,7 @@ enum {
     SCM_TYPE_SYNTAX,
     SCM_TYPE_ERROR,
     SCM_TYPE_PORT,
+    SCM_TYPE_LIBRARY
 };
 
 struct scmval {
@@ -91,9 +100,10 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/writer.h"
 #include "scm/reader.h"
 #include "scm/system.h"
+#include "scm/library.h"
 
 // utilities
-void init_eval();
+void init_eval(scmval);
 scmval eval(scmval, scmval);
 
 #define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }

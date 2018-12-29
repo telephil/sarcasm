@@ -51,11 +51,11 @@ static scmval scm_string_to_symbol(scmval v) {
 }
 
 // initialization
-void init_symbol() {
-    define("symbol?", scm_symbol_p, arity_exactly(1));
-    define("symbol=?", scm_symbol_equal_p, arity_at_least(2));
-    define("symbol->string", scm_symbol_to_string, arity_exactly(1));
-    define("string->symbol", scm_string_to_symbol, arity_exactly(1));
+void init_symbol(scmval env) {
+    define(env, "symbol?", scm_symbol_p, arity_exactly(1));
+    define(env, "symbol=?", scm_symbol_equal_p, arity_at_least(2));
+    define(env, "symbol->string", scm_symbol_to_string, arity_exactly(1));
+    define(env, "string->symbol", scm_string_to_symbol, arity_exactly(1));
     
     scm_undef = make_val(SCM_TYPE_UNDEF);
     scm_void  = make_val(SCM_TYPE_VOID);

@@ -148,27 +148,27 @@ static scmval scm_sub(int argc, scmval* argv) {
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
-void init_number() {
-    define("number?",           scm_number_p,           arity_exactly(1));
-    define("real?",             scm_real_p,             arity_exactly(1));
-    define("integer?",          scm_integer_p,          arity_exactly(1));
-    define("exact?",            scm_exact_p,            arity_exactly(1));
-    define("inexact?",          scm_inexact_p,          arity_exactly(1));
-    define("exact-integer?",    scm_exact_integer_p,    arity_exactly(1));
-    define("finite?",           scm_finite_p,           arity_exactly(1));
-    define("infinite?",         scm_infinite_p,         arity_exactly(1));
-    define("nan?",              scm_nan_p,              arity_exactly(1));
-    define("zero?",             scm_zero_p,             arity_exactly(1));
-    define("positive?",         scm_positive_p,         arity_exactly(1));
-    define("negative?",         scm_negative_p,         arity_exactly(1));
-    define("=",                 scm_number_eq_p,        arity_at_least(2));
-    define("<",                 scm_number_lt_p,        arity_at_least(2));
-    define(">",                 scm_number_gt_p,        arity_at_least(2));
-    define("<=",                scm_number_le_p,        arity_at_least(2));
-    define(">=",                scm_number_ge_p,        arity_at_least(2));
-    define("+",                 scm_add,                arity_at_least(0));
-    define("*",                 scm_mul,                arity_at_least(0));
-    define("-",                 scm_sub,                arity_at_least(1));
+void init_number(scmval env) {
+    define(env, "number?",           scm_number_p,           arity_exactly(1));
+    define(env, "real?",             scm_real_p,             arity_exactly(1));
+    define(env, "integer?",          scm_integer_p,          arity_exactly(1));
+    define(env, "exact?",            scm_exact_p,            arity_exactly(1));
+    define(env, "inexact?",          scm_inexact_p,          arity_exactly(1));
+    define(env, "exact-integer?",    scm_exact_integer_p,    arity_exactly(1));
+    define(env, "finite?",           scm_finite_p,           arity_exactly(1));
+    define(env, "infinite?",         scm_infinite_p,         arity_exactly(1));
+    define(env, "nan?",              scm_nan_p,              arity_exactly(1));
+    define(env, "zero?",             scm_zero_p,             arity_exactly(1));
+    define(env, "positive?",         scm_positive_p,         arity_exactly(1));
+    define(env, "negative?",         scm_negative_p,         arity_exactly(1));
+    define(env, "=",                 scm_number_eq_p,        arity_at_least(2));
+    define(env, "<",                 scm_number_lt_p,        arity_at_least(2));
+    define(env, ">",                 scm_number_gt_p,        arity_at_least(2));
+    define(env, "<=",                scm_number_le_p,        arity_at_least(2));
+    define(env, ">=",                scm_number_ge_p,        arity_at_least(2));
+    define(env, "+",                 scm_add,                arity_at_least(0));
+    define(env, "*",                 scm_mul,                arity_at_least(0));
+    define(env, "-",                 scm_sub,                arity_at_least(1));
 
     scm_0       = scm_fix(0);
     scm_pos_inf = scm_flo(HUGE_VAL);

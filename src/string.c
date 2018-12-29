@@ -218,31 +218,31 @@ static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, 
 }
 
 
-void init_string() {
-    define("string?",           scm_string_p,           arity_exactly(1));
-    define("make-string",       scm_make_string,        arity_or(1, 2));
-    define("string",            scm_string,             arity_at_least(1));
-    define("string-length",     scm_string_length,      arity_exactly(1));
-    define("string-ref",        scm_string_ref,         arity_exactly(2));
-    define("string-set!",       scm_string_set,         arity_exactly(3));
-    define("string=?",          scm_string_eq_p,        arity_at_least(2));
-    define("string<?",          scm_string_lt_p,        arity_at_least(2));
-    define("string>?",          scm_string_gt_p,        arity_at_least(2));
-    define("string<=?",         scm_string_le_p,        arity_at_least(2));
-    define("string>=?",         scm_string_ge_p,        arity_at_least(2));
-    define("string-ci=?",       scm_string_ci_eq_p,     arity_at_least(2));
-    define("string-ci<?",       scm_string_ci_lt_p,     arity_at_least(2));
-    define("string-ci>?",       scm_string_ci_gt_p,     arity_at_least(2));
-    define("string-ci<=?",      scm_string_ci_le_p,     arity_at_least(2));
-    define("string-ci>=?",      scm_string_ci_ge_p,     arity_at_least(2));
-    define("string-upcase",     scm_string_upcase,      arity_exactly(1));
-    define("string-downcase",   scm_string_downcase,    arity_exactly(1));
-    define("substring",         scm_substring,          arity_exactly(3));
-    define("string-append",     scm_string_append,      arity_at_least(2));
-    define("string->list",      scm_string_to_list,     arity_between(1, 3));
-    define("list->string",      scm_list_to_string,     arity_exactly(1));
-    define("string-copy",       scm_string_copy,        arity_between(1, 3));
-    define("string-copy!",      scm_string_mcopy,       arity_between(3, 5));
-    define("string-fill!",      scm_string_fill,        arity_between(2, 4));
+void init_string(scmval env) {
+    define(env, "string?",           scm_string_p,           arity_exactly(1));
+    define(env, "make-string",       scm_make_string,        arity_or(1, 2));
+    define(env, "string",            scm_string,             arity_at_least(1));
+    define(env, "string-length",     scm_string_length,      arity_exactly(1));
+    define(env, "string-ref",        scm_string_ref,         arity_exactly(2));
+    define(env, "string-set!",       scm_string_set,         arity_exactly(3));
+    define(env, "string=?",          scm_string_eq_p,        arity_at_least(2));
+    define(env, "string<?",          scm_string_lt_p,        arity_at_least(2));
+    define(env, "string>?",          scm_string_gt_p,        arity_at_least(2));
+    define(env, "string<=?",         scm_string_le_p,        arity_at_least(2));
+    define(env, "string>=?",         scm_string_ge_p,        arity_at_least(2));
+    define(env, "string-ci=?",       scm_string_ci_eq_p,     arity_at_least(2));
+    define(env, "string-ci<?",       scm_string_ci_lt_p,     arity_at_least(2));
+    define(env, "string-ci>?",       scm_string_ci_gt_p,     arity_at_least(2));
+    define(env, "string-ci<=?",      scm_string_ci_le_p,     arity_at_least(2));
+    define(env, "string-ci>=?",      scm_string_ci_ge_p,     arity_at_least(2));
+    define(env, "string-upcase",     scm_string_upcase,      arity_exactly(1));
+    define(env, "string-downcase",   scm_string_downcase,    arity_exactly(1));
+    define(env, "substring",         scm_substring,          arity_exactly(3));
+    define(env, "string-append",     scm_string_append,      arity_at_least(2));
+    define(env, "string->list",      scm_string_to_list,     arity_between(1, 3));
+    define(env, "list->string",      scm_list_to_string,     arity_exactly(1));
+    define(env, "string-copy",       scm_string_copy,        arity_between(1, 3));
+    define(env, "string-copy!",      scm_string_mcopy,       arity_between(3, 5));
+    define(env, "string-fill!",      scm_string_fill,        arity_between(2, 4));
 }
 

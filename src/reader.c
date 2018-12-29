@@ -29,7 +29,7 @@ static bool is_special_subsequent(char);
 static bool is_valid_digit(char, int);
 
 
-void init_reader() {
+void init_reader(scmval env) {
     scm_close_paren = intern(")");
     scm_dot         = intern(".");
     read_error_type = intern("read-error");

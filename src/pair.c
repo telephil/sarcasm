@@ -84,19 +84,19 @@ static scmval scm_length(scmval l) {
 }
 
 // initialization
-void init_pair() {
+void init_pair(scmval env) {
     scm_null  = make_val(SCM_TYPE_NULL);
 
-    define("pair?", scm_pair_p, arity_exactly(1));
-    define("list?", scm_list_p, arity_exactly(1));
-    define("null?", scm_null_p, arity_exactly(1));
-    define("make-list", scm_make_list, arity_or(1, 2));
-    define("list", scm_list, arity_at_least(0));
-    define("cons", scm_cons, arity_exactly(2));
-    define("car", scm_car, arity_exactly(1));
-    define("cdr", scm_cdr, arity_exactly(1));
-    define("set-car!", scm_setcar, arity_exactly(2));
-    define("set-cdr!", scm_setcdr, arity_exactly(2));
-    define("length", scm_length, arity_exactly(1));
+    define(env, "pair?", scm_pair_p, arity_exactly(1));
+    define(env, "list?", scm_list_p, arity_exactly(1));
+    define(env, "null?", scm_null_p, arity_exactly(1));
+    define(env, "make-list", scm_make_list, arity_or(1, 2));
+    define(env, "list", scm_list, arity_at_least(0));
+    define(env, "cons", scm_cons, arity_exactly(2));
+    define(env, "car", scm_car, arity_exactly(1));
+    define(env, "cdr", scm_cdr, arity_exactly(1));
+    define(env, "set-car!", scm_setcar, arity_exactly(2));
+    define(env, "set-cdr!", scm_setcdr, arity_exactly(2));
+    define(env, "length", scm_length, arity_exactly(1));
 }
 

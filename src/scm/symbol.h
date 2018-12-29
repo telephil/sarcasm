@@ -17,7 +17,7 @@ define_contract(symbol_c, "symbol", is_symbol);
 static inline scm_string_t* get_symbol(scmval v) { return (scm_string_t*)v.o; }
 
 // initialization
-void init_symbol();
+void init_symbol(scmval);
 
 // standard library
 scmval intern(const char*);

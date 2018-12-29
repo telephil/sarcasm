@@ -149,18 +149,18 @@ static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
 }
 
-void init_bytevector() {
-    define("bytevector?",        scm_bytevector_p,       arity_exactly(1));
-    define("make-bytevector",    scm_make_bytevector,    arity_or(1, 2));
-    define("bytevector",         scm_bytevector,         arity_at_least(0));
-    define("bytevector-length",  scm_bytevector_length,  arity_exactly(1));
-    define("bytevector-u8-ref",  scm_bytevector_ref,     arity_exactly(2));
-    define("bytevector-u8-set!", scm_bytevector_set,     arity_exactly(3));
-    define("bytevector-copy",    scm_bytevector_copy,    arity_between(1, 3));
-    define("bytevector-copy!",   scm_bytevector_mcopy,   arity_between(3, 5));
-    define("bytevector-append",  scm_bytevector_append,  arity_at_least(2));
-    define("utf8->string",       scm_utf8_to_string,     arity_between(1, 3));
-    define("string->utf8",       scm_string_to_utf8,     arity_between(1, 3));
+void init_bytevector(scmval env) {
+    define(env, "bytevector?",        scm_bytevector_p,       arity_exactly(1));
+    define(env, "make-bytevector",    scm_make_bytevector,    arity_or(1, 2));
+    define(env, "bytevector",         scm_bytevector,         arity_at_least(0));
+    define(env, "bytevector-length",  scm_bytevector_length,  arity_exactly(1));
+    define(env, "bytevector-u8-ref",  scm_bytevector_ref,     arity_exactly(2));
+    define(env, "bytevector-u8-set!", scm_bytevector_set,     arity_exactly(3));
+    define(env, "bytevector-copy",    scm_bytevector_copy,    arity_between(1, 3));
+    define(env, "bytevector-copy!",   scm_bytevector_mcopy,   arity_between(3, 5));
+    define(env, "bytevector-append",  scm_bytevector_append,  arity_at_least(2));
+    define(env, "utf8->string",       scm_utf8_to_string,     arity_between(1, 3));
+    define(env, "string->utf8",       scm_string_to_utf8,     arity_between(1, 3));
 }
 
 

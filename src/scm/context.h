@@ -2,9 +2,6 @@ typedef struct context scm_ctx_t;
 
 struct context {
     scm_dict_t* symbols;
-    scm_dict_t* globals;
-
-    scmval toplevel;
 
     scmval current_output_port;
     scmval current_error_port;

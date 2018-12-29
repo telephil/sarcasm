@@ -22,17 +22,13 @@ void load(const char* path, scmval env) {
 }
 
 static void set_features() {
-    short word = 0x0001;
-    char* b    = (char*)&word;
-    bool le    = (b[0] == 1);
+    int word  = 0x0001;
+    int le    = *((char*)&word);
 
-    features = 
-        cons(intern("r7rs"),
-          cons(intern(PLATFORM),
-            cons(intern(le ? "little-endian" : "big-endian"),
-              cons(intern(IMPLEMENTATION_NAME),
-                cons(intern(IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION),
-                  scm_null)))));
+    features = list(intern("r7rs"), intern("exact-closed"), intern("ieee-float"), intern("posix"),
+                    intern(OS), intern(ARCH), intern(le ? "little-endian" : "big-endian"),
+                    intern(IMPLEMENTATION_NAME), intern(IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION),
+                    scm_null);
 }
 
 static void set_commandline(int argc, char* argv[]) {
@@ -46,7 +42,7 @@ static void set_commandline(int argc, char* argv[]) {
 // STANDARD LIBRARY
 ////////////////////////////////////////////////////////////////////////////////
 static scmval scm_load(scmval filename, scmval env) {
-    opt_arg(env, scm_context.toplevel);
+    opt_arg(env, scm_interaction_environment());
     check_arg("load", string_c, filename);
     check_arg("load", env_c, env);
     load(c_str(filename), env);
@@ -118,7 +114,7 @@ static scmval scm_current_second() {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     // TAI is 37s ahead of UTC (thanks Wikipedia)
-    flonum res = 37.0 + ts.tv_sec + 0.000000001*ts.tv_nsec;
+    flonum res = 37 + ts.tv_sec + 0.000000001*ts.tv_nsec;
     return scm_flo(res);
 }
 
@@ -126,17 +122,17 @@ static scmval scm_features() {
     return features;
 }
 
-void init_system(int argc, char* argv[]) {
-    define("load",                       scm_load,           arity_or(1, 2));
-    define("file-exists?",               scm_file_exists_p,  arity_exactly(1));
-    define("delete-file",                scm_delete_file,    arity_exactly(1));
-    define("command-line",               scm_command_line,   arity_exactly(0));
-    define("exit",                       scm_exit,           arity_or(0, 1));
-    define("emergency-exit",             scm_emergency_exit, arity_or(0, 1));
-    define("current-second",             scm_current_second, arity_exactly(0));
-    define("features",                   scm_features,       arity_exactly(0));
-    define("get-environment-variable",   scm_getenv_var,     arity_exactly(1));
-    define("get-environment-variables",  scm_getenv_vars,    arity_exactly(0));
+void init_system(scmval env, int argc, char* argv[]) {
+    define(env, "load",                       scm_load,           arity_or(1, 2));
+    define(env, "file-exists?",               scm_file_exists_p,  arity_exactly(1));
+    define(env, "delete-file",                scm_delete_file,    arity_exactly(1));
+    define(env, "command-line",               scm_command_line,   arity_exactly(0));
+    define(env, "exit",                       scm_exit,           arity_or(0, 1));
+    define(env, "emergency-exit",             scm_emergency_exit, arity_or(0, 1));
+    define(env, "current-second",             scm_current_second, arity_exactly(0));
+    define(env, "features",                   scm_features,       arity_exactly(0));
+    define(env, "get-environment-variable",   scm_getenv_var,     arity_exactly(1));
+    define(env, "get-environment-variables",  scm_getenv_vars,    arity_exactly(0));
 
     set_features();
     set_commandline(argc, argv);

@@ -198,20 +198,20 @@ static scmval scm_vector_fill(scmval v, scmval fill, scmval start, scmval end) {
 }
 
 // initialization
-void init_vector() {
-    define("vector?",           scm_vector_p,           arity_exactly(1));
-    define("make-vector",       scm_make_vector,        arity_or(1, 2));
-    define("vector",            scm_vector,             arity_at_least(0));
-    define("vector-length",     scm_vector_length,      arity_exactly(1));
-    define("vector-ref",        scm_vector_ref,         arity_exactly(2));
-    define("vector-set!",       scm_vector_set,         arity_exactly(3));
-    define("vector->list",      scm_vector_to_list,     arity_between(1, 3));
-    define("list->vector",      scm_list_to_vector,     arity_exactly(1));
-    define("vector->string",    scm_vector_to_string,   arity_between(1, 3));
-    define("string->vector",    scm_string_to_vector,   arity_between(1, 3));
-    define("vector-copy",       scm_vector_copy,        arity_between(1, 3));
-    define("vector-copy!",      scm_vector_mcopy,       arity_between(1, 3));
-    define("vector-append",     scm_vector_append,      arity_at_least(2));
-    define("vector-fill!",      scm_vector_fill,        arity_between(2, 4));
+void init_vector(scmval env) {
+    define(env, "vector?",           scm_vector_p,           arity_exactly(1));
+    define(env, "make-vector",       scm_make_vector,        arity_or(1, 2));
+    define(env, "vector",            scm_vector,             arity_at_least(0));
+    define(env, "vector-length",     scm_vector_length,      arity_exactly(1));
+    define(env, "vector-ref",        scm_vector_ref,         arity_exactly(2));
+    define(env, "vector-set!",       scm_vector_set,         arity_exactly(3));
+    define(env, "vector->list",      scm_vector_to_list,     arity_between(1, 3));
+    define(env, "list->vector",      scm_list_to_vector,     arity_exactly(1));
+    define(env, "vector->string",    scm_vector_to_string,   arity_between(1, 3));
+    define(env, "string->vector",    scm_string_to_vector,   arity_between(1, 3));
+    define(env, "vector-copy",       scm_vector_copy,        arity_between(1, 3));
+    define(env, "vector-copy!",      scm_vector_mcopy,       arity_between(1, 3));
+    define(env, "vector-append",     scm_vector_append,      arity_at_least(2));
+    define(env, "vector-fill!",      scm_vector_fill,        arity_between(2, 4));
 }
 

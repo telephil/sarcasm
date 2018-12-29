@@ -1,3 +1,3 @@
 void load(const char*, scmval);
-void init_system(int argc, char* argv[]);
+void init_system(scmval, int argc, char* argv[]);
 

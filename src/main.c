@@ -10,32 +10,33 @@ static void repl();
 static void scm_init(int argc, char* argv[]) {
     GC_INIT();
 
-    init_context();
-    init_errors();
-    init_bool();
-    init_number();
-    init_char();
-    init_string();
-    init_symbol();
-    init_pair();
-    init_vector();
-    init_bytevector();
-    init_port();
-    init_syntax();
-    init_reader();
-    init_eval();
-    init_system(argc, argv);
-}
+    scmval env = make_env(scm_undef);
 
-static void scm_load_base() {
-    static const char* files[] = {
-        "./scheme/list.scm",
-        "./scheme/syntax.scm",
-        NULL
-    };
-    for(int i = 0; files[i] != NULL; i++) {
-        load(files[i], scm_context.toplevel);
-    }
+    init_context();
+    init_errors(env);
+    init_bool(env);
+    init_number(env);
+    init_char(env);
+    init_string(env);
+    init_symbol(env);
+    init_pair(env);
+    init_vector(env);
+    init_bytevector(env);
+    init_port(env);
+    init_syntax(env);
+    init_reader(env);
+    init_eval(env);
+    init_system(env, argc, argv);
+    init_library(env);
+    init_env(env);
+    // load scheme defined procedures / syntax
+    load("./lib/sarcasm/init.scm", env);
+    // create core library
+    scmval corelib = make_core_library(env);
+    // then create standard environments
+    post_init_env();
+
+    printf("; loaded library: %s\n", scm_to_cstr(library_name(corelib)));
 }
 
 static void default_error_handler(scmval err);
@@ -44,7 +45,6 @@ static void default_error_handler(scmval err);
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
     scm_init(argc, argv);
-    scm_load_base();
     printf("scm v0.1\n");
     repl();
     printf("Bye.\n");
@@ -85,7 +85,7 @@ static char** proc_name_completion_function(const char* text, int start, int end
 static void init_completion() {
     int     size;
     scmval* procs;
-    dict_keys(scm_context.globals, &size, &procs);
+    dict_keys(env_globals(scm_interaction_environment()), &size, &procs);
     proc_names = calloc(size+1, sizeof(char*));
     for(int i = 0; i < size; i++) {
         proc_names[i] = strdup(c_cstr(procs[i]));
@@ -96,10 +96,16 @@ static void init_completion() {
 
 static void default_error_handler(scmval err) {
     write(scm_current_error_port(), err, scm_mode_display);
-    fprintf(stderr, "\n");
+    write(scm_current_error_port(), make_char('\n'), scm_mode_display);
+}
+
+static void save_repl_history() {
+    char* path = get_history_filename();
+    write_history(path);
 }
 
 static void repl() {
+    atexit(save_repl_history);
     char* path = get_history_filename();
     char* line = NULL;
     scmval v;
@@ -109,12 +115,10 @@ static void repl() {
         line = readline("> ");
         if(!line)
             break;
-        if(*line == ',' && *(line+1) == 'q')
-            break;
         add_history(line);
         with_error_handler(default_error_handler) {
             v = read_from_string(line);
-            v = eval(v, scm_context.toplevel);
+            v = eval(v, scm_interaction_environment());
             if(!(is_undef(v) || is_void(v))) {
                 write(scm_current_output_port(), v, scm_mode_write | scm_mode_pp_quote);
                 scm_printf(scm_current_output_port(), "\n");

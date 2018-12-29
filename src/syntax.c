@@ -4,7 +4,7 @@ scmval scm_underscore;
 scmval scm_ellipsis;
 scmval syntax_error_type;
 
-void init_syntax() {
+void init_syntax(scmval env) {
     scm_underscore  = intern("_");
     scm_ellipsis    = intern("...");
     syntax_error_type = intern("syntax-error");

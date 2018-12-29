@@ -9,6 +9,7 @@ static scmval scm_lambda;
 static scmval scm_if;
 static scmval scm_set;
 static scmval scm_begin;
+static scmval scm_define_library;
 static scmval app_error_type;
 
 static void   list_to_args(scmval, int*, scmval**);
@@ -31,7 +32,7 @@ static scmval scm_void_subr(int argc, scmval *argv) {
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
-void init_eval() {
+void init_eval(scmval env) {
     scm_apply           = intern("apply");
     scm_define          = intern("define");
     scm_define_syntax   = intern("define-syntax");
@@ -40,9 +41,10 @@ void init_eval() {
     scm_set             = intern("set!");
     scm_lambda          = intern("lambda");
     scm_begin           = intern("begin");
+    scm_define_library  = intern("define-library");
     app_error_type      = intern("application-error");
 
-    define("void", scm_void_subr, arity_at_least(0));
+    define(env, "void", scm_void_subr, arity_at_least(0));
 }
 
 #define COND if(false) {}
@@ -64,6 +66,9 @@ loop:
     } else if(is_pair(v)) {
         scmval s = car(v);
         COND 
+        CASE(scm_define_library) {
+            r = define_library(cdr(v));
+        }
         CASE(scm_define) {
             r = stx_define(cdr(v), e);
         }
@@ -225,7 +230,7 @@ static void define_closure(scmval expr, scmval env) {
         }
     }
     scmval c = make_closure(scm_str(c_str(name)), ac, av, env, body);
-    dict_set(scm_context.globals, name, c);
+    set(env, name, c);
 }
 
 static void define_symbol(scmval expr, scmval e) {
@@ -233,7 +238,7 @@ static void define_symbol(scmval expr, scmval e) {
     if(len != 2) error(arity_error_type, "define expects 2 arguments but received %d", len);
     scmval name = car(expr);
     scmval body = eval(cadr(expr), e);
-    dict_set(scm_context.globals, name, body);
+    set(e, name, body);
     if(is_closure(body))
         set_closure_name(body, name);
 }
@@ -263,7 +268,7 @@ static scmval stx_define_syntax(scmval expr, scmval env) {
             error(syntax_error_type, "define-syntax: syntax rule should be a list with two elements but got %s", scm_to_cstr(car(rules)));
     }
     scmval syntax = make_syntax(name, cadr(rule_list), cddr(rule_list));
-    dict_set(scm_context.globals, name, syntax);
+    set(env, name, syntax);
     return scm_undef;
 }
 
@@ -274,7 +279,7 @@ static scmval stx_set(scmval expr, scmval env) {
         error(syntax_error_type, "set!: expected symbol but got %s", scm_to_cstr(car(expr)));
     if(is_undef(lookup(env, car(expr))))
         error(syntax_error_type, "set!: symbol %s is not defined", scm_to_cstr(car(expr)));
-    dict_set(scm_context.globals, car(expr), eval(cadr(expr), env));
+    set(env, car(expr), eval(cadr(expr), env));
     return scm_undef;
 }
 

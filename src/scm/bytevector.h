@@ -20,5 +20,5 @@ static inline bool is_byte(scmval v) { return is_fixnum(v) && c_fix(v) >= 0 && c
 define_contract(bytevector_c, "bytevector", is_bytevector);
 define_contract(byte_c, "byte", is_byte);
 // standard library
-void init_bytevector();
+void init_bytevector(scmval);
 

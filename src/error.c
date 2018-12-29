@@ -20,7 +20,7 @@ void raise(scmval e) {
 }
 
 // initialization
-void init_errors() {
+void init_errors(scmval env) {
     type_error_type  = intern("type-error");
     range_error_type = intern("range-error");
     arity_error_type = intern("arity-error");

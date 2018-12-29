@@ -88,6 +88,11 @@ void write(scmval p, scmval v, short flags) {
         case SCM_TYPE_PORT:
             scm_printf(p, "#<%sput-port:%s>", is_input_port(v) ? "in" : "out", port_name(v));
             break;
+        case SCM_TYPE_LIBRARY:
+            scm_puts(p, "#<library:");
+            write(p, library_name(v), flags);
+            scm_puts(p, ">");
+            break;
     }
 }
 

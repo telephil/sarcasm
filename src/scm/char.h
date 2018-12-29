@@ -7,4 +7,4 @@ define_contract(char_c, "character", is_char);
 // accessor
 static inline char c_char(scmval v) { return v.c; }
 // standard library
-void init_char();
+void init_char(scmval);
