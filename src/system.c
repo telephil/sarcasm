@@ -55,7 +55,7 @@ static scmval scm_load(scmval filename, scmval env) {
 // of read and write functions
 extern int access(const char*, int);
 
-static scmval scm_file_exists_p(scmval filename) {
+scmval scm_file_exists_p(scmval filename) {
     check_arg("file-exists?", string_c, filename);
     return scm_bool(access(c_str(filename), 0) != -1);
 }
