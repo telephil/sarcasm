@@ -2,8 +2,9 @@
 #include <readline/history.h>
 #include "scm.h"
 
-static void repl();
 static void default_error_handler(scmval err);
+static void repl();
+static void run(const char*);
 
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
@@ -42,10 +43,24 @@ static void scm_init(int argc, char* argv[]) {
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
     scm_init(argc, argv);
-    printf("scm v0.1\n");
-    repl();
-    printf("Bye.\n");
+    if(argc == 2) {
+        run(argv[1]);
+    } else {
+        printf("scm v0.1\n");
+        repl();
+        printf("Bye.\n");
+    }
     return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// R U N  P R O G R A M
+////////////////////////////////////////////////////////////////////////////////
+void run(const char* filename) {
+    scmval env = make_env(scm_undef);
+    with_error_handler(default_error_handler) {
+        load(filename, env);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
