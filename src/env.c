@@ -40,23 +40,23 @@ void bind(scmval e, scmval s, scmval v) {
     dict_set(env_bindings(e), s, v);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// STANDARD LIBRARY
-////////////////////////////////////////////////////////////////////////////////
-static inline void import_lib(scmval env, scmval lib) {
+void import(scmval name, scmval env) {
+    scmval lib = load_library(name, env);
+    if(is_undef(lib))
+        error(intern("error"), "library '%s' not found", scm_to_cstr(name));
     foreach(export, library_exports(lib)) {
         scmval value = dict_ref(library_symbols(lib), export);
         set(env, export, value);
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// STANDARD LIBRARY
+////////////////////////////////////////////////////////////////////////////////
 scmval scm_environment(int argc, scmval* argv) {
     scmval env = make_env(scm_undef);
     for(int i = 0; i < argc; i++) {
-        scmval lib = load_library(argv[i], env);
-        if(is_undef(lib))
-            error(intern("error"), "library '%s' not found", scm_to_cstr(argv[i]));
-        import_lib(env, lib);
+        import(argv[i], env);
     }
     return env;
 }

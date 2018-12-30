@@ -25,6 +25,7 @@ void define(scmval, const char*, subr_f, arity_t);
 scmval lookup(scmval, scmval);
 void set(scmval, scmval, scmval);
 void bind(scmval, scmval, scmval);
+void import(scmval, scmval);
 
 scmval scm_environment(int argc, scmval* argv);
 scmval scm_interaction_environment();
