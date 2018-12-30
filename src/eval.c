@@ -27,8 +27,13 @@ static scmval apply_subr(scmval, scmval, scmval);
 static scmval apply_closure(scmval, scmval, scmval);
 
 ////////////////////////////////////////////////////////////////////////////////
-//
+// STANDARD LIBRARY
 ////////////////////////////////////////////////////////////////////////////////
+static scmval scm_eval(scmval expr, scmval env) {
+    check_arg("eval", env_c, env);
+    return eval(expr, env);
+}
+
 static scmval scm_void_subr(int argc, scmval *argv) {
     return scm_void;
 }
@@ -51,6 +56,7 @@ void init_eval(scmval env) {
     scm_include         = intern("include");
     app_error_type      = intern("application-error");
 
+    define(env, "eval", scm_eval,      arity_exactly(2));
     define(env, "void", scm_void_subr, arity_at_least(0));
 }
 
