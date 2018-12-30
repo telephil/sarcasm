@@ -52,6 +52,8 @@ scmval load_library(scmval name, scmval env) {
     }
     scm_puts(p, ".scm");
     scmval s = scm_get_output_string(p);
+    if(is_false(scm_file_exists_p(s)))
+        error(intern("file-error"), "library %s not found", scm_to_cstr(name));
     lib = load(c_str(s), env);
     return lib;
 }
