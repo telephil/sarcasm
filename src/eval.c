@@ -19,6 +19,7 @@ static void   list_to_args(scmval, int*, scmval**);
 static scmval stx_define(scmval, scmval);
 static scmval stx_define_syntax(scmval, scmval);
 static scmval stx_define_library(scmval, scmval);
+static scmval stx_import(scmval, scmval);
 static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
@@ -97,6 +98,9 @@ loop:
         CASE(scm_if) {
             v = stx_if(cdr(v), e);
             goto loop;
+        }
+        CASE(scm_import) {
+            r = stx_import(cdr(v), e);
         }
         CASE(scm_quote) {
             r = cadr(v);
@@ -308,8 +312,8 @@ static scmval stx_define_library(scmval expr, scmval env) {
     }
     int argc = list_length(imports), i = 0;
     scmval* argv = scm_new_array(argc, scmval);
-    foreach(import, imports) {
-        argv[i++] = import;
+    foreach(name, imports) {
+        argv[i++] = name;
     }
     scmval libenv = scm_environment(argc, argv);
     foreach(expr, body) {
@@ -324,6 +328,12 @@ static scmval stx_define_library(scmval expr, scmval env) {
     return library;
 }
 
+static scmval stx_import(scmval expr, scmval env) {
+    foreach(name, expr) {
+        import(name, env);
+    }
+    return scm_undef;
+}
 
 static scmval stx_set(scmval expr, scmval env) {
     int len = list_length(expr);
