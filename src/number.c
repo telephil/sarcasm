@@ -145,6 +145,21 @@ static scmval scm_sub(int argc, scmval* argv) {
     return x;
 }
 
+static scmval scm_exact(scmval n) {
+    check_arg("exact", number_c, n);
+    if(is_fixnum(n))
+        return n;
+    return scm_fix((fixnum)c_flo(n));
+}
+
+static scmval scm_truncate(scmval n) {
+    check_arg("truncate", number_c, n);
+    if(is_fixnum(n))
+        return n;
+    flonum f = c_flo(n);
+    return scm_flo(trunc(f));
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
@@ -169,6 +184,8 @@ void init_number(scmval env) {
     define(env, "+",                 scm_add,                arity_at_least(0));
     define(env, "*",                 scm_mul,                arity_at_least(0));
     define(env, "-",                 scm_sub,                arity_at_least(1));
+    define(env, "exact",             scm_exact,              arity_exactly(1));
+    define(env, "truncate",          scm_truncate,           arity_exactly(1));
 
     scm_0       = scm_fix(0);
     scm_pos_inf = scm_flo(HUGE_VAL);
