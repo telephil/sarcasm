@@ -22,4 +22,5 @@ static inline fixnum c_fix(scmval v) { return v.i; }
 static inline flonum c_flo(scmval v) { return v.d; }
 // standard library
 void init_number();
+bool numeq(scmval x, scmval y);
 

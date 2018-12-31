@@ -39,7 +39,7 @@ static scmval scm_number_p(scmval x) {
 }
 
 static scmval scm_real_p(scmval x) {
-    return scm_bool(is_flonum(x));
+    return scm_bool(is_fixnum(x) || is_flonum(x));
 }
 
 static scmval scm_integer_p(scmval x) {
@@ -111,7 +111,7 @@ make_number_comparator("=",  scm_number_eq_p, ==)
 make_number_comparator("<",  scm_number_lt_p, <)
 make_number_comparator(">",  scm_number_gt_p, >)
 make_number_comparator("<=", scm_number_le_p, <=)
-make_number_comparator(">=", scm_number_ge_p, <=)
+make_number_comparator(">=", scm_number_ge_p, >=)
 
 #undef make_number_comparator
 
@@ -194,8 +194,12 @@ void init_number(scmval env) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// 2 args operators used for generalization
+// Helpers
 ////////////////////////////////////////////////////////////////////////////////
+bool numeq(scmval x, scmval y) {
+    return ncmp(x,y) == 0;
+}
+
 static int ncmp(scmval x, scmval y) {
     int res = 0;
     if(is_fixnum(x)) {
