@@ -5,8 +5,13 @@ LDFLAGS = `pkg-config --libs bdw-gc` -lcord -lreadline
 TARGET  = scm
 SOURCES = $(wildcard src/*.c)
 
-all:	$(SOURCES)
+all:	$(TARGET)
+	
+$(TARGET):	$(SOURCES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $(TARGET)
+
+test:	$(TARGET)
+	@./$(TARGET) ./tests/base.scm
 
 clean:
 	rm -f $(TARGET) 
