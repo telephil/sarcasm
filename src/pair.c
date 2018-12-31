@@ -76,6 +76,7 @@ static scmval scm_setcdr(scmval l, scmval v) {
 }
 
 static scmval scm_length(scmval l) {
+    if(is_null(l)) return scm_0; // FIXME
     check_arg("length", list_c, l);
     int i = 0;
     for(i = 0; !is_null(l); i++, l = cdr(l))
