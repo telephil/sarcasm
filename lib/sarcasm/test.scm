@@ -5,7 +5,7 @@
           (scheme write)
           (scheme time))
   (export
-    test-begin test-end test-exit is
+    test-begin test-end test-exit is is-q is-v is-true is-false
     %test-start %test-count %test-fail %do-test)
   (begin
     (define %test-start 0)
@@ -34,25 +34,46 @@
     (define (test-exit)
       (exit %test-fail))
 
-    (define (%do-test expr expected got)
+    (define (%do-test pred? expr expected got)
       (set! %test-count (+ 1 %test-count))
-      (if (equal? expected got)
+      (if (pred? expected got)
           (begin
             (display "[PASS] ")
-            (display expr)
+            (write expr)
             (newline))
           (begin
             (set! %test-fail (+ 1 %test-fail))
             (display "[FAIL] ")
-            (display expr)
+            (write expr)
             (display " => expected:")
-            (display expected)
+            (write expected)
             (display " - actual:")
-            (display got)
+            (write got)
             (newline))))
 
     (define-syntax is
       (syntax-rules ()
         ((_ expected expr)
-         (%do-test 'expr expected expr))))))
+         (%do-test equal? 'expr expected expr))))
+
+    (define-syntax is-v
+      (syntax-rules ()
+        ((_ expected expr)
+         (%do-test eqv? 'expr expected expr))))
+
+    (define-syntax is-q
+      (syntax-rules ()
+        ((_ expected expr)
+         (%do-test eq? 'expr expected expr))))
+    
+    (define-syntax is-true
+      (syntax-rules ()
+        ((_ expr)
+         (%do-test eq? 'expr #t expr))))
+
+    (define-syntax is-false
+      (syntax-rules ()
+        ((_ expr)
+         (%do-test eq? 'expr #f expr))))
+    ))
 
