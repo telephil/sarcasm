@@ -1,4 +1,7 @@
 (import (scheme base)
+        (scheme inexact)
+        (scheme process-context)
+        (scheme time)
         (scheme write)
         (sarcasm test))
 
