@@ -57,7 +57,7 @@ extern int access(const char*, int);
 
 scmval scm_file_exists_p(scmval filename) {
     check_arg("file-exists?", string_c, filename);
-    return scm_bool(access(c_str(filename), 0) != -1);
+    return scm_bool(access(c_cstr(filename), 0) != -1);
 }
 
 static scmval scm_delete_file(scmval filename) {
