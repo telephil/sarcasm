@@ -116,7 +116,7 @@ static void write_pair(scmval p, scmval v, short flags) {
     if(flags & scm_mode_pp_quote) {
         if(!is_null(v) && is_eq(car(v), scm_quote)) {
             scm_putc(p, '\'');
-            write_pair(p, cdr(v), flags);
+            write(p, cadr(v), flags);
             return;
         }
     }
