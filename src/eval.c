@@ -147,17 +147,16 @@ static scmval apply_subr(scmval subr, scmval arglist, scmval env) {
     list_to_args(arglist, &argc, &argv);
     check_arity(subr, argc);
     int new_argc = argc_from_arity(subr, argc);
+    scmval *new_argv = argv;
     if(new_argc > 0) {
-        scmval* new_argv = scm_new_array(new_argc, scmval);
+        new_argv = scm_new_array(new_argc, scmval);
         for(int i = 0; i < new_argc; i++) {
             new_argv[i] = (i < argc)
                 ? eval(argv[i], env)
                 : scm_undef;
         }
-        r = apply_funcall(subr, new_argc, new_argv);
-    } else {
-        r = funcall0(subr);
     }
+    r = apply_funcall(subr, new_argc, new_argv);
     return r;
 }
 
