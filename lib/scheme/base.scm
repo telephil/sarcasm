@@ -2,105 +2,197 @@
 (define-library (scheme base)
   (import (sarcasm core))
   (export
-    * + - < <= = > >=
+    *
+    +
+    -
+    ;/
+    <
+    <=
+    =
+    =>
+    >
+    >=
+    and
+    ;append
+    apply
+    ;assoc
+    ;assq
+    ;assv
     begin
+    ;binary-port?
+    ;boolean=?
     boolean?
-    bytevector bytevector-append bytevector-copy bytevector-copy!  bytevector-length
-    bytevector-u8-ref bytevector-u8-set!  bytevector?
-    car cdr
-    char->integer char-alphabetic?  char-ci<=?  char-ci<?  char-ci=?  char-ci>=?
-    char-ci>?  char-downcase char-lower-case?  char-numeric?  char-upcase
-    char-upper-case?  char-whitespace?  char<=?  char<?  char=?  char>=?
-    char>?  char?
+    bytevector
+    bytevector-append 
+    bytevector-copy
+    bytevector-copy!
+    bytevector-length
+    bytevector-u8-ref
+    bytevector-u8-set!
+    bytevector?
+    caar
+    cadr
+    ;call-with-current-continuation
+    ;call-with-port
+    call-with-values
+    call/cc
+    car
+    ;case
+    cdar
+    cddr
+    cdr
+    ;ceiling
+    char->integer
+    char-ready?
+    char<=?
+    char<?
+    char=?
+    char>=?
+    char>?
+    char?
     close-input-port
     close-output-port
-    command-line
+    close-port
+    ;complex?
+    ;cond
+    ;cond-expand
     cons
-    current-error-port
-    current-input-port
+    current-error-port current-input-port
     current-output-port
-    current-second
-    delete-file
-    digit-value
-    display
-    emergency-exit
+    define
+    ;define-record-type
+    define-syntax
+    ;define-values
+    ;denominator
+    ;do
+    ;dynamic-wind
+    ;else ???
+    ;eof-object ???
     eof-object?
     eq?
     equal?
     eqv?
+    ;error
+    ;error-object-irritants
+    ;error-object-message
+    ;error-object?
+    ;even?
+    exact
+    ;exact-integer-sqrt
     exact-integer?
     exact?
-    exact
-    truncate
-    exit
+    ;expt
     features
-    file-exists?
-    finite?
+    ;file-error?
+    ;floor
+    ;floor-quotient
+    ;floor-remainder
+    ;floor/
     flush-output-port
-    get-environment-variable
-    get-environment-variables
+    ;for-each
+    ;gcd
+    ;get-output-bytevector
     get-output-string
+    ;guard
+    if
+    ;include
+    ;include-ci
+    ;inexact
     inexact?
-    infinite?
+    input-port-open?
     input-port?
     integer->char
     integer?
+    lambda
+    ;lcm
     length
-    reverse
+    ;let
+    ;let*
+    ;let*-values
+    ;let-syntax
+    ;let-values
+    ;letrec
+    ;letrec*
+    ;letrec-syntax
     list
-    list-tail
-    list-ref
     list->string
     list->vector
+    list-copy
+    list-ref
+    ;list-set!
+    list-tail
     list?
-    load
     make-bytevector
     make-list
+    ;make-parameter
     make-string
     make-vector
+    ;map
+    ;max
     member
     memq
     memv
-    nan?
+    ;min
+    modulo
     negative?
     newline
     not
     null?
+    ;number->string
     number?
-    open-input-file
+    ;numerator
+    odd?
+    ;open-input-bytevector
     open-input-string
-    open-output-file
+    ;open-output-bytevector
     open-output-string
+    ;or
+    output-port-open?
     output-port?
     pair?
+    ;parameterize
     peek-char
-    port-open?
+    ;peek-u8
     port?
     positive?
+    procedure?
+    quasiquote
+    quote
+    quotient
+    ;raise
+    ;raise-continuable
+    ;rational?
+    ;rationalize
+    ;read-bytevector
+    ;read-bytevector!
     read-char
+    ;read-error?
     read-line
+    ;read-string
+    ;read-u8
     real?
+    remainder
+    reverse
+    ;round
+    set!
     set-car!
     set-cdr!
+    ;square
     string
     string->list
+    ;string->number
     string->symbol
     string->utf8
     string->vector
     string-append
-    string-ci<=?
-    string-ci<?
-    string-ci=?
-    string-ci>=?
-    string-ci>?
     string-copy
     string-copy!
-    string-downcase
     string-fill!
+    ;string-for-each
     string-length
+    ;string-map
     string-ref
     string-set!
-    string-upcase
     string<=?
     string<?
     string=?
@@ -111,7 +203,19 @@
     symbol->string
     symbol=?
     symbol?
-    utf8->string
+    ;syntax-error
+    syntax-rules
+    ;textual-port?
+    truncate
+    ;truncate-quotient
+    ;truncate-remainder
+    ;truncate/
+    ;u8-ready?
+    unless
+    unquote
+    unquote-splicing
+    ;utf8->string
+    ;values
     vector
     vector->list
     vector->string
@@ -119,13 +223,19 @@
     vector-copy
     vector-copy!
     vector-fill!
+    vector-for-each
     vector-length
+    vector-map
     vector-ref
     vector-set!
     vector?
-    void
-    write
+    when
+    ;with-exception-handler
+    ;write-bytevector
     write-char
-    zero?))
+    ;write-string
+    ;write-u8
+    zero?
+    ))
 
-        
+
