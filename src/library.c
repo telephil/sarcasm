@@ -33,17 +33,14 @@ scmval make_core_library(scmval env) {
 
 static scmval find_in_cache(scmval name) {
     foreach(lib, library_cache) {
-        if(is_equal(name, library_name(lib)))
+        if(is_equal(name, library_name(lib))) {
             return lib;
+        }
     }
     return scm_undef;
 }
 
-scmval load_library(scmval name, scmval env) {
-    scmval lib = find_in_cache(name);
-    if(!is_undef(lib))
-        return lib;
-
+static inline scmval library_to_filename(scmval name) {
     scmval p = scm_open_output_string();
     scm_printf(p, "./lib");
     foreach(elt, name) {
@@ -52,9 +49,17 @@ scmval load_library(scmval name, scmval env) {
     }
     scm_puts(p, ".scm");
     scmval s = scm_get_output_string(p);
-    if(is_false(scm_file_exists_p(s)))
+    return s;
+}
+
+scmval load_library(scmval name, scmval env) {
+    scmval lib = find_in_cache(name);
+    if(!is_undef(lib))
+        return lib;
+    scmval filename = library_to_filename(name);
+    if(is_false(scm_file_exists_p(filename)))
         error(intern("file-error"), "library %s not found", scm_to_cstr(name));
-    lib = load(c_str(s), env);
+    lib = load(c_str(filename), env);
     return lib;
 }
 

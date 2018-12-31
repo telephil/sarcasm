@@ -24,6 +24,7 @@ static inline scmval        env_next(scmval v) { return get_env(v)->next; }
 void define(scmval, const char*, subr_f, arity_t);
 scmval lookup(scmval, scmval);
 void set(scmval, scmval, scmval);
+bool update(scmval, scmval, scmval);
 void bind(scmval, scmval, scmval);
 void import(scmval, scmval);
 

@@ -23,18 +23,41 @@ scmval lookup(scmval e, scmval s) {
     scmval v;
     while(!is_undef(e)) {
         v = dict_ref(env_bindings(e), s);
-        if(!is_undef(v))
+        if(!is_undef(v)) {
             return v;
+        }
         if(is_undef(env_next(e)))
             break;
         e = env_next(e);
     }
-    return dict_ref(env_globals(e), s);
+    v = dict_ref(env_globals(e), s);
+    return v;
 }
 
 void set(scmval e, scmval s, scmval v) {
     dict_set(env_globals(e), s, v);
 }
+
+bool update(scmval e, scmval s, scmval v) {
+    scmval v0;
+    while(!is_undef(e)) {
+        v0 = dict_ref(env_bindings(e), s);
+        if(!is_undef(v0)) {
+            dict_set(env_bindings(e), s, v);
+            return true;
+        }
+        if(is_undef(env_next(e)))
+            break;
+        e = env_next(e);
+    }
+    v0 = dict_ref(env_globals(e), s);
+    if(!is_undef(v0)) {
+        dict_set(env_globals(e), s, v);
+        return true;
+    }
+    return false;
+}
+
 
 void bind(scmval e, scmval s, scmval v) {
     dict_set(env_bindings(e), s, v);

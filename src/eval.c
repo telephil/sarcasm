@@ -316,6 +316,7 @@ static scmval stx_define_library(scmval expr, scmval env) {
         argv[i++] = name;
     }
     scmval libenv = scm_environment(argc, argv);
+    get_env(libenv)->next = env; // XXX: is that the proper solution ?
     foreach(expr, body) {
         eval(expr, libenv);
     }
@@ -340,9 +341,8 @@ static scmval stx_set(scmval expr, scmval env) {
     if(len != 2) error(syntax_error_type, "invalid set! syntax");
     if(!is_symbol(car(expr)))
         error(syntax_error_type, "set!: expected symbol but got %s", scm_to_cstr(car(expr)));
-    if(is_undef(lookup(env, car(expr))))
+    if(!update(env, car(expr), eval(cadr(expr), env)))
         error(syntax_error_type, "set!: symbol %s is not defined", scm_to_cstr(car(expr)));
-    set(env, car(expr), eval(cadr(expr), env));
     return scm_undef;
 }
 
