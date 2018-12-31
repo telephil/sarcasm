@@ -46,7 +46,10 @@
     integer->char
     integer?
     length
+    reverse
     list
+    list-tail
+    list-ref
     list->string
     list->vector
     list?
@@ -55,6 +58,9 @@
     make-list
     make-string
     make-vector
+    member
+    memq
+    memv
     nan?
     negative?
     newline
