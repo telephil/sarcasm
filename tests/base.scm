@@ -74,7 +74,7 @@
 (is-true (boolean? #t))
 (is-false (boolean? 0))
 (is-false (boolean? '()))
-;! (is-true (boolean=? #t #t #t))
+(skip (is-true (boolean=? #t #t #t)))
 ;; Pairs and lists
 (is-true (pair? '(a . b)))
 (is-true (pair? '(a b c)))
@@ -88,10 +88,10 @@
 (is 'a (car '(a b c)))
 (is '(a) (car '((a) b c)))
 (is 1 (car '(1 . 2)))
-;! (is-error (car '())
+(skip (is-error (car '())))
 (is '(b c d) (cdr '((a) b c d)))
 (is 2 (cdr '(1 . 2)))
-;! (is-error (cdr '()))
+(skip (is-error (cdr '())))
 
 (test-end) 
 (test-exit)
