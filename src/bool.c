@@ -14,6 +14,8 @@ scmval make_bool(bool b) {
 
 // helpers
 bool is_eqv(scmval x, scmval y) {
+    if(is_number(x) && is_number(y))
+        return numeq(x,y);
     if(type_of(x) != type_of(y))
         return false;
     if(is_eq(x, y))
@@ -26,10 +28,10 @@ bool is_eqv(scmval x, scmval y) {
 }
 
 bool is_equal(scmval x, scmval y) {
-    if(type_of(x) != type_of(y))
-        return false;
     if(is_eqv(x, y))
         return true;
+    if(type_of(x) != type_of(y))
+        return false;
     if(is_pair(x)) {
         return is_equal(car(x), car(y)) && is_equal(cdr(x), cdr(y));
     } else if(is_vector(x)) {
