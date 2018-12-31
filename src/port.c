@@ -136,7 +136,7 @@ static scmval scm_read_line(scmval p) {
 static scmval scm_write(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("write", output_port_c, p);
-    write(p, v, scm_mode_write);
+    write(p, v, scm_mode_write | scm_mode_pp_quote);
     return scm_undef;
 }
 
@@ -150,7 +150,7 @@ static scmval scm_write_char(scmval v, scmval p) {
 static scmval scm_display(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("display", output_port_c, p);
-    write(p, v, scm_mode_display);
+    write(p, v, scm_mode_display | scm_mode_pp_quote);
     return scm_undef;
 }
 
