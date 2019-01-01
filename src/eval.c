@@ -260,9 +260,13 @@ static scmval stx_lambda(scmval expr, scmval env) {
 
 static scmval stx_let(scmval expr, scmval env) {
     int len = list_length(expr);
-    if(len < 2) error(syntax_error_type, "invalid let syntax");
-    scmval arglist = car(expr);
-    scmval body    = cdr(expr);
+    if(len < 2) error(syntax_error_type, "invalid let syntax: expected at least 2 arguments but received %d", len);
+    bool named = is_symbol(car(expr));
+    if(named && len < 3)
+        error(syntax_error_type, "invalid let syntax: expected at least 3 arguments but received %", len);
+    scmval name    = named ? car(expr) : scm_undef;
+    scmval arglist = named ? cadr(expr) : car(expr);
+    scmval body    = named ? cddr(expr) : cdr(expr);
     scmval vars    = scm_null;
     scmval vals    = scm_null;
     scmval tvars, pvars, tvals, pvals;
@@ -282,7 +286,14 @@ static scmval stx_let(scmval expr, scmval env) {
         }
     }
     scmval ldef = cons(scm_lambda, cons(vars, body)); // (lambda (vars...) body...)
-    scmval result = cons(ldef, vals); // (ldef values...)
+    scmval result = scm_undef;
+    if(named) {
+        scmval lrdef = list(scm_letrec, cons(cons(name, cons(ldef, scm_null)), scm_null), name, scm_null);
+        result = cons(lrdef, vals);
+    } else {
+        result = cons(ldef, vals); // (ldef values...)
+    }
+    dbg("E(let)", result);
     return result;
 }
 
