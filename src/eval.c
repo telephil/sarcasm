@@ -239,6 +239,36 @@ static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
     return scm_undef; // not reached
 }
 
+// Convert internal definitions to a letrec* form
+static inline scmval transform_internal_definitions(scmval body) {
+    bool   done = false;
+    scmval defs = scm_null, td;
+    scmval rest = scm_null, tr;
+    foreach(expr, body) {
+        if(is_list(expr) && is_eq(car(expr), scm_define)) {
+            if(done) error(syntax_error_type, "internal definitions must appear at the beginning of the body");
+            if(is_null(defs)) {
+                defs = td = cons(cdr(expr), scm_null);
+            } else {
+                setcdr(td, cons(cdr(expr), scm_null));
+                td = cdr(td);
+            }
+        } else {
+            done = true;
+            if(is_null(defs)) // no internal definitions found
+                return body;
+            if(is_null(rest)) {
+                rest = tr = cons(expr, scm_null);
+            } else {
+                setcdr(tr, cons(expr, scm_null));
+                tr = cdr(tr);
+            }
+        }
+    }
+    scmval result = cons(scm_letrec_star, cons(defs, rest));
+    return result;
+}
+
 static scmval stx_lambda(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2) error(arity_error_type, "lambda expects at least 2 arguments but received %d", len);
@@ -254,10 +284,21 @@ static scmval stx_lambda(scmval expr, scmval env) {
         av = scm_new_array(1, scmval);
         av[0] = arglist;
     }
-    scmval body = cdr(expr);
+    scmval body = transform_internal_definitions(cdr(expr));
+    dbg("E(body)", body);
     return make_closure(scm_undef, ac, av, env, body);
 }
 
+// (define-syntax let
+//   (syntax-rules ()
+//     ((let ((name val) ...) body1 body2 ...)
+//       ((lambda (name ...) body1 body2 ...)
+//         val ...))
+//     ((let tag ((name val) ...) body1 body2 ...)
+//       ((letrec ((tag (lambda (name ...)
+//                        body1 body2 ...)))
+//          tag)
+//       val ...))))
 static scmval stx_let(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2) error(syntax_error_type, "invalid let syntax: expected at least 2 arguments but received %d", len);
@@ -297,6 +338,14 @@ static scmval stx_let(scmval expr, scmval env) {
     return result;
 }
 
+// (define-syntax let*
+//   (syntax-rules ()
+//     ((let* () body1 body2 ...)
+//       (let () body1 body2 ...))
+//     ((let* ((name1 val1) (name2 val2) ...) body1 body2 ...)
+//      (let ((name1 val1))
+//        (let* ((name2 val2) ...)
+//          body1 body2 ...)))))
 static scmval stx_let_star(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2) error(syntax_error_type, "invalid let* syntax");
@@ -309,6 +358,14 @@ static scmval stx_let_star(scmval expr, scmval env) {
     scmval result = cons(scm_let, cons(cons(car(arglist), scm_null), cons(rest, scm_null)));
     return result;
 }
+
+// (define-syntax letrec*
+//   (syntax-rules ()
+//     ((letrec* ((var1 init1) ...) body1 body2 ...)
+//      (let ((var1 <undefined>) ...)
+//        (set! var1 init1)
+//        ...
+//        (let () body1 body2 ...)))))
 static scmval stx_letrec_star(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2) error(syntax_error_type, "invalid letrec* syntax");
