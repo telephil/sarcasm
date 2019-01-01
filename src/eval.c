@@ -6,6 +6,7 @@ static scmval scm_set;
 static scmval scm_define_syntax;
 static scmval scm_syntax_rules;
 static scmval scm_lambda;
+static scmval scm_case_lambda;
 static scmval scm_if;
 static scmval scm_set;
 static scmval scm_begin;
@@ -26,6 +27,7 @@ static scmval stx_import(scmval, scmval);
 static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
+static scmval stx_case_lambda(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
 static scmval stx_let(scmval, scmval);
 static scmval stx_let_star(scmval, scmval);
@@ -56,6 +58,7 @@ void init_eval(scmval env) {
     scm_if              = intern("if");
     scm_set             = intern("set!");
     scm_lambda          = intern("lambda");
+    scm_case_lambda     = intern("case-lambda");
     scm_begin           = intern("begin");
     scm_define_library  = intern("define-library");
     scm_import          = intern("import");
@@ -103,6 +106,10 @@ loop:
         }
         CASE(scm_lambda) {
             r = stx_lambda(cdr(v), e);
+        }
+        CASE(scm_case_lambda) {
+            v = stx_case_lambda(cdr(v), e);
+            goto loop;
         }
         CASE(scm_let) {
             v = stx_let(cdr(v), e);
@@ -285,8 +292,35 @@ static scmval stx_lambda(scmval expr, scmval env) {
         av[0] = arglist;
     }
     scmval body = transform_internal_definitions(cdr(expr));
-    dbg("E(body)", body);
     return make_closure(scm_undef, ac, av, env, body);
+}
+
+// PLAIN UGLY C MACRO EXPANSION :(
+static scmval stx_case_lambda(scmval expr, scmval env) {
+    if(is_null(expr)) error(syntax_error_type, "invalid case-lambda syntax");
+    // transform all clauses to if / apply
+    int len = list_length(expr);
+    scmval* transformed = scm_new_array(len+1, scmval);
+    int i = 0;
+    foreach(clause, expr) {
+        scmval p = list(scm_if,
+                        list(intern("="), intern("len"), scm_fix(list_length(car(clause))), scm_null),
+                        list(scm_apply, cons(scm_lambda, clause), intern("args"), scm_null),
+                        scm_null);
+        transformed[i++] = p;
+    }
+    transformed[i] = list(intern("error"), scm_str("no matching clause"), scm_null);
+    scmval body = cons(transformed[0], scm_null);
+    for(int i = 0; i < len; i++) {
+        setcdr(cddr(transformed[i]), cons(transformed[i+1], scm_null));
+    }
+    scmval result =
+        list(scm_lambda, intern("args"),
+             cons(scm_let,
+                  cons(cons(list(intern("len"), list(intern("length"), intern("args"), scm_null), scm_null), scm_null),
+                       body)),
+             scm_null);
+    return result;
 }
 
 // (define-syntax let
@@ -334,7 +368,6 @@ static scmval stx_let(scmval expr, scmval env) {
     } else {
         result = cons(ldef, vals); // (ldef values...)
     }
-    dbg("E(let)", result);
     return result;
 }
 
@@ -391,7 +424,6 @@ static scmval stx_letrec_star(scmval expr, scmval env) {
     }
     setcdr(tvals, cons(body, scm_null));
     scmval result = cons(scm_let, cons(vars, vals)); // (let (vars...) vals... (let () body...))
-    dbg("E(letrec*)", result);
     return result;
 }
 
