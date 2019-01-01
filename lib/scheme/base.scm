@@ -106,8 +106,8 @@
     lambda
     ;lcm
     length
-    ;let
-    ;let*
+    let
+    let*
     ;let*-values
     ;let-syntax
     ;let-values
@@ -146,7 +146,7 @@
     open-input-string
     ;open-output-bytevector
     open-output-string
-    ;or
+    or
     output-port-open?
     output-port?
     pair?
