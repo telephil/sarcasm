@@ -13,7 +13,10 @@ static scmval scm_define_library;
 static scmval scm_import;
 static scmval scm_export;
 static scmval scm_include;
-static scmval app_error_type;
+static scmval scm_let;
+static scmval scm_let_star;
+static scmval scm_letrec;
+static scmval scm_letrec_star;
 
 static void   list_to_args(scmval, int*, scmval**);
 static scmval stx_define(scmval, scmval);
@@ -24,6 +27,8 @@ static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
+static scmval stx_let(scmval, scmval);
+static scmval stx_let_star(scmval, scmval);
 static scmval apply_subr(scmval, scmval, scmval);
 static scmval apply_closure(scmval, scmval, scmval);
 
@@ -55,7 +60,10 @@ void init_eval(scmval env) {
     scm_import          = intern("import");
     scm_export          = intern("export");
     scm_include         = intern("include");
-    app_error_type      = intern("application-error");
+    scm_let             = intern("let");
+    scm_let_star        = intern("let*");
+    scm_letrec          = intern("letrec");
+    scm_letrec_star     = intern("letrec*");
 
     define(env, "eval", scm_eval,      arity_exactly(2));
     define(env, "void", scm_void_subr, arity_at_least(0));
@@ -94,6 +102,14 @@ loop:
         }
         CASE(scm_lambda) {
             r = stx_lambda(cdr(v), e);
+        }
+        CASE(scm_let) {
+            v = stx_let(cdr(v), e);
+            goto loop;
+        }
+        CASE(scm_let_star) {
+            v = stx_let_star(cdr(v), e);
+            goto loop;
         }
         CASE(scm_if) {
             v = stx_if(cdr(v), e);
@@ -227,6 +243,47 @@ static scmval stx_lambda(scmval expr, scmval env) {
     }
     scmval body = cdr(expr);
     return make_closure(scm_undef, ac, av, env, body);
+}
+
+static scmval stx_let(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2) error(syntax_error_type, "invalid let syntax");
+    scmval arglist = car(expr);
+    scmval body    = cdr(expr);
+    scmval vars    = scm_null;
+    scmval vals    = scm_null;
+    scmval tvars, pvars, tvals, pvals;
+    foreach(arg, arglist) {
+        if(!is_list(arg))
+            error(syntax_error_type, "invalid let syntax: expected a list but received %s", scm_to_cstr(arg));
+        pvars = cons(car(arg), scm_null);
+        pvals = cons(cadr(arg), scm_null);
+        if(is_null(vars)) {
+            vars = tvars = pvars;
+            vals = tvals = pvals;
+        } else {
+            setcdr(tvars, pvars);
+            tvars = pvars;
+            setcdr(tvals, pvals);
+            tvals = pvals;
+        }
+    }
+    scmval ldef = cons(scm_lambda, cons(vars, body)); // (lambda (vars...) body...)
+    scmval result = cons(ldef, vals); // (ldef values...)
+    return result;
+}
+
+static scmval stx_let_star(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2) error(syntax_error_type, "invalid let* syntax");
+    scmval arglist = car(expr);
+    scmval body    = cdr(expr);
+    if(is_null(arglist))
+        return stx_let(expr, env);
+
+    scmval rest   = cons(scm_let_star, cons(cdr(arglist), body));
+    scmval result = cons(scm_let, cons(cons(car(arglist), scm_null), cons(rest, scm_null)));
+    return result;
 }
 
 static void define_closure(scmval expr, scmval env) {
