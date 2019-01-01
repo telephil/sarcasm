@@ -29,6 +29,7 @@ static scmval stx_lambda(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
 static scmval stx_let(scmval, scmval);
 static scmval stx_let_star(scmval, scmval);
+static scmval stx_letrec_star(scmval, scmval);
 static scmval apply_subr(scmval, scmval, scmval);
 static scmval apply_closure(scmval, scmval, scmval);
 
@@ -109,6 +110,18 @@ loop:
         }
         CASE(scm_let_star) {
             v = stx_let_star(cdr(v), e);
+            goto loop;
+        }
+        CASE(scm_let_star) {
+            v = stx_letrec_star(cdr(v), e);
+            goto loop;
+        }
+        CASE(scm_letrec) {
+            v = stx_letrec_star(cdr(v), e);
+            goto loop;
+        }
+        CASE(scm_letrec_star) {
+            v = stx_letrec_star(cdr(v), e);
             goto loop;
         }
         CASE(scm_if) {
@@ -285,6 +298,35 @@ static scmval stx_let_star(scmval expr, scmval env) {
     scmval result = cons(scm_let, cons(cons(car(arglist), scm_null), cons(rest, scm_null)));
     return result;
 }
+static scmval stx_letrec_star(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2) error(syntax_error_type, "invalid letrec* syntax");
+    scmval arglist = car(expr);
+    scmval body    = cons(scm_let, cons(scm_null, cdr(expr)));
+    scmval vars    = scm_null;
+    scmval vals    = scm_null;
+    scmval tvars, pvars, tvals, pvals;
+    foreach(arg, arglist) {
+        if(!is_list(arg))
+            error(syntax_error_type, "invalid letrec* syntax: expected a list but received %s", scm_to_cstr(arg));
+        pvars = cons(list(car(arg), scm_void, scm_null), scm_null);    // ((var1 #undefined)...)
+        pvals = cons(list(scm_set, car(arg), cadr(arg), scm_null), scm_null); // (set! var1 val1)...
+        if(is_null(vars)) {
+            vars = tvars = pvars;
+            vals = tvals = pvals;
+        } else {
+            setcdr(tvars, pvars);
+            tvars = pvars;
+            setcdr(tvals, pvals);
+            tvals = pvals;
+        }
+    }
+    setcdr(tvals, cons(body, scm_null));
+    scmval result = cons(scm_let, cons(vars, vals)); // (let (vars...) vals... (let () body...))
+    dbg("E(letrec*)", result);
+    return result;
+}
+
 
 static void define_closure(scmval expr, scmval env) {
     int len = list_length(expr);
