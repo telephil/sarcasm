@@ -35,6 +35,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; LIST OPERATIONS
+(define (caar lst) (car (car lst)))
+(define (cadr lst) (car (cdr lst)))
+(define (cdar lst) (cdr (car lst)))
+(define (cddr lst) (cdr (cdr lst)))
+
 (define (list-ref lst k)
   (if (zero? k)
       (car lst)
@@ -68,26 +73,39 @@
           (last-pair (cdr lst)))))
 
 (define member
-  (lambda (obj lst)
-    (if (null? lst)
-        #f
-        (if (equal? obj (car lst))
-            lst
-            (member obj (cdr lst))))))
+  (case-lambda
+    ((obj lst pred?)
+     (if (null? lst)
+         #f
+         (if (pred? obj (car lst))
+             lst
+             (member obj (cdr lst) pred?))))
+    ((obj lst)
+     (member obj lst equal?))))
 
 (define memq
   (lambda (obj lst)
-    (if (null? lst)
-        #f
-        (if (eq? obj (car lst))
-            lst
-            (memq obj (cdr lst))))))
+    (member obj lst eq?)))
 
 (define memv
   (lambda (obj lst)
-    (if (null? lst)
-        #f
-        (if (eqv? obj (car lst))
-            lst
-            (memq obj (cdr lst))))))
+    (member obj lst eqv?)))
 
+(define assoc
+  (case-lambda
+    ((obj alist) (assoc obj alist equal?))
+    ((obj alist pred?)
+     (if (null? alist)
+         #f
+         (if (pred? obj (caar alist))
+             (car alist)
+             (assoc obj (cdr alist) pred?))))))
+
+
+(define assq
+  (lambda (obj alist)
+    (assoc obj alist eq?)))
+
+(define assv
+  (lambda (obj alist)
+    (assoc obj alist eqv?)))
