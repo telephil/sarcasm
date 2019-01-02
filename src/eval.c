@@ -268,7 +268,7 @@ static inline scmval transform_internal_definitions(scmval body) {
             }
         }
     }
-    scmval result = cons(scm_letrec_star, cons(defs, rest));
+    scmval result = cons(cons(scm_letrec_star, cons(defs, rest)), scm_null);
     return result;
 }
 
@@ -423,7 +423,7 @@ static scmval stx_letrec_star(scmval expr, scmval env) {
     return result;
 }
 
-
+// FIXME duplicate stx_lambda
 static void define_closure(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2) error(arity_error_type, "define expects at least 2 arguments but received %d", len);
@@ -440,6 +440,7 @@ static void define_closure(scmval expr, scmval env) {
             av[i++] = car(l);
         }
     }
+    body = transform_internal_definitions(body);
     scmval c = make_closure(scm_str(c_str(name)), ac, av, env, body);
     set(env, name, c);
 }
