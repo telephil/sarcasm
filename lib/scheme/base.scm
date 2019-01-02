@@ -15,9 +15,9 @@
     and
     ;append
     apply
-    ;assoc
-    ;assq
-    ;assv
+    assoc
+    assq
+    assv
     begin
     ;binary-port?
     ;boolean=?
@@ -67,7 +67,7 @@
     ;do
     ;dynamic-wind
     ;else ???
-    ;eof-object ???
+    eof-object
     eof-object?
     eq?
     equal?
