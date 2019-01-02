@@ -15,6 +15,7 @@ static int ncmp(scmval, scmval);
 static scmval nadd(scmval, scmval);
 static scmval nmul(scmval, scmval);
 static scmval nsub(scmval, scmval);
+static scmval ndiv(scmval, scmval);
 
 ////////////////////////////////////////////////////////////////////////////////
 // constructors
@@ -70,6 +71,27 @@ static scmval scm_nan_p(scmval x) {
     return scm_bool(is_nan(x));
 }
 
+#define make_number_comparator(NAME, CNAME, PRED)           \
+    static inline scmval CNAME(int argc, scmval* argv) {    \
+        check_args(NAME, number_c, argc, argv);             \
+        scmval x, y;                                        \
+        x = argv[0];                                        \
+        for(int i = 1; i < argc; i++) {                     \
+            y = argv[i];                                    \
+            if(!(ncmp(x, y) PRED 0)) return scm_false;      \
+            x = y;                                          \
+        }                                                   \
+        return scm_true;                                    \
+    }
+
+make_number_comparator("=",  scm_number_eq_p, ==)
+make_number_comparator("<",  scm_number_lt_p, <)
+make_number_comparator(">",  scm_number_gt_p, >)
+make_number_comparator("<=", scm_number_le_p, <=)
+make_number_comparator(">=", scm_number_ge_p, >=)
+
+#undef make_number_comparator
+
 static scmval scm_zero_p(scmval x) {
     check_arg("zero?", number_c, x);
     if(is_pos_inf(x))       return scm_false;
@@ -94,26 +116,37 @@ static scmval scm_negative_p(scmval x) {
     return scm_bool((is_fixnum(x) && c_fix(x) < 0) || (is_flonum(x) && c_flo(x) < 0.0));
 }
 
-#define make_number_comparator(NAME, CNAME, PRED)           \
-    static inline scmval CNAME(int argc, scmval* argv) {    \
-        check_args(NAME, number_c, argc, argv);             \
-        scmval x, y;                                        \
-        x = argv[0];                                        \
-        for(int i = 1; i < argc; i++) {                     \
-            y = argv[i];                                    \
-            if(!(ncmp(x, y) PRED 0)) return scm_false;      \
-            x = y;                                          \
-        }                                                   \
-        return scm_true;                                    \
+static scmval scm_odd_p(scmval x) {
+    check_arg("odd?", number_c, x);
+    if(!is_fixnum(x))
+        return scm_true;
+    return scm_bool(c_fix(x) & 1);
+}
+
+static scmval scm_even_p(scmval x) {
+    check_arg("even?", number_c, x);
+    return scm_not(scm_odd_p(x));
+}
+
+static scmval scm_max(int argc, scmval* argv) {
+    check_args("max", number_c, argc, argv);
+    scmval m = argv[0];
+    for(int i = 1; i < argc; i++) {
+        if(ncmp(m, argv[i]) < 0)
+            m = argv[i];
     }
+    return m;
+}
 
-make_number_comparator("=",  scm_number_eq_p, ==)
-make_number_comparator("<",  scm_number_lt_p, <)
-make_number_comparator(">",  scm_number_gt_p, >)
-make_number_comparator("<=", scm_number_le_p, <=)
-make_number_comparator(">=", scm_number_ge_p, >=)
-
-#undef make_number_comparator
+static scmval scm_min(int argc, scmval* argv) {
+    check_args("min", number_c, argc, argv);
+    scmval m = argv[0];
+    for(int i = 1; i < argc; i++) {
+        if(ncmp(m, argv[i]) > 0)
+            m = argv[i];
+    }
+    return m;
+}
 
 static scmval scm_add(int argc, scmval* argv) {
     if(argc == 0) return scm_0;
@@ -141,6 +174,16 @@ static scmval scm_sub(int argc, scmval* argv) {
     scmval x = argv[0];
     for(int i = 1; i < argc; i++) {
         x = nsub(x, argv[i]);
+    }
+    return x;
+}
+
+static scmval scm_div(int argc, scmval* argv) {
+    check_args("/", number_c, argc, argv);
+    if(argc == 1) return ndiv(scm_fix(1), argv[0]);
+    scmval x = argv[0];
+    for(int i = 1; i < argc; i++) {
+        x = ndiv(x, argv[i]);
     }
     return x;
 }
@@ -176,6 +219,10 @@ void init_number(scmval env) {
     define(env, "zero?",             scm_zero_p,             arity_exactly(1));
     define(env, "positive?",         scm_positive_p,         arity_exactly(1));
     define(env, "negative?",         scm_negative_p,         arity_exactly(1));
+    define(env, "odd?",              scm_odd_p,              arity_exactly(1));
+    define(env, "even?",             scm_even_p,             arity_exactly(1));
+    define(env, "max",               scm_max,                arity_at_least(2));
+    define(env, "min",               scm_min,                arity_at_least(2));
     define(env, "=",                 scm_number_eq_p,        arity_at_least(2));
     define(env, "<",                 scm_number_lt_p,        arity_at_least(2));
     define(env, ">",                 scm_number_gt_p,        arity_at_least(2));
@@ -184,6 +231,7 @@ void init_number(scmval env) {
     define(env, "+",                 scm_add,                arity_at_least(0));
     define(env, "*",                 scm_mul,                arity_at_least(0));
     define(env, "-",                 scm_sub,                arity_at_least(1));
+    define(env, "/",                 scm_div,                arity_at_least(1));
     define(env, "exact",             scm_exact,              arity_exactly(1));
     define(env, "truncate",          scm_truncate,           arity_exactly(1));
 
@@ -277,6 +325,24 @@ static scmval nsub(scmval x, scmval y) {
             r = scm_flo(c_flo(x) - c_fix(y));
         } else if(is_flonum(y)) {
             r = scm_flo(c_flo(x) - c_flo(y));
+        }
+    }
+    return r;
+}
+
+static scmval ndiv(scmval x, scmval y) {
+    scmval r = scm_fix(1);
+    if(is_fixnum(x)) {
+        if(is_fixnum(y)) {
+            r = scm_fix(c_fix(x) / c_fix(y));
+        } else if(is_flonum(y)) {
+            r = scm_flo(c_fix(x) / c_flo(y));
+        }
+    } else if(is_flonum(x)) {
+        if(is_fixnum(y)) {
+            r = scm_flo(c_flo(x) / c_fix(y));
+        } else if(is_flonum(y)) {
+            r = scm_flo(c_flo(x) / c_flo(y));
         }
     }
     return r;

@@ -5,7 +5,7 @@
     *
     +
     -
-    ;/
+    /
     <
     <=
     =
@@ -20,7 +20,7 @@
     assv
     begin
     ;binary-port?
-    ;boolean=?
+    boolean=?
     boolean?
     bytevector
     bytevector-append 
@@ -76,7 +76,7 @@
     ;error-object-irritants
     ;error-object-message
     ;error-object?
-    ;even?
+    even?
     exact
     ;exact-integer-sqrt
     exact-integer?
@@ -128,11 +128,11 @@
     make-string
     make-vector
     ;map
-    ;max
+    max
     member
     memq
     memv
-    ;min
+    min
     modulo
     negative?
     newline

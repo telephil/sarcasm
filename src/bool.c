@@ -59,7 +59,7 @@ static scmval scm_boolean_p(scmval v) {
     return scm_bool(is_bool(v));
 }
 
-static scmval scm_not(scmval v) {
+scmval scm_not(scmval v) {
     return scm_bool(is_false(v));
 }
 
@@ -75,6 +75,15 @@ static scmval scm_equal(scmval x, scmval y) {
     return scm_bool(is_equal(x, y));
 }
 
+static scmval scm_boolean_equal_p(int argc, scmval* argv) {
+    check_args("boolean=?", bool_c, argc, argv);
+    for(int i = 1; i < argc; i++) {
+        if(!is_eq(argv[0], argv[i]))
+            return scm_false;
+    }
+    return scm_true;
+}
+
 // initialization
 void init_bool(scmval env) {
     scm_true  = make_bool(true);
@@ -82,6 +91,7 @@ void init_bool(scmval env) {
 
     define(env, "boolean?", scm_boolean_p, arity_exactly(1));
     define(env, "not", scm_not, arity_exactly(1));
+    define(env, "boolean=?", scm_boolean_equal_p, arity_at_least(2));
     define(env, "eq?", scm_eq, arity_exactly(2));
     define(env, "eqv?", scm_eqv, arity_exactly(2));
     define(env, "equal?", scm_equal, arity_exactly(2));
