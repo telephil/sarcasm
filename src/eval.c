@@ -119,10 +119,6 @@ loop:
             v = stx_let_star(cdr(v), e);
             goto loop;
         }
-        CASE(scm_let_star) {
-            v = stx_letrec_star(cdr(v), e);
-            goto loop;
-        }
         CASE(scm_letrec) {
             v = stx_letrec_star(cdr(v), e);
             goto loop;
