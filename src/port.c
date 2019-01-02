@@ -184,6 +184,12 @@ static scmval scm_flush_output_port(scmval p) {
     return scm_undef;
 }
 
+static scmval scm_close_port(scmval p) {
+    check_arg("close-port", port_c, p);
+    port_close(p);
+    return scm_undef;
+}
+
 void init_port(scmval env) {
     scm_eof   = make_val(SCM_TYPE_EOF);
 
@@ -207,6 +213,7 @@ void init_port(scmval env) {
     define(env, "get-output-string", scm_get_output_string, arity_exactly(1));
     define(env, "open-output-file", scm_open_output_file, arity_exactly(1));
     define(env, "close-output-port", scm_close_output_port, arity_exactly(1));
+    define(env, "close-port", scm_close_port, arity_exactly(1));
     define(env, "char-ready?", scm_char_ready_p, arity_or(0, 1));
     define(env, "read",      scm_read,      arity_or(0, 1));
     define(env, "read-char", scm_read_char, arity_exactly(1));
