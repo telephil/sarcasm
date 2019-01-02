@@ -147,7 +147,18 @@ loop:
             error(syntax_error_type, "unquote-splicing: not in quasiquote");
         }
         CASE(scm_apply) {
-            v = cons(cadr(v), eval(caddr(v), e));
+            scmval args = eval(caddr(v), e);
+            scmval head = scm_null, tail;
+            foreach(arg, args) {
+                if(is_null(head)) {
+                    head = tail = cons(cons(scm_quote, cons(arg, scm_null)), scm_null);
+                } else {
+                    setcdr(tail, cons(cons(scm_quote, cons(arg, scm_null)), scm_null));
+                    tail = cdr(tail);
+                }
+            }
+            v = cons(cadr(v), head);
+            //v = cons(cadr(v), eval(caddr(v), e));
             goto loop;
         }
         DEFAULT {
