@@ -1,4 +1,6 @@
 (import (scheme base)
+        (scheme char)
+        (scheme cxr)
         (scheme inexact)
         (scheme process-context)
         (scheme time)
@@ -121,8 +123,16 @@
 (is-false (memq 'd '(a b c)))
 (is-false (memq (list 'a) '(b (a) c)))
 (is '((a) c) (member (list 'a) '(b (a) c)))
-(skip (is '("b" "c") (member "B" '("a" "b" "c" string-ci=?))))
+(is '("b" "c") (member "B" '("a" "b" "c") string-ci=?))
 (is '(101 102) (memv 101 '(100 101 102)))
+(define e '((a 1) (b 2) (c 3)))
+(is '(a 1) (assq 'a e))
+(is '(b 2) (assq 'b e))
+(is-false (assq 'd e))
+(is-false (assq (list 'a) '(((a)) ((b)) ((c)))))
+(is '((a)) (assoc (list 'a) '(((a)) ((b)) ((c)))))
+(is '(2 4) (assoc 2.0 '((1 1) (2 4) (3 9))))
+(is '(5 7) (assoc 5 '((2 3) (5 7) (11 13))))
 ;; Symbols
 (is-true (symbol? 'foo))
 (is-true (symbol? (car '(a b))))
@@ -133,4 +143,5 @@
 
 (test-end) 
 (test-exit)
+
 
