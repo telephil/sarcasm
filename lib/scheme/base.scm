@@ -33,7 +33,7 @@
     caar
     cadr
     ;call-with-current-continuation
-    ;call-with-port
+    call-with-port
     call-with-values
     call/cc
     car
