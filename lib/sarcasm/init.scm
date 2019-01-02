@@ -4,6 +4,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SYNTAX
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-syntax begin
   (syntax-rules ()
     ((begin) (void))
@@ -35,6 +36,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; LIST OPERATIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define (caar lst) (car (car lst)))
 (define (cadr lst) (car (cdr lst)))
 (define (cdar lst) (cdr (car lst)))
@@ -101,7 +103,6 @@
              (car alist)
              (assoc obj (cdr alist) pred?))))))
 
-
 (define assq
   (lambda (obj alist)
     (assoc obj alist eq?)))
@@ -109,3 +110,20 @@
 (define assv
   (lambda (obj alist)
     (assoc obj alist eqv?)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PORT OPERATIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (call-with-port port proc)
+  (define result (proc port))
+  (close-port port)
+  result)
+
+(define (call-with-input-file filename proc)
+  (define port (open-input-file filename))
+  (call-with-port port proc))
+
+(define (call-with-output-file filename proc)
+  (define port (open-output-file filename))
+  (call-with-port port proc))
+
