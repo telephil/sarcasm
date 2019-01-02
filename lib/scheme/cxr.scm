@@ -35,5 +35,6 @@
     (define (cdaddr lst) (cdr (car (cdr (cdr lst)))))
     (define (cddadr lst) (cdr (cdr (car (cdr lst)))))
     (define (cdddar lst) (cdr (cdr (cdr (car lst)))))
-    (define (cddddr lst) (cdr (cdr (cdr (cdr lst))))))
+    (define (cddddr lst) (cdr (cdr (cdr (cdr lst)))))))
+
 
