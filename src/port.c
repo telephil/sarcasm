@@ -49,6 +49,10 @@ static scmval scm_port_open_p(scmval v) {
     return scm_bool(is_port_open(v));
 }
 
+static scmval scm_eof_object() {
+    return scm_eof;
+}
+
 static scmval scm_current_input_port() {
     return scm_g_current_input_port;
 }
@@ -96,6 +100,18 @@ static scmval scm_close_output_port(scmval p) {
     check_arg("close-output-port", output_port_c, p);
     port_close(p);
     return scm_undef;
+}
+
+static scmval scm_char_ready_p(scmval p) {
+    opt_arg(p, scm_current_input_port());
+    check_arg("char-ready?", input_port_c, p);
+    return port_ready(p);
+}
+
+static scmval scm_read(scmval p) {
+    opt_arg(p, scm_current_input_port());
+    check_arg("read", input_port_c, p);
+    return read(p);
 }
 
 static scmval scm_read_char(scmval p) {
@@ -179,6 +195,7 @@ void init_port(scmval env) {
     define(env, "input-port?", scm_input_port_p, arity_exactly(1));
     define(env, "output-port?", scm_output_port_p, arity_exactly(1));
     define(env, "eof-object?", scm_eof_p, arity_exactly(1));
+    define(env, "eof-object", scm_eof_object, arity_exactly(0));
     define(env, "port-open?", scm_port_open_p, arity_exactly(1));
     define(env, "current-input-port", scm_current_input_port, arity_exactly(0));
     define(env, "current-output-port", scm_current_output_port, arity_exactly(0));
@@ -190,6 +207,8 @@ void init_port(scmval env) {
     define(env, "get-output-string", scm_get_output_string, arity_exactly(1));
     define(env, "open-output-file", scm_open_output_file, arity_exactly(1));
     define(env, "close-output-port", scm_close_output_port, arity_exactly(1));
+    define(env, "char-ready?", scm_char_ready_p, arity_or(0, 1));
+    define(env, "read",      scm_read,      arity_or(0, 1));
     define(env, "read-char", scm_read_char, arity_exactly(1));
     define(env, "peek-char", scm_peek_char, arity_exactly(1));
     define(env, "read-line", scm_read_line, arity_exactly(1));
