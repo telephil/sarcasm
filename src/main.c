@@ -1,8 +1,10 @@
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <time.h>
 #include "scm.h"
 
 static void default_error_handler(scmval err);
+static void fatal_error_handler(scmval err);
 static void repl();
 static void run(const char*);
 
@@ -31,7 +33,9 @@ static void scm_init(int argc, char* argv[]) {
     init_library(env);
     init_env(env);
     // load scheme defined procedures / syntax
-    load("./lib/sarcasm/init.scm", env);
+    with_error_handler(fatal_error_handler) {
+        load("./lib/sarcasm/init.scm", env);
+    }
     // create core library
     make_core_library(env);
     // then create standard environments
@@ -61,6 +65,19 @@ void run(const char* filename) {
     with_error_handler(default_error_handler) {
         load(filename, env);
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// E R R O R  H A N D L E R S
+////////////////////////////////////////////////////////////////////////////////
+static void default_error_handler(scmval err) {
+    write(scm_current_error_port(), err, scm_mode_display);
+    write(scm_current_error_port(), make_char('\n'), scm_mode_display);
+}
+
+static void fatal_error_handler(scmval err) {
+    default_error_handler(err);
+    exit(1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,11 +121,6 @@ static void init_completion() {
     }
     proc_names[size] = NULL;
     rl_attempted_completion_function = proc_name_completion_function;
-}
-
-static void default_error_handler(scmval err) {
-    write(scm_current_error_port(), err, scm_mode_display);
-    write(scm_current_error_port(), make_char('\n'), scm_mode_display);
 }
 
 static void save_repl_history() {
