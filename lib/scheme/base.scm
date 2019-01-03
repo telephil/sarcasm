@@ -13,7 +13,7 @@
     >
     >=
     and
-    ;append
+    append
     apply
     assoc
     assq

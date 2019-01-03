@@ -17,7 +17,8 @@ static inline bool is_pair(scmval v) { return is_null(v) || (type_of(v) == SCM_T
 static inline bool is_list(scmval v) { return type_of(v) == SCM_TYPE_PAIR; }
 
 // contracts
-define_contract(list_c, "list", is_list);
+define_contract(pair_c, "pair", is_pair); // XXX should be list_c
+define_contract(list_c, "list", is_list); // XXX should be pair_c
 
 // accessors
 static inline scm_pair_t* get_pair(scmval v) { return (scm_pair_t*)v.o; }
