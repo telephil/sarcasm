@@ -76,13 +76,13 @@ scmval scm_current_error_port() {
 static scmval scm_set_current_output_port(scmval port) {
     check_arg("%set-current-output-port", output_port_c, port);
     scm_g_current_output_port = port;
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_set_current_input_port(scmval port) {
     check_arg("%set-current-input-port", input_port_c, port);
     scm_g_current_input_port = port;
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_open_input_string(scmval v) {
@@ -98,7 +98,7 @@ scmval scm_open_input_file(scmval v) {
 scmval scm_close_input_port(scmval p) {
     check_arg("close-input-port", input_port_c, p);
     port_close(p);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_open_output_file(scmval v) {
@@ -119,7 +119,7 @@ scmval scm_get_output_string(scmval p) {
 static scmval scm_close_output_port(scmval p) {
     check_arg("close-output-port", output_port_c, p);
     port_close(p);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_char_ready_p(scmval p) {
@@ -176,14 +176,14 @@ static scmval scm_write(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("write", output_port_c, p);
     write(p, v, scm_mode_write | scm_mode_pp_quote);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_write_char(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("write-char", output_port_c, p);
     port_putc(p, v);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_write_string(scmval str, scmval port, scmval start, scmval end) {
@@ -200,34 +200,34 @@ static scmval scm_write_string(scmval str, scmval port, scmval start, scmval end
     for(int i = c_fix(start); i <= c_fix(end); i++) {
         scm_putc(port, cs[i]);
     }
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_display(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("display", output_port_c, p);
     write(p, v, scm_mode_display | scm_mode_pp_quote);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_newline(scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("newline", output_port_c, p);
     port_putc(p, make_char('\n'));
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_flush_output_port(scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("flush-output-port", output_port_c, p);
     port_flush(p);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_close_port(scmval p) {
     check_arg("close-port", port_c, p);
     port_close(p);
-    return scm_undef;
+    return scm_void;
 }
 
 void init_port(scmval env) {

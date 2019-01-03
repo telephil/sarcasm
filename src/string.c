@@ -57,7 +57,7 @@ static scmval scm_string_set(scmval s, scmval k, scmval c) {
     char* ns = c_cstr(s);
     ns[c_fix(k)] = c_char(c);
     get_string(s)->value = CORD_from_char_star(ns);
-    return scm_undef;
+    return scm_void;
 }
 
 static int CORD_cmpi(CORD x, CORD y) {
@@ -178,7 +178,7 @@ static scmval scm_string_fill(scmval s, scmval fill, scmval start, scmval end) {
         ns[i] = c_char(fill);
     }
     get_string(s)->value = CORD_from_char_star(ns);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval string_copy(const char* name, scmval s, scmval start, scmval end) {
@@ -214,7 +214,7 @@ static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, 
     char* sfrom = c_cstr(from);
     strncpy(sto+c_fix(at), sfrom+c_fix(start), c_fix(end)-c_fix(start)+1);
     get_string(to)->value = CORD_from_char_star(sto);
-    return scm_undef;
+    return scm_void;
 }
 
 

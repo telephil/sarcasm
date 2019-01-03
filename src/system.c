@@ -57,7 +57,7 @@ static scmval scm_load(scmval filename, scmval env) {
     check_arg("load", string_c, filename);
     check_arg("load", env_c, env);
     load(c_str(filename), env);
-    return scm_undef;
+    return scm_void;
 }
 
 // taken from unistd.h that we cannot include as we define conflicting versions

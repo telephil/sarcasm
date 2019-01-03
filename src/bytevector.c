@@ -62,7 +62,7 @@ static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
     check_arg("bytevector-u8-set!", byte_c, byte);
     check_range("bytevector-u8-set!", c_fix(k), 0, bytevector_size(b));
     bytevector_set(b, c_fix(k), byte);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
@@ -97,7 +97,7 @@ static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval sta
     memcpy(get_bytevector(to)->elts + c_fix(at),
            get_bytevector(from)->elts + c_fix(start),
            c_fix(end) - c_fix(start) + 1);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_bytevector_append(int argc, scmval* argv) {

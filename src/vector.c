@@ -62,7 +62,7 @@ static scmval scm_vector_set(scmval v, scmval i, scmval x) {
     check_arg("vector-set!", fixnum_c, i);
     check_range("vector-set!", c_fix(i), 0, vector_size(v));
     vector_set(v, c_fix(i), x);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_vector_to_list(scmval v, scmval start, scmval end) {
@@ -161,7 +161,7 @@ static scmval scm_vector_mcopy(scmval to, scmval at, scmval from, scmval start, 
     memcpy(get_vector(to)->elts + c_fix(at),
            get_vector(from)->elts + c_fix(start),
            size*sizeof(scmval));
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_vector_append(int argc, scmval* argv) {
@@ -194,7 +194,7 @@ static scmval scm_vector_fill(scmval v, scmval fill, scmval start, scmval end) {
     for(int i = c_fix(start); i <= c_fix(end); i++) {
         vector_set(v, i, fill);
     }
-    return scm_undef;
+    return scm_void;
 }
 
 // initialization

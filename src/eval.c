@@ -555,7 +555,7 @@ static scmval stx_set(scmval expr, scmval env) {
         error(syntax_error_type, "set!: expected symbol but got %s", scm_to_cstr(car(expr)));
     if(!update(env, car(expr), eval(cadr(expr), env)))
         error(syntax_error_type, "set!: symbol %s is not defined", scm_to_cstr(car(expr)));
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval quasiquote(scmval expr, scmval env) {

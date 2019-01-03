@@ -66,13 +66,13 @@ static scmval scm_cdr(scmval l) {
 static scmval scm_setcar(scmval l, scmval v) {
     check_arg("set-car!", list_c, l);
     setcar(l, v);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_setcdr(scmval l, scmval v) {
     check_arg("set-cdr!", list_c, l);
     setcdr(l, v);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval scm_length(scmval l) {
