@@ -73,10 +73,10 @@
     eq?
     equal?
     eqv?
-    ;error
-    ;error-object-irritants
-    ;error-object-message
-    ;error-object?
+    error
+    error-object-irritants
+    error-object-message
+    error-object?
     even?
     exact
     ;exact-integer-sqrt
@@ -84,7 +84,7 @@
     exact?
     ;expt
     features
-    ;file-error?
+    file-error?
     ;floor
     ;floor-quotient
     ;floor-remainder
