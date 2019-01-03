@@ -3,3 +3,4 @@
 *.swp
 *.dSYM
 /scm
+.clang_complete
