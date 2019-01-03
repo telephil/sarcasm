@@ -317,23 +317,21 @@ static scmval stx_case_lambda(scmval expr, scmval env) {
     scmval* transformed = scm_new_array(len+1, scmval);
     int i = 0;
     foreach(clause, expr) {
-        scmval p = list(scm_if,
-                        list(intern("="), intern("len"), scm_fix(list_length(car(clause))), scm_null),
-                        list(scm_apply, cons(scm_lambda, clause), intern("args"), scm_null),
-                        scm_null);
+        scmval p = list3(scm_if,
+                         list3(intern("="), intern("len"), scm_fix(list_length(car(clause)))),
+                         list3(scm_apply, cons(scm_lambda, clause), intern("args")));
         transformed[i++] = p;
     }
-    transformed[i] = list(intern("error"), scm_str("no matching clause found"), scm_null);
+    transformed[i] = list2(intern("error"), scm_str("no matching clause found"));
     scmval body = cons(transformed[0], scm_null);
     for(int i = 0; i < len; i++) {
         setcdr(cddr(transformed[i]), cons(transformed[i+1], scm_null));
     }
     scmval result =
-        list(scm_lambda, intern("args"),
-             cons(scm_let,
-                  cons(cons(list(intern("len"), list(intern("length"), intern("args"), scm_null), scm_null), scm_null),
-                       body)),
-             scm_null);
+        list3(scm_lambda, intern("args"),
+              cons(scm_let,
+                   cons(list1(list2(intern("len"), list2(intern("length"), intern("args")))),
+                        body)));
     return result;
 }
 
@@ -377,7 +375,7 @@ static scmval stx_let(scmval expr, scmval env) {
     scmval ldef = cons(scm_lambda, cons(vars, body)); // (lambda (vars...) body...)
     scmval result = scm_undef;
     if(named) {
-        scmval lrdef = list(scm_letrec, cons(cons(name, cons(ldef, scm_null)), scm_null), name, scm_null);
+        scmval lrdef = list3(scm_letrec, list1(cons(name, list1(ldef))), name);
         result = cons(lrdef, vals);
     } else {
         result = cons(ldef, vals); // (ldef values...)
@@ -424,8 +422,8 @@ static scmval stx_letrec_star(scmval expr, scmval env) {
     foreach(arg, arglist) {
         if(!is_list(arg))
             error(syntax_error_type, "invalid letrec* syntax: expected a list but received %s", scm_to_cstr(arg));
-        pvars = cons(list(car(arg), scm_void, scm_null), scm_null);    // ((var1 #undefined)...)
-        pvals = cons(list(scm_set, car(arg), cadr(arg), scm_null), scm_null); // (set! var1 val1)...
+        pvars = list1(list2(car(arg), scm_void));    // ((var1 #undefined)...)
+        pvals = list1(list3(scm_set, car(arg), cadr(arg))); // (set! var1 val1)...
         if(is_null(vars)) {
             vars = tvars = pvars;
             vals = tvals = pvals;

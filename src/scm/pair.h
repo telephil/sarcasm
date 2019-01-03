@@ -54,23 +54,6 @@ static inline size_t list_length(scmval v) {
     return l;
 } 
 
-static inline scmval list(scmval head, ...) {
-    scmval h, t;
-    h = t = cons(head, scm_null);
-    va_list ap;
-    va_start(ap, head);
-    while(true) {
-        scmval v = va_arg(ap, scmval);
-        if(is_null(v))
-            break;
-        scmval p = cons(v, scm_null);
-        setcdr(t, p);
-        t = p;
-    }
-    va_end(ap);
-    return h;
-}
-
 static inline scmval list1(scmval e) { return cons(e, scm_null); }
 static inline scmval list2(scmval e1, scmval e2) { return cons(e1, list1(e2)); }
 static inline scmval list3(scmval e1, scmval e2, scmval e3) { return cons(e1, list2(e2, e3)); }

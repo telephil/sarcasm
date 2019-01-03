@@ -26,11 +26,20 @@ scmval load(const char* path, scmval env) {
 static void set_features() {
     int word  = 0x0001;
     int le    = *((char*)&word);
+    char* f[] = {
+        "r7rs",
+        "exact-closed", "ieee-float",
+        "posix", OS, ARCH, le ? "little-endian" : "big-endian",
+        IMPLEMENTATION_NAME, IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION,
+        NULL
+    };
 
-    features = list(intern("r7rs"), intern("exact-closed"), intern("ieee-float"), intern("posix"),
-                    intern(OS), intern(ARCH), intern(le ? "little-endian" : "big-endian"),
-                    intern(IMPLEMENTATION_NAME), intern(IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION),
-                    scm_null);
+    features = list1(intern(f[0]));
+    scmval t = features;
+    for(int i = 1; f[i] != NULL; i++) {
+        setcdr(t, list1(intern(f[i])));
+        t = cdr(t);
+    }
 }
 
 static void set_commandline(int argc, char* argv[]) {
