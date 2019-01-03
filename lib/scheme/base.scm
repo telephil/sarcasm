@@ -19,7 +19,7 @@
     assq
     assv
     begin
-    ;binary-port?
+    binary-port?
     boolean=?
     boolean?
     bytevector
@@ -206,7 +206,7 @@
     symbol?
     ;syntax-error
     syntax-rules
-    ;textual-port?
+    textual-port?
     truncate
     ;truncate-quotient
     ;truncate-remainder
@@ -234,7 +234,7 @@
     ;with-exception-handler
     ;write-bytevector
     write-char
-    ;write-string
+    write-string
     ;write-u8
     zero?
     ))

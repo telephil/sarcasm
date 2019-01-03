@@ -40,6 +40,14 @@ static scmval scm_output_port_p(scmval v) {
     return scm_bool(is_output_port(v));
 }
 
+static scmval scm_textual_port_p(scmval v) {
+    return scm_bool(is_textual_port(v));
+}
+
+static scmval scm_binary_port_p(scmval v) {
+    return scm_bool(is_binary_port(v));
+}
+
 static scmval scm_eof_p(scmval v) {
     return scm_bool(is_eof(v));
 }
@@ -63,6 +71,18 @@ scmval scm_current_output_port() {
 
 scmval scm_current_error_port() {
     return scm_g_current_error_port;
+}
+
+static scmval scm_set_current_output_port(scmval port) {
+    check_arg("%set-current-output-port", output_port_c, port);
+    scm_g_current_output_port = port;
+    return scm_undef;
+}
+
+static scmval scm_set_current_input_port(scmval port) {
+    check_arg("%set-current-input-port", input_port_c, port);
+    scm_g_current_input_port = port;
+    return scm_undef;
 }
 
 static scmval scm_open_input_string(scmval v) {
@@ -115,11 +135,13 @@ static scmval scm_read(scmval p) {
 }
 
 static scmval scm_read_char(scmval p) {
+    opt_arg(p, scm_current_input_port());
     check_arg("read-char", input_port_c, p);
     return port_getc(p);
 }
 
 static scmval scm_peek_char(scmval p) {
+    opt_arg(p, scm_current_input_port());
     check_arg("peek-char", input_port_c, p);
     scmval c = port_getc(p);
     if(is_eof(c))
@@ -129,6 +151,7 @@ static scmval scm_peek_char(scmval p) {
 }
 
 static scmval scm_read_line(scmval p) {
+    opt_arg(p, scm_current_input_port());
     check_arg("read-line", input_port_c, p);
     int i = 0, len = 1024;
     char* buf, c;
@@ -160,6 +183,23 @@ static scmval scm_write_char(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("write-char", output_port_c, p);
     port_putc(p, v);
+    return scm_undef;
+}
+
+static scmval scm_write_string(scmval str, scmval port, scmval start, scmval end) {
+    opt_arg(port,   scm_current_output_port());
+    opt_arg(start,  scm_0);
+    opt_arg(end,    scm_fix(string_length(str)-1));
+    check_arg("write-string", string_c, str);
+    check_arg("write-string", output_port_c, port);
+    check_arg("write-string", fixnum_c, start);
+    check_arg("write-string", fixnum_c, end);
+    check_range("write-string", c_fix(start), 0, string_length(str));
+    check_range("write-string", c_fix(end), c_fix(start), string_length(str));
+    char *cs = c_cstr(str);
+    for(int i = c_fix(start); i <= c_fix(end); i++) {
+        scm_putc(port, cs[i]);
+    }
     return scm_undef;
 }
 
@@ -203,9 +243,13 @@ void init_port(scmval env) {
     define(env, "eof-object?", scm_eof_p, arity_exactly(1));
     define(env, "eof-object", scm_eof_object, arity_exactly(0));
     define(env, "port-open?", scm_port_open_p, arity_exactly(1));
+    define(env, "binary-port?", scm_binary_port_p, arity_exactly(1));
+    define(env, "textual-port?", scm_textual_port_p, arity_exactly(1));
     define(env, "current-input-port", scm_current_input_port, arity_exactly(0));
     define(env, "current-output-port", scm_current_output_port, arity_exactly(0));
     define(env, "current-error-port", scm_current_error_port, arity_exactly(0));
+    define(env, "%set-current-output-port", scm_set_current_output_port, arity_exactly(1));
+    define(env, "%set-current-input-port", scm_set_current_input_port, arity_exactly(1));
     define(env, "open-input-string", scm_open_input_string, arity_exactly(1));
     define(env, "open-input-file", scm_open_input_file, arity_exactly(1));
     define(env, "close-input-port", scm_close_input_port, arity_exactly(1));
@@ -216,11 +260,12 @@ void init_port(scmval env) {
     define(env, "close-port", scm_close_port, arity_exactly(1));
     define(env, "char-ready?", scm_char_ready_p, arity_or(0, 1));
     define(env, "read",      scm_read,      arity_or(0, 1));
-    define(env, "read-char", scm_read_char, arity_exactly(1));
-    define(env, "peek-char", scm_peek_char, arity_exactly(1));
-    define(env, "read-line", scm_read_line, arity_exactly(1));
+    define(env, "read-char", scm_read_char, arity_or(0, 1));
+    define(env, "peek-char", scm_peek_char, arity_or(0, 1));
+    define(env, "read-line", scm_read_line, arity_or(0, 1));
     define(env, "write", scm_write, arity_or(1, 2));
     define(env, "write-char", scm_write_char, arity_or(1, 2));
+    define(env, "write-string", scm_write_string, arity_between(1, 4));
     define(env, "display", scm_display, arity_or(1, 2));
     define(env, "newline", scm_newline, arity_or(0, 1));
     define(env, "flush-output-port", scm_flush_output_port, arity_or(0, 1));
@@ -329,7 +374,7 @@ static void file_flush(scmval op) {
 
 static scmval make_file_input_port(FILE* fp, char* name) {
     static scm_port_vtable_t vtable = { file_close, file_getc, file_ungetc, file_char_ready, NULL, NULL, NULL };
-    scmval p = make_port(scm_port_input | scm_port_file, fp, name, &vtable);
+    scmval p = make_port(scm_port_input | scm_port_file | scm_port_text, fp, name, &vtable);
     return p;
 }
 
@@ -341,7 +386,7 @@ static scmval make_file_input_port_from_filename(scmval f) {
 
 static scmval make_file_output_port(FILE* fp, char* name) {
     static scm_port_vtable_t vtable = { file_close, NULL, NULL, NULL, file_putc, file_puts, file_flush };
-    return make_port(scm_port_output | scm_port_file, fp, name, &vtable);
+    return make_port(scm_port_output | scm_port_file | scm_port_text, fp, name, &vtable);
 }
 
 static scmval make_file_output_port_from_filename(scmval f) {
@@ -398,13 +443,13 @@ static scmval scm_str_input_port(scmval s) {
     in->buf = CORD_to_const_char_star(c_str(s));
     in->idx = 0;
     in->len = strlen(in->buf);
-    return make_port(scm_port_input | scm_port_string, in, "string", &vtable);
+    return make_port(scm_port_input | scm_port_string | scm_port_text, in, "string", &vtable);
 }
 
 static scmval scm_str_output_port() {
     static scm_port_vtable_t vtable = { string_close, NULL, NULL, NULL, string_putc, string_puts, string_flush };
     scm_string_t* s = scm_new(scm_string_t);
     s->value = NULL;
-    return make_port(scm_port_output | scm_port_string, s, "string", &vtable);
+    return make_port(scm_port_output | scm_port_string | scm_port_text, s, "string", &vtable);
 }
 

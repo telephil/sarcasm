@@ -6,7 +6,9 @@ enum {
     scm_port_input  = 1<<0,
     scm_port_output = 1<<1,
     scm_port_file   = 1<<2,
-    scm_port_string = 1<<3
+    scm_port_string = 1<<3,
+    scm_port_text   = 1<<4,
+    scm_port_binary = 1<<5
 };
 
 struct scm_port {
@@ -72,6 +74,8 @@ static inline bool is_output_port(scmval v) { return is_port(v) && (port_flags(v
 static inline bool is_file_port(scmval v) { return is_port(v) && (port_flags(v) & scm_port_file); }
 static inline bool is_string_port(scmval v) { return is_port(v) && (port_flags(v) & scm_port_string); }
 static inline bool is_output_string_port(scmval v) { return is_output_port(v) && is_string_port(v); }
+static inline bool is_textual_port(scmval v) { return is_port(v) && (port_flags(v) & scm_port_text); }
+static inline bool is_binary_port(scmval v) { return is_port(v) && (port_flags(v) & scm_port_binary); }
 
 // contracts
 define_contract(port_c, "port", is_port);

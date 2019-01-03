@@ -127,3 +127,22 @@
   (define port (open-output-file filename))
   (call-with-port port proc))
 
+(define (with-input-from-file filename thunk)
+  (define orig-port (current-input-port))
+  (define port (open-input-file filename))
+  (%set-current-input-port port)
+  (let ((result (thunk)))
+    (%set-current-input-port orig-port)
+    (close-port port)
+    result))
+
+(define (with-output-to-file filename thunk)
+  (define orig-port (current-output-port))
+  (define port (open-output-file filename))
+  (%set-current-output-port port)
+  (let ((result (thunk)))
+    (%set-current-output-port orig-port)
+    (close-port port)
+    result))
+
+
