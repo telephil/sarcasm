@@ -156,7 +156,7 @@ static scmval scm_read_line(scmval p) {
     int i = 0, len = 1024;
     char* buf, c;
     scmval v;
-    buf = scm_new_array(len, char);
+    buf = scm_new_atomic(len, char);
     while(true) {
         c = scm_getc(p);
         if(c == EOF)
@@ -170,6 +170,22 @@ static scmval scm_read_line(scmval p) {
     buf[i] = '\0';
     v = scm_str(buf);
     return v;
+}
+
+static scmval scm_read_string(scmval k, scmval port) {
+    opt_arg(port, scm_current_input_port());
+    check_arg("read-string", fixnum_c, k);
+    check_arg("read-string", input_port_c, port);
+    char* buf = scm_new_atomic(c_fix(k) + 1, char);
+    int i = 0;
+    for(i = 0; i < c_fix(k); i++) {
+        char c = scm_getc(port);
+        if(c == EOF)
+            break;
+        buf[i] = c;
+    }
+    buf[i] = '\0';
+    return scm_str(buf);
 }
 
 static scmval scm_write(scmval v, scmval p) {
@@ -263,6 +279,7 @@ void init_port(scmval env) {
     define(env, "read-char", scm_read_char, arity_or(0, 1));
     define(env, "peek-char", scm_peek_char, arity_or(0, 1));
     define(env, "read-line", scm_read_line, arity_or(0, 1));
+    define(env, "read-string", scm_read_string, arity_or(1, 2));
     define(env, "write", scm_write, arity_or(1, 2));
     define(env, "write-char", scm_write_char, arity_or(1, 2));
     define(env, "write-string", scm_write_string, arity_between(1, 4));
