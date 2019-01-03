@@ -35,10 +35,10 @@ static inline void error(scmval type, const char* format, ...) {
 }
 
 // exceptions
-#define with_error_handler(F)               \
-    if(setjmp(scm_g_errbuf)) {    \
-        F(scm_g_lasterr);              \
-    } else                                  
+#define with_error_handler(F)   \
+    if(setjmp(scm_g_errbuf)) {  \
+        F(scm_g_lasterr);       \
+    } else
 
 // common error types
 extern scmval type_error_type;
