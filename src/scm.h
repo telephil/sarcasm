@@ -1,5 +1,5 @@
 #pragma once
-
+#define GC_DEBUG 1
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
@@ -57,7 +57,8 @@ enum {
     SCM_TYPE_SYNTAX,
     SCM_TYPE_ERROR,
     SCM_TYPE_PORT,
-    SCM_TYPE_LIBRARY
+    SCM_TYPE_LIBRARY,
+    SCM_TYPE_RECORD
 };
 
 struct scmval {
@@ -100,6 +101,7 @@ static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o
 #include "scm/reader.h"
 #include "scm/system.h"
 #include "scm/library.h"
+#include "scm/record.h"
 
 // utilities
 void init_eval(scmval);

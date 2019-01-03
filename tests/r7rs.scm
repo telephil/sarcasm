@@ -153,6 +153,20 @@
 (is-true (symbol? 'nil))
 (is-false (symbol? '()))
 (is-false (symbol? #f))
+;; Records
+(define-record-type <pare>
+  (kons x y)
+  pare?
+  (x kar set-kar!)
+  (y kdr))
+(is-true (pare? (kons 1 2)))
+(is-false (pare? (cons 1 2)))
+(is 1 (kar (kons 1 2)))
+(is 2 (kdr (kons 1 2)))
+(is 3 (let ((k (kons 1 2)))
+        (set-kar! k 3)
+        (kar k)))
+
 
 (test-end) 
 (test-exit)

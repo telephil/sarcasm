@@ -41,6 +41,7 @@ static inline scmval cons(scmval car, scmval cdr) { return make_pair(car, cdr); 
 #define caddr(V) car(cdr(cdr(V)))
 #define cdddr(V) cdr(cdr(cdr(V)))
 #define cadddr(V) car(cdr(cdr(cdr(V))))
+#define cddddr(V) cdr(cdr(cdr(cdr(V))))
 
 static inline size_t list_length(scmval v) {
     size_t l;
@@ -69,4 +70,9 @@ static inline scmval list(scmval head, ...) {
     va_end(ap);
     return h;
 }
+
+static inline scmval list1(scmval e) { return cons(e, scm_null); }
+static inline scmval list2(scmval e1, scmval e2) { return cons(e1, list1(e2)); }
+static inline scmval list3(scmval e1, scmval e2, scmval e3) { return cons(e1, list2(e2, e3)); }
+static inline scmval list4(scmval e1, scmval e2, scmval e3, scmval e4) { return cons(e1, list3(e2, e3, e4)); }
 

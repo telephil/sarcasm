@@ -30,6 +30,7 @@ static void scm_init(int argc, char* argv[]) {
     init_reader(env);
     init_eval(env);
     init_system(env, argc, argv);
+    init_record(env);
     init_library(env);
     init_env(env);
     // load scheme defined procedures / syntax

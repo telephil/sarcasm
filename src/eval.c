@@ -18,6 +18,7 @@ static scmval scm_let;
 static scmval scm_let_star;
 static scmval scm_letrec;
 static scmval scm_letrec_star;
+static scmval scm_define_record_type;
 
 static void   list_to_args(scmval, int*, scmval**);
 static scmval stx_define(scmval, scmval);
@@ -32,6 +33,7 @@ static scmval stx_quasiquote(scmval, scmval);
 static scmval stx_let(scmval, scmval);
 static scmval stx_let_star(scmval, scmval);
 static scmval stx_letrec_star(scmval, scmval);
+static scmval stx_define_record_type(scmval, scmval);
 static scmval apply_subr(scmval, scmval, scmval);
 static scmval apply_closure(scmval, scmval, scmval);
 
@@ -68,6 +70,7 @@ void init_eval(scmval env) {
     scm_let_star        = intern("let*");
     scm_letrec          = intern("letrec");
     scm_letrec_star     = intern("letrec*");
+    scm_define_record_type = intern("define-record-type");
 
     define(env, "eval", scm_eval,      arity_exactly(2));
     define(env, "void", scm_void_subr, arity_at_least(0));
@@ -83,6 +86,7 @@ void init_eval(scmval env) {
 scmval eval(scmval v, scmval e) {
     scmval r = v;
 loop:
+    //dbg("eval", v);
     if(is_null(v)) {
         error(syntax_error_type, "unquoted empty list is not a valid expression");
     } else if(is_symbol(v)) {
@@ -131,6 +135,9 @@ loop:
             v = stx_if(cdr(v), e);
             goto loop;
         }
+        CASE(scm_define_record_type) {
+            r = stx_define_record_type(cdr(v), e);
+        } 
         CASE(scm_import) {
             r = stx_import(cdr(v), e);
         }
@@ -316,7 +323,7 @@ static scmval stx_case_lambda(scmval expr, scmval env) {
                         scm_null);
         transformed[i++] = p;
     }
-    transformed[i] = list(intern("error"), scm_str("no matching clause"), scm_null);
+    transformed[i] = list(intern("error"), scm_str("no matching clause found"), scm_null);
     scmval body = cons(transformed[0], scm_null);
     for(int i = 0; i < len; i++) {
         setcdr(cddr(transformed[i]), cons(transformed[i+1], scm_null));
@@ -462,8 +469,9 @@ static void define_symbol(scmval expr, scmval e) {
     scmval name = car(expr);
     scmval body = eval(cadr(expr), e);
     set(e, name, body);
-    if(is_closure(body))
+    if(is_closure(body)) {
         set_closure_name(body, name);
+    }
 }
 
 static scmval stx_define(scmval expr, scmval env) {
@@ -590,6 +598,93 @@ static scmval stx_if(scmval expr, scmval env) {
     scmval consequent = cadr(expr);
     scmval alternate  = (len == 3) ? caddr(expr) : scm_void;
     return !is_false(test) ? consequent : alternate;
+}
+
+static void define_record_predicate(scmval pred, scmval type, scmval env) {
+    scmval obj  = intern("obj");
+    scmval body =
+        list3(intern("and"), 
+              list2(intern("record?"), obj),
+              list3(intern("eq?"), list2(intern("record-type"), obj), list2(scm_quote, type)));
+    scmval proc =
+        list2(pred, list3(scm_lambda, list1(obj), body));
+    stx_define(proc, env);
+//    dbg("pred", proc);
+}
+
+static scmval codegen_record_field_accessor(scmval name, int index) {
+    scmval obj  = intern("obj");
+    scmval proc =
+        list2(name,
+                list3(scm_lambda, list1(obj),
+                    list3(intern("vector-ref"), list2(intern("record-slots"), obj), scm_fix(index))));
+    return proc;
+}
+
+static scmval codegen_record_field_mutator(scmval name, int index) {
+    scmval obj  = intern("obj");
+    scmval val  = intern("val");
+    scmval proc =
+        list2(name, list3(scm_lambda, list2(obj, val),
+                    list4(intern("vector-set!"), list2(intern("record-slots"), obj), scm_fix(index), val)));
+    return proc;
+}
+
+static void define_record_fields(scmval fields, scmval env) {
+    int index = 0;
+    foreach(field, fields) {
+        int len = list_length(field);
+        scmval mutator = scm_undef;
+        scmval accessor = scm_undef;
+        switch(len) {
+            case 3:
+                mutator = codegen_record_field_mutator(caddr(field), index);
+            case 2:
+                accessor = codegen_record_field_accessor(cadr(field), index);
+                break;
+            default:
+                error(syntax_error_type, "invalid record field syntax");
+        }
+        index++;
+        stx_define(accessor, env);
+        if(!is_undef(mutator))
+            stx_define(mutator, env);
+    }
+}
+
+static void define_record_ctor(scmval ctor, scmval type, scmval fields, scmval env) {
+    scmval sdef = cons(intern("vector"), scm_null), t = sdef;
+    foreach(field, fields) {
+        scmval fname = car(field);
+        bool   found = false;
+        foreach(fref, cdr(ctor)) {
+            if(is_eq(fref, fname)) {
+                found = true;
+                break;
+            }
+        }
+        setcdr(t, list1(found ? fname : list1(intern("void"))));
+        t = cdr(t);
+    }
+    scmval proc = list2(car(ctor),
+            list3(scm_lambda, cdr(ctor),
+                list3(intern("make-record"), list2(scm_quote, type), sdef)));
+    stx_define(proc, env);
+    //dbg("ctor", proc);
+}
+static scmval stx_define_record_type(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 4) error(syntax_error_type, "invalid define-record-type syntax");
+    scmval type   = car(expr);
+    scmval ctor   = cadr(expr);
+    scmval pred   = caddr(expr);
+    scmval fields = cdddr(expr);
+    if(!is_symbol(type))
+        error(syntax_error_type, "invalid record name (expected a symbol but got %s", scm_to_cstr(type)); 
+    define_record_ctor(ctor, type, fields, env);
+    define_record_predicate(pred, type, env); 
+    define_record_fields(fields, env);
+    return scm_undef;
 }
 
 static void list_to_args(scmval l, int* argc, scmval** argv) {

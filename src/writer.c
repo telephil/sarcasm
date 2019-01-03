@@ -93,6 +93,11 @@ void write(scmval p, scmval v, short flags) {
             write(p, library_name(v), flags);
             scm_puts(p, ">");
             break;
+        case SCM_TYPE_RECORD:
+            scm_puts(p, "#<record:");
+            write(p, record_type(v), flags);
+            scm_puts(p, ">");
+            break;
     }
 }
 

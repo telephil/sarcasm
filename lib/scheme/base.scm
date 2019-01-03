@@ -60,7 +60,8 @@
     current-error-port current-input-port
     current-output-port
     define
-    ;define-record-type
+    define-record-type
+    make-record record? record-type record-slots ;; needed while we have a bug with non-exported library symbols
     define-syntax
     ;define-values
     ;denominator
