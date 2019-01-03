@@ -26,9 +26,9 @@ scmval scm_record_slots(scmval obj) {
 }
 
 void init_record(scmval env) {
-    define(env, "make-record", scm_make_record,     arity_exactly(2));
-    define(env, "record?",      scm_record_p,       arity_exactly(1));
-    define(env, "record-type",  scm_record_type,    arity_exactly(1));
-    define(env, "record-slots", scm_record_slots,   arity_exactly(1));
+    define(env, "%make-record", scm_make_record,     arity_exactly(2));
+    define(env, "%record?",      scm_record_p,       arity_exactly(1));
+    define(env, "%record-type",  scm_record_type,    arity_exactly(1));
+    define(env, "%record-slots", scm_record_slots,   arity_exactly(1));
 }
 

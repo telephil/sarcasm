@@ -604,12 +604,11 @@ static void define_record_predicate(scmval pred, scmval type, scmval env) {
     scmval obj  = intern("obj");
     scmval body =
         list3(intern("and"), 
-              list2(intern("record?"), obj),
-              list3(intern("eq?"), list2(intern("record-type"), obj), list2(scm_quote, type)));
+              list2(intern("%record?"), obj),
+              list3(intern("eq?"), list2(intern("%record-type"), obj), list2(scm_quote, type)));
     scmval proc =
         list2(pred, list3(scm_lambda, list1(obj), body));
     stx_define(proc, env);
-//    dbg("pred", proc);
 }
 
 static scmval codegen_record_field_accessor(scmval name, int index) {
@@ -617,7 +616,7 @@ static scmval codegen_record_field_accessor(scmval name, int index) {
     scmval proc =
         list2(name,
                 list3(scm_lambda, list1(obj),
-                    list3(intern("vector-ref"), list2(intern("record-slots"), obj), scm_fix(index))));
+                    list3(intern("vector-ref"), list2(intern("%record-slots"), obj), scm_fix(index))));
     return proc;
 }
 
@@ -626,7 +625,7 @@ static scmval codegen_record_field_mutator(scmval name, int index) {
     scmval val  = intern("val");
     scmval proc =
         list2(name, list3(scm_lambda, list2(obj, val),
-                    list4(intern("vector-set!"), list2(intern("record-slots"), obj), scm_fix(index), val)));
+                    list4(intern("vector-set!"), list2(intern("%record-slots"), obj), scm_fix(index), val)));
     return proc;
 }
 
@@ -668,7 +667,7 @@ static void define_record_ctor(scmval ctor, scmval type, scmval fields, scmval e
     }
     scmval proc = list2(car(ctor),
             list3(scm_lambda, cdr(ctor),
-                list3(intern("make-record"), list2(scm_quote, type), sdef)));
+                list3(intern("%make-record"), list2(scm_quote, type), sdef)));
     stx_define(proc, env);
     //dbg("ctor", proc);
 }
