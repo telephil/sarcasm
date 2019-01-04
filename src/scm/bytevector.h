@@ -8,6 +8,7 @@ struct scm_bytevector {
 // constructor
 scmval make_bytevector(size_t, scmval);
 scmval make_bytevector_from_list(int, scmval);
+scmval make_bytevector_from_data(int, byte*);
 // accessors
 static inline scm_bytevector_t* get_bytevector(scmval v) { return (scm_bytevector_t*)v.o; }
 static inline size_t  bytevector_size(scmval v) { return get_bytevector(v)->size; }

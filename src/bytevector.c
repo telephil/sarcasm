@@ -24,6 +24,13 @@ scmval make_bytevector_from_list(int size, scmval l) {
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
 }
 
+scmval make_bytevector_from_data(int size, byte* data) {
+    scm_bytevector_t* b = scm_new(scm_bytevector_t);
+    b->size = size;
+    b->elts = data;
+    return make_ptr(SCM_TYPE_BYTEVECTOR, b);
+}
+
 // standard library
 static scmval scm_bytevector_p(scmval v) {
     return scm_bool(is_bytevector(v));
