@@ -84,7 +84,10 @@ void write(scmval p, scmval v, short flags) {
             write_error(p, v, flags);
             break;
         case SCM_TYPE_PORT:
-            scm_printf(p, "#<%sput-port:%s>", is_input_port(v) ? "in" : "out", port_name(v));
+            scm_puts(p, "#<");
+            if(is_binary_port(v))
+                scm_puts(p, "binary-");
+            scm_printf(p, "%sput-port:%s>", is_input_port(v) ? "in" : "out", port_name(v));
             break;
         case SCM_TYPE_LIBRARY:
             scm_puts(p, "#<library:");
