@@ -7,8 +7,7 @@
   (export
     test-begin test-end test-exit
     is is-q is-v is-true is-false
-    skip
-    %test-start %test-count %test-fail %test-skip %test %skip)
+    skip)
   (begin
     (define %test-start 0)
     (define %test-count 0)
