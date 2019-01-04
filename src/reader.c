@@ -26,8 +26,6 @@ static bool is_special_initial(char);
 static bool is_peculiar_identifier(char);
 static bool is_subsequent(char);
 static bool is_special_subsequent(char);
-static bool is_valid_digit(char, int);
-
 
 void init_reader(scmval env) {
     scm_close_paren = intern(")");
@@ -186,65 +184,6 @@ number_fallback:
     return v;
 }
 
-static scmval read_number(char* buf) {
-    int base = 10;
-    bool dot = false;
-    bool neg = false;
-    bool is_int = false;
-    char *p = buf, *q;
-
-    // constants
-    if(strncmp(buf, "+nan.0", 6) == 0)
-        return scm_nan;
-    else if(strncmp(buf, "+inf.0", 6) == 0)
-        return scm_pos_inf;
-    else if(strncmp(buf, "-inf.0", 6) == 0)
-        return scm_neg_inf;
-
-    // base
-    if(*p == '#') {
-        p++;
-        switch(*p) {
-            case 'b': base =  2; break;
-            case 'o': base =  8; break;
-            case 'd': base = 10; break;
-            case 'x': base = 16; break;
-            default: 
-              return scm_undef;
-        }
-        p++;
-    } 
-    if(*p == '+' || *p == '-') {
-        if(*p == '-')
-            neg = true;
-        p++;
-    }
-    if(!*p)
-        return scm_undef;
-    is_int = true;
-    for(q = p; *q; q++) {
-        if(*q == '.') {
-            if(dot) return scm_undef; // already found a dot
-            if(base != 10) return scm_undef;
-            dot = true;
-            is_int = false;
-        } else if(!is_valid_digit(*q, base))
-            return scm_undef;
-    }
-
-    if(is_int) {
-        fixnum l = strtol(p, NULL, base);
-        if(neg) l = -l;
-        return scm_fix(l);
-    } else {
-        flonum f = strtod(p, NULL);
-        if(neg) f = -f;
-        return scm_flo(f);
-    }
-
-    return scm_undef;
-}
-
 static scmval read_any(scmval p) {
     scmval v = scm_undef;
     char buf[MAX_TOK_SIZE], c;
@@ -261,8 +200,8 @@ static scmval read_any(scmval p) {
     }
     buf[size] = '\0';
     // Try to read number
-    v = read_number(buf);
-    if(!is_undef(v)) {
+    v = string_to_number(buf);
+    if(!is_false(v)) {
         return v;
     }
     // Check if identifier
@@ -494,26 +433,5 @@ static bool is_subsequent(char c)
 static bool is_special_subsequent(char c)
 {
   return (c == '+' || c == '-' || c == '.' || c == '@');
-}
-
-static bool is_valid_digit(char c, int base) {
-    bool valid = false;
-    switch(base) {
-        case 2:
-            valid = (c == '0' || c == '1');
-            break;
-        case 8:
-            valid = (c >= '0' && c <= '7');
-            break;
-        case 10:
-            valid = (c >= '0' && c <= '9');
-            break;
-        case 16:
-            valid = (c >= '0' && c <= '9') 
-                 || (c >= 'a' && c <= 'f')
-                 || (c >= 'A' && c <= 'F');
-            break;
-    }
-    return valid;
 }
 

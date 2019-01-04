@@ -139,7 +139,7 @@
     newline
     not
     null?
-    ;number->string
+    number->string
     number?
     ;numerator
     odd?
@@ -181,7 +181,7 @@
     ;square
     string
     string->list
-    ;string->number
+    string->number
     string->symbol
     string->utf8
     string->vector

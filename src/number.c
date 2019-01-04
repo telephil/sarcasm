@@ -203,6 +203,45 @@ static scmval scm_truncate(scmval n) {
     return scm_flo(trunc(f));
 }
 
+static char* number_to_binary(fixnum z, char *result) {
+  if(z > 1) {
+    result = number_to_binary(z>>1, result);
+  }
+  *result = z & 1 ? '1' : '0';
+  return result + 1;
+}
+
+static scmval scm_number_to_string(scmval z, scmval radix) {
+    opt_arg(radix, scm_fix(10));
+    check_arg("number->string", number_c, z);
+    check_arg("number->string", radix_c, radix);
+    if(is_flonum(z))
+        return scm_to_string(z);
+    scmval result;
+    char *buf;
+    fixnum i = c_fix(z);
+    fixnum r = c_fix(radix);
+    if(r == 2) {
+        buf = scm_new_atomic(512, char);
+        number_to_binary(i, buf);
+    } else {
+        char *fmt;
+        switch(r) {
+            case 8:  fmt = "%o"; break;
+            case 10: fmt = "%ld";  break;
+            case 16: fmt = "%x"; break;
+        }
+        asprintf(&buf, fmt, i);
+        result = scm_str(buf);
+    }
+    return scm_str(buf);
+}
+
+static scmval scm_string_to_number(scmval s) {
+    check_arg("string->number", string_c, s);
+    return string_to_number(c_cstr(s));
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
@@ -234,6 +273,8 @@ void init_number(scmval env) {
     define(env, "/",                 scm_div,                arity_at_least(1));
     define(env, "exact",             scm_exact,              arity_exactly(1));
     define(env, "truncate",          scm_truncate,           arity_exactly(1));
+    define(env, "string->number",    scm_string_to_number,   arity_exactly(1));
+    define(env, "number->string",    scm_number_to_string,   arity_or(1, 2));
 
     scm_0       = scm_fix(0);
     scm_pos_inf = scm_flo(HUGE_VAL);
@@ -244,6 +285,67 @@ void init_number(scmval env) {
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
+static bool is_valid_digit(char c, int base);
+
+scmval string_to_number(char* buf) {
+    int base = 10;
+    bool dot = false;
+    bool neg = false;
+    bool is_int = false;
+    char *p = buf, *q;
+
+    // constants
+    if(strncmp(buf, "+nan.0", 6) == 0)
+        return scm_nan;
+    else if(strncmp(buf, "+inf.0", 6) == 0)
+        return scm_pos_inf;
+    else if(strncmp(buf, "-inf.0", 6) == 0)
+        return scm_neg_inf;
+
+    // base
+    if(*p == '#') {
+        p++;
+        switch(*p) {
+            case 'b': base =  2; break;
+            case 'o': base =  8; break;
+            case 'd': base = 10; break;
+            case 'x': base = 16; break;
+            default: 
+              return scm_false;
+        }
+        p++;
+    } 
+    if(*p == '+' || *p == '-') {
+        if(*p == '-')
+            neg = true;
+        p++;
+    }
+    if(!*p)
+        return scm_false;
+    is_int = true;
+    for(q = p; *q; q++) {
+        if(*q == '.') {
+            if(dot) return scm_false; // already found a dot
+            if(base != 10) return scm_false;
+            dot = true;
+            is_int = false;
+        } else if(!is_valid_digit(*q, base))
+            return scm_false;
+    }
+
+    if(is_int) {
+        fixnum l = strtol(p, NULL, base);
+        if(neg) l = -l;
+        return scm_fix(l);
+    } else {
+        flonum f = strtod(p, NULL);
+        if(neg) f = -f;
+        return scm_flo(f);
+    }
+
+    return scm_false;
+}
+
 bool numeq(scmval x, scmval y) {
     return ncmp(x,y) == 0;
 }
@@ -346,5 +448,26 @@ static scmval ndiv(scmval x, scmval y) {
         }
     }
     return r;
+}
+
+static bool is_valid_digit(char c, int base) {
+    bool valid = false;
+    switch(base) {
+        case 2:
+            valid = (c == '0' || c == '1');
+            break;
+        case 8:
+            valid = (c >= '0' && c <= '7');
+            break;
+        case 10:
+            valid = (c >= '0' && c <= '9');
+            break;
+        case 16:
+            valid = (c >= '0' && c <= '9')
+                 || (c >= 'a' && c <= 'f')
+                 || (c >= 'A' && c <= 'F');
+            break;
+    }
+    return valid;
 }
 
