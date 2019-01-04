@@ -92,7 +92,7 @@
     flush-output-port
     ;for-each
     ;gcd
-    ;get-output-bytevector
+    get-output-bytevector
     get-output-string
     ;guard
     if
@@ -143,9 +143,9 @@
     number?
     ;numerator
     odd?
-    ;open-input-bytevector
+    open-input-bytevector
     open-input-string
-    ;open-output-bytevector
+    open-output-bytevector
     open-output-string
     or
     output-port-open?
@@ -153,24 +153,24 @@
     pair?
     ;parameterize
     peek-char
-    ;peek-u8
+    peek-u8
     port?
     positive?
     procedure?
     quasiquote
     quote
     quotient
-    ;raise
-    ;raise-continuable
+    raise
+    raise-continuable
     ;rational?
     ;rationalize
-    ;read-bytevector
-    ;read-bytevector!
+    read-bytevector
+    read-bytevector!
     read-char
     ;read-error?
     read-line
     read-string
-    ;read-u8
+    read-u8
     real?
     remainder
     reverse
@@ -211,7 +211,7 @@
     ;truncate-quotient
     ;truncate-remainder
     ;truncate/
-    ;u8-ready?
+    u8-ready?
     unless
     unquote
     unquote-splicing
@@ -232,10 +232,10 @@
     vector?
     when
     ;with-exception-handler
-    ;write-bytevector
+    write-bytevector
     write-char
     write-string
-    ;write-u8
+    write-u8
     zero?
     ))
 
