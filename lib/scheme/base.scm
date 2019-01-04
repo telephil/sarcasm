@@ -120,7 +120,7 @@
     list->vector
     list-copy
     list-ref
-    ;list-set!
+    list-set!
     list-tail
     list?
     make-bytevector

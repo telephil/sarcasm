@@ -117,6 +117,17 @@ static scmval scm_append(int argc, scmval* argv) {
     return result;
 }
 
+static scmval scm_list_set(scmval lst, scmval k, scmval obj) {
+    check_arg("list-set!", list_c, lst);
+    check_arg("list-set!", fixnum_c, k);
+    check_range("list-set!", c_fix(k), 0, list_length(lst));
+    scmval p = lst;
+    for(int i = 0; i < c_fix(k); i++)
+        p = cdr(p);
+    setcar(p, obj);
+    return scm_void;
+}
+
 // initialization
 void init_pair(scmval env) {
     scm_null  = make_val(SCM_TYPE_NULL);
@@ -133,5 +144,6 @@ void init_pair(scmval env) {
     define(env, "set-cdr!",     scm_setcdr,     arity_exactly(2));
     define(env, "length",       scm_length,     arity_exactly(1));
     define(env, "append",       scm_append,     arity_at_least(0));
+    define(env, "list-set!",    scm_list_set,   arity_exactly(3));
 }
 
