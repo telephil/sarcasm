@@ -4,6 +4,7 @@ static void write_char(scmval, scmval, short);
 static void write_pair(scmval, scmval, short);
 static void write_vector(scmval, scmval, short);
 static void write_bytevector(scmval, scmval, short);
+static void write_error(scmval, scmval, short);
 
 void write(scmval p, scmval v, short flags) {
     switch(type_of(v)) {
@@ -80,10 +81,7 @@ void write(scmval p, scmval v, short flags) {
             scm_printf(p, "#<syntax:%s>", c_str(syntax_name(v)));
             break;
         case SCM_TYPE_ERROR:
-            scm_putc(p, '[');
-            write(p, error_type(v), flags);
-            scm_puts(p, "] ");
-            write(p, error_message(v), flags);
+            write_error(p, v, flags);
             break;
         case SCM_TYPE_PORT:
             scm_printf(p, "#<%sput-port:%s>", is_input_port(v) ? "in" : "out", port_name(v));
@@ -158,5 +156,15 @@ static void write_bytevector(scmval p, scmval v, short flags) {
         write(p, bytevector_ref(v, i), flags);
     }
     scm_putc(p, ')');
+}
+
+static void write_error(scmval p, scmval v, short flags) {
+    scm_puts(p, "[ERROR] ");
+    if(is_eq(error_type(v), exn_error_type) || is_eq(error_type(v), cexn_error_type)) {
+        scm_puts(p, "an error was raised with non-condition value ");
+        write(p, car(error_irritants(v)), flags);
+    } else {
+        write(p, error_message(v), flags);
+    }
 }
 

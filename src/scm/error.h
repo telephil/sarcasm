@@ -46,6 +46,8 @@ static inline void error(scmval type, const char* format, ...) {
     } else
 
 // common error types
+extern scmval exn_error_type;
+extern scmval cexn_error_type;
 extern scmval type_error_type;
 extern scmval range_error_type;
 extern scmval arity_error_type;

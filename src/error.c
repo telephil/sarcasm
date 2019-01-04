@@ -3,6 +3,9 @@
 // globals
 scmval   scm_g_lasterr;
 jmp_buf  scm_g_errbuf;
+
+scmval exn_error_type;
+scmval cexn_error_type;
 scmval range_error_type;
 scmval arity_error_type;
 scmval type_error_type;
@@ -24,6 +27,18 @@ void raise(scmval e) {
 }
 
 // standard library
+static scmval scm_raise(scmval obj) {
+    scmval err = make_error(exn_error_type, scm_undef, list1(obj));
+    raise(err);
+    return scm_undef;
+}
+
+static scmval scm_raise_continuable(scmval obj) {
+    scmval err = make_error(cexn_error_type, scm_undef, list1(obj));
+    raise(err);
+    return scm_undef;
+}
+
 static scmval scm_error(int argc, scmval* argv) {
     check_arg("error", string_c, argv[0]);
     scmval irrs = scm_null;
@@ -57,12 +72,16 @@ static scmval scm_file_error_p(scmval v) {
 
 // initialization
 void init_errors(scmval env) {
+    define(env, "raise",                    scm_raise,                  arity_exactly(1));
+    define(env, "raise-continuable",        scm_raise_continuable,      arity_exactly(1));
     define(env, "error",                    scm_error,                  arity_at_least(1));
     define(env, "file-error?",              scm_file_error_p,           arity_exactly(1));
     define(env, "error-object-p",           scm_error_object_p,         arity_exactly(1));
     define(env, "error-object-message",     scm_error_object_message,   arity_exactly(1));
     define(env, "error-object-irritants",   scm_error_object_irritants, arity_exactly(1));
 
+    exn_error_type   = intern("exception");
+    cexn_error_type  = intern("continuable exception");
     type_error_type  = intern("type-error");
     range_error_type = intern("range-error");
     arity_error_type = intern("arity-error");
