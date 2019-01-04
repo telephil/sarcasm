@@ -67,10 +67,17 @@ void import(scmval name, scmval env) {
     scmval lib = load_library(name, env);
     if(is_undef(lib))
         error(intern("error"), "library '%s' not found", scm_to_cstr(name));
+    // FIXME
+    // atm we copy everything otherwise the non-exported symbols
+    // are not visible.
+    // THIS IS A MAJOR ISSUE
+    dict_copy(env_globals(env), library_symbols(lib));
+    /*
     foreach(export, library_exports(lib)) {
         scmval value = dict_ref(library_symbols(lib), export);
         set(env, export, value);
     }
+    */
 }
 
 ////////////////////////////////////////////////////////////////////////////////
