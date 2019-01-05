@@ -714,51 +714,30 @@ static int ncmp(scmval x, scmval y) {
     int res = 0;
     if(is_fixnum(x)) {
         if(is_fixnum(y)) {
-            fixnum diff = c_fix(x) - c_fix(y);
-            if(diff < 0)        res = -1;
-            else if(diff > 0)   res = 1;
-            else                res = 0;
+            res = c_fix(x) - c_fix(y);
         } else if(is_flonum(y)) {
             flonum diff = c_fix(x) - c_flo(y);
-            if(diff < 0)        res = -1;
-            else if(diff > 0)   res = 1;
-            else                res = 0;
+            res = diff < 0 ? -1 : diff > 0 ? 1 : 0;
         } else if(is_bignum(y)) {
-            int cmp = mpz_cmp_si(c_big(y), c_fix(x));
-            if(cmp > 0)         res = -1;
-            else if(cmp < 0)    res = 1;
-            else                res = 0;
+            // negate as we switched param order
+            res = - mpz_cmp_si(c_big(y), c_fix(x));
         }
     } else if(is_bignum(x)) {
         if(is_fixnum(y)) {
-            int cmp = mpz_cmp_si(c_big(x), c_fix(y));
-            if(cmp < 0)         res = -1;
-            else if(cmp > 0)    res = 1;
-            else                res = 0;
+            res = mpz_cmp_si(c_big(x), c_fix(y));
         } else if(is_flonum(y)) {
-            int cmp = mpz_cmp_d(c_big(x), c_flo(y));
-            if(cmp < 0)         res = -1;
-            else if(cmp > 0)    res = 1;
-            else                res = 0;
+            res = mpz_cmp_d(c_big(x), c_flo(y));
         } else if(is_bignum(y)) {
-            int cmp = mpz_cmp(c_big(x), c_big(y));
-            if(cmp < 0)         res = -1;
-            else if(cmp > 0)    res = 1;
-            else                res = 0;
+            res = mpz_cmp(c_big(x), c_big(y));
         }
     } else if(is_flonum(x)) {
         if(is_fixnum(y)) {
             res = -ncmp(y, x);
         } else if(is_flonum(y)) {
             flonum diff = c_flo(x) - c_flo(y);
-            if(diff < 0)        res = -1;
-            else if(diff > 0)   res = 1;
-            else                res = 0;
+            res = diff < 0 ? -1 : diff > 0 ? 1 : 0;
         } else if(is_bignum(y)) {
-            int cmp = mpz_cmp_d(c_big(y), c_fix(x));
-            if(cmp > 0)         res = -1;
-            else if(cmp < 0)    res = 1;
-            else                res = 0;
+            res = mpz_cmp_d(c_big(y), c_fix(x));
         }
     }
     return res;
