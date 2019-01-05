@@ -241,8 +241,6 @@ static scmval scm_abs(scmval x) {
         mpz_t r;
         mpz_init(r);
         mpz_abs(r, c_big(x));
-        mpz_clear(c_big(x));
-        scm_delete(x.o);
         return scm_big(r);
     } else {
         flonum f = c_flo(x);
