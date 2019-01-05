@@ -41,7 +41,7 @@
     cdar
     cddr
     cdr
-    ;ceiling
+    ceiling
     char->integer
     char-ready?
     char<=?
@@ -63,10 +63,10 @@
     define-record-type
     define-syntax
     ;define-values
-    ;denominator
+    denominator
     ;do
     ;dynamic-wind
-    ;else ???
+    else
     eof-object
     eof-object?
     eq?
@@ -81,10 +81,10 @@
     ;exact-integer-sqrt
     exact-integer?
     exact?
-    ;expt
+    expt
     features
     file-error?
-    ;floor
+    floor
     ;floor-quotient
     ;floor-remainder
     ;floor/
@@ -97,7 +97,7 @@
     if
     ;include
     ;include-ci
-    ;inexact
+    inexact
     inexact?
     input-port-open?
     input-port?
@@ -140,7 +140,7 @@
     null?
     number->string
     number?
-    ;numerator
+    numerator
     odd?
     open-input-bytevector
     open-input-string
@@ -166,18 +166,18 @@
     read-bytevector
     read-bytevector!
     read-char
-    ;read-error?
+    read-error?
     read-line
     read-string
     read-u8
     real?
     remainder
     reverse
-    ;round
+    round
     set!
     set-car!
     set-cdr!
-    ;square
+    square
     string
     string->list
     string->number
