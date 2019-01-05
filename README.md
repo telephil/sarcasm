@@ -10,6 +10,7 @@ $ make
 
 #### Dependencies
 - [Boehm GC](http://www.hboehm.info/gc/)
+- [GMP](https://gmplib.org/)
 - [GNU Readline](https://tiswww.cwru.edu/php/chet/readline/rltop.html)
 
 ### Running
