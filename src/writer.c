@@ -1,3 +1,4 @@
+#include <float.h>
 #include "scm.h"
 
 static void write_char(scmval, scmval, short);
@@ -34,7 +35,7 @@ void write(scmval p, scmval v, short flags) {
             } else if(is_neg_inf(v)) {
                 scm_puts(p, "-inf.0");
             } else {
-                scm_printf(p, "%lf", c_flo(v));
+                scm_printf(p, "%.*g", DBL_DECIMAL_DIG, c_flo(v));
             }
             break;
         case SCM_TYPE_CHAR:
