@@ -32,23 +32,50 @@ scmval scm_flo(flonum d) {
     return v;
 }
 
+scmval scm_big(mpz_t m) {
+    scm_bignum_t* big = scm_new(scm_bignum_t);
+    mpz_init_set(big->m, m);
+    return make_ptr(SCM_TYPE_BIGNUM, big);
+}
+
+scmval scm_bigi(fixnum i) {
+    scm_bignum_t* big = scm_new(scm_bignum_t);
+    mpz_init_set_si(big->m, i);
+    scmval v = make_ptr(SCM_TYPE_BIGNUM, big);
+    return v;
+}
+
+scmval scm_bigf(flonum f) {
+    scm_bignum_t* big = scm_new(scm_bignum_t);
+    mpz_init_set_d(big->m, f);
+    scmval v = make_ptr(SCM_TYPE_BIGNUM, big);
+    return v;
+}
+
+scmval scm_bigs(const char* s, int base) {
+    scm_bignum_t* big = scm_new(scm_bignum_t);
+    mpz_init_set_str(big->m, s, base);
+    scmval v = make_ptr(SCM_TYPE_BIGNUM, big);
+    return v;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // STANDARD LIBRARY
 ////////////////////////////////////////////////////////////////////////////////
 static scmval scm_number_p(scmval x) {
-    return scm_bool(is_fixnum(x) || is_flonum(x));
+    return scm_bool(is_number(x));
 }
 
 static scmval scm_real_p(scmval x) {
-    return scm_bool(is_fixnum(x) || is_flonum(x));
+    return scm_bool(is_number(x));
 }
 
 static scmval scm_integer_p(scmval x) {
-    return scm_bool(is_fixnum(x));
+    return scm_bool(is_integer(x));
 }
 
 static scmval scm_exact_p(scmval x) {
-    return scm_bool(is_fixnum(x));
+    return scm_bool(is_integer(x));
 }
 
 static scmval scm_inexact_p(scmval x) {
@@ -56,7 +83,7 @@ static scmval scm_inexact_p(scmval x) {
 }
 
 static scmval scm_exact_integer_p(scmval x) {
-    return scm_bool(is_fixnum(x));
+    return scm_bool(is_integer(x));
 }
 
 static scmval scm_finite_p(scmval x) {
@@ -525,9 +552,21 @@ scmval string_to_number(char* buf) {
     }
 
     if(is_int) {
-        fixnum l = strtol(p, NULL, base);
-        if(neg) l = -l;
-        return scm_fix(l);
+        mpz_t m;
+        mpz_init_set_str(m, p, base);
+        if(mpz_fits_slong_p(m)) {
+            mpz_clear(m);
+            fixnum l = strtol(p, NULL, base);
+            if(neg) l = -l;
+            return scm_fix(l);
+        }
+        if(neg) {
+            mpz_t n;
+            mpz_neg(n, m);
+            mpz_clear(m);
+            return scm_big(n);
+        }
+        return scm_big(m);
     } else {
         flonum f = strtod(p, NULL);
         if(neg) f = -f;
@@ -569,74 +608,132 @@ static int ncmp(scmval x, scmval y) {
     return res;
 }
 
+// promote numbers to their most common type
+// in case of two fixnums they are both promoted to bignums
+// as to prevent overflowing during calculations. If they fit
+// in a fixnum they are converted back afterward
+static int promote(scmval* x, scmval* y) {
+    int tx = type_of(*x);
+    int ty = type_of(*y);
+    switch(tx) {
+        case SCM_TYPE_FLONUM:
+            switch(ty) {
+                case SCM_TYPE_FLONUM: /* no-op */                           break;
+                case SCM_TYPE_BIGNUM: *y = scm_flo(mpz_get_d(c_big(*y)));   break;
+                case SCM_TYPE_FIXNUM: *y = scm_flo((flonum)c_fix(*y));      break;
+            }
+            break;
+        case SCM_TYPE_BIGNUM:
+            switch(ty) {
+                case SCM_TYPE_FLONUM: *x = scm_flo(mpz_get_d(c_big(*x)));   break;
+                case SCM_TYPE_BIGNUM: /* no-op */                           break;
+                case SCM_TYPE_FIXNUM: *y = scm_bigi(c_fix(*y));             break;
+            }
+            break;
+        case SCM_TYPE_FIXNUM:
+            switch(ty) {
+                case SCM_TYPE_FLONUM: *x = scm_flo((flonum)c_fix(*x));      break;
+                case SCM_TYPE_BIGNUM: *x = scm_bigi(c_fix(*x));             break;
+                case SCM_TYPE_FIXNUM: *x = scm_bigi(c_fix(*x));
+                                      *y = scm_bigi(c_fix(*y));             break;
+            }
+            break;
+    }
+    return type_of(*x);
+}
+
 static scmval nadd(scmval x, scmval y) {
     scmval r = scm_0;
-    if(is_fixnum(x)) {
-        if(is_fixnum(y)) {
-            r = scm_fix(c_fix(x) + c_fix(y));
-        } else if(is_flonum(y)) {
-            r = scm_flo(c_fix(x) + c_flo(y));
-        }
-    } else if(is_flonum(x)) {
-        if(is_fixnum(y)) {
-            r = nadd(y, x);
-        } else if(is_flonum(y)) {
+    int type = promote(&x, &y);
+    switch(type) {
+        case SCM_TYPE_FLONUM:
             r = scm_flo(c_flo(x) + c_flo(y));
-        }
+            break;
+        case SCM_TYPE_BIGNUM: 
+        case SCM_TYPE_FIXNUM:
+            {
+                mpz_t m;
+                mpz_init(m);
+                mpz_add(m, c_big(x), c_big(y));
+                if(mpz_fits_slong_p(m))
+                    r = scm_fix(mpz_get_si(m));
+                else
+                    r = scm_big(m);
+                mpz_clear(m);
+            }
+            break;
     }
     return r;
 }
 
 static scmval nmul(scmval x, scmval y) {
     scmval r = scm_fix(1);
-    if(is_fixnum(x)) {
-        if(is_fixnum(y)) {
-            r = scm_fix(c_fix(x) * c_fix(y));
-        } else if(is_flonum(y)) {
-            r = scm_flo(c_fix(x) * c_flo(y));
-        }
-    } else if(is_flonum(x)) {
-        if(is_fixnum(y)) {
-            r = nmul(y, x);
-        } else if(is_flonum(y)) {
+    int type = promote(&x, &y);
+    switch(type) {
+        case SCM_TYPE_FLONUM:
             r = scm_flo(c_flo(x) * c_flo(y));
-        }
+            break;
+        case SCM_TYPE_BIGNUM: 
+        case SCM_TYPE_FIXNUM:
+            {
+                mpz_t m;
+                mpz_init(m);
+                mpz_mul(m, c_big(x), c_big(y));
+                if(mpz_fits_slong_p(m))
+                    r = scm_fix(mpz_get_si(m));
+                else
+                    r = scm_big(m);
+                mpz_clear(m);
+            }
+            break;
     }
     return r;
 }
 
 static scmval nsub(scmval x, scmval y) {
     scmval r = scm_0;
-    if(is_fixnum(x)) {
-        if(is_fixnum(y)) {
-            r = scm_fix(c_fix(x) - c_fix(y));
-        } else if(is_flonum(y)) {
-            r = scm_flo(c_fix(x) - c_flo(y));
-        }
-    } else if(is_flonum(x)) {
-        if(is_fixnum(y)) {
-            r = scm_flo(c_flo(x) - c_fix(y));
-        } else if(is_flonum(y)) {
+    int type = promote(&x, &y);
+    switch(type) {
+        case SCM_TYPE_FLONUM:
             r = scm_flo(c_flo(x) - c_flo(y));
-        }
+            break;
+        case SCM_TYPE_BIGNUM: 
+        case SCM_TYPE_FIXNUM:
+            {
+                mpz_t m;
+                mpz_init(m);
+                mpz_sub(m, c_big(x), c_big(y));
+                if(mpz_fits_slong_p(m))
+                    r = scm_fix(mpz_get_si(m));
+                else
+                    r = scm_big(m);
+                mpz_clear(m);
+            }
+            break;
     }
     return r;
 }
 
 static scmval ndiv(scmval x, scmval y) {
     scmval r = scm_fix(1);
-    if(is_fixnum(x)) {
-        if(is_fixnum(y)) {
-            r = scm_fix(c_fix(x) / c_fix(y));
-        } else if(is_flonum(y)) {
-            r = scm_flo(c_fix(x) / c_flo(y));
-        }
-    } else if(is_flonum(x)) {
-        if(is_fixnum(y)) {
-            r = scm_flo(c_flo(x) / c_fix(y));
-        } else if(is_flonum(y)) {
+    int type = promote(&x, &y);
+    switch(type) {
+        case SCM_TYPE_FLONUM:
             r = scm_flo(c_flo(x) / c_flo(y));
-        }
+            break;
+        case SCM_TYPE_BIGNUM: 
+        case SCM_TYPE_FIXNUM:
+            {
+                mpz_t m;
+                mpz_init(m);
+                mpz_div(m, c_big(x), c_big(y));
+                if(mpz_fits_slong_p(m))
+                    r = scm_fix(mpz_get_si(m));
+                else
+                    r = scm_big(m);
+                mpz_clear(m);
+            }
+            break;
     }
     return r;
 }

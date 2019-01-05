@@ -13,6 +13,7 @@ static void run(const char*);
 ////////////////////////////////////////////////////////////////////////////////
 static void scm_init(int argc, char* argv[]) {
     GC_INIT();
+    mp_set_memory_functions(scm_gc_malloc, scm_gc_realloc, scm_gc_free);
 
     scmval env = make_env(scm_undef);
 

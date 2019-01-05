@@ -1,3 +1,4 @@
+typedef struct { mpz_t m; } scm_bignum_t;
 // globals
 extern scmval scm_0;
 extern scmval scm_pos_inf;
@@ -9,11 +10,13 @@ scmval scm_flo(flonum);
 // accessors
 static inline fixnum c_fix(scmval v) { return v.i; }
 static inline flonum c_flo(scmval v) { return v.d; }
+#define c_big(v) (((scm_bignum_t*)((v).o))->m)
 // predicates
 static inline bool is_fixnum(scmval v) { return type_of(v) == SCM_TYPE_FIXNUM; }
 static inline bool is_flonum(scmval v) { return type_of(v) == SCM_TYPE_FLONUM; }
-static inline bool is_number(scmval x) { return is_fixnum(x) || is_flonum(x); }
-static inline bool is_integer(scmval x) { return is_fixnum(x); }
+static inline bool is_bignum(scmval v) { return type_of(v) == SCM_TYPE_BIGNUM; }
+static inline bool is_number(scmval x) { return is_fixnum(x) || is_bignum(x) || is_flonum(x); }
+static inline bool is_integer(scmval x) { return is_fixnum(x) || is_bignum(x); }
 static inline bool is_nan(scmval x) { return is_eq(x, scm_nan); }
 static inline bool is_pos_inf(scmval x) { return is_eq(x, scm_pos_inf); }
 static inline bool is_neg_inf(scmval x) { return is_eq(x, scm_neg_inf); }

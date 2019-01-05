@@ -11,6 +11,7 @@
 #include <math.h>
 #include <gc/gc.h>
 #include <gc/cord.h>
+#include <gmp.h>
 
 #define IMPLEMENTATION_NAME     "sarcasm"
 #define IMPLEMENTATION_VERSION  "0.1"
@@ -44,6 +45,7 @@ enum {
     SCM_TYPE_EOF,
     SCM_TYPE_BOOL,
     SCM_TYPE_FIXNUM,
+    SCM_TYPE_BIGNUM,
     SCM_TYPE_FLONUM,
     SCM_TYPE_CHAR,
     SCM_TYPE_STRING,

@@ -27,6 +27,9 @@ void write(scmval p, scmval v, short flags) {
         case SCM_TYPE_FIXNUM:
             scm_printf(p, "%lld", c_fix(v));
             break;
+        case SCM_TYPE_BIGNUM:
+            printf("%s", mpz_get_str(NULL, 10, c_big(v)));
+            break;
         case SCM_TYPE_FLONUM:
             if(is_nan(v)) {
                 scm_puts(p, "+nan.0");
