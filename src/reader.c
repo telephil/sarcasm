@@ -13,6 +13,7 @@ scmval scm_unquote_splicing;
 
 // read helpers
 static scmval read_aux(scmval, bool);
+static scmval read_bool(scmval, char);
 static scmval read_char(scmval);
 static scmval read_string(scmval);
 static scmval read_list(scmval);
@@ -149,10 +150,8 @@ start_read:
                         }
                     }
                 case 't':
-                    v = scm_true;
-                    break;
                 case 'f':
-                    v = scm_false;
+                    v = read_bool(p, c);
                     break;
                 case '\\':
                     v = read_char(p);
@@ -184,6 +183,31 @@ number_fallback:
             break;
     }
     return v;
+}
+
+static scmval read_bool(scmval p, char initial) {
+    char buf[6];
+    buf[0] = initial;
+    int size = 1;
+    for(int i = 1; i < 5; i++) {
+        char c = scm_getc(p);
+        if(c == EOF || is_delimiter(c)) {
+            scm_ungetc(p, c);
+            break;
+        }
+        buf[size++] = c;
+    }
+    buf[size] = '\0';
+    scmval b = scm_false;
+    if(size == 1)
+        b = initial == 't' ? scm_true : scm_false;
+    else if(strcmp(buf, "true") == 0)
+        b = scm_true;
+    else if(strcmp(buf, "false") == 0)
+        b = scm_false;
+    else
+        read_error(p, "unexpected token '#%s' while reading boolean", buf);
+    return b;
 }
 
 static scmval read_any(scmval p) {
