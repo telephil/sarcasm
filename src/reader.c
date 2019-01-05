@@ -93,6 +93,8 @@ start_read:
                 c = scm_getc(p);
                 if(c != '.') read_error(p, "unexpected '%c' while reading ...");
                 v = scm_ellipsis;
+            } else if(isdigit(scm_peek(p))) { // flonum with no starting 0
+                goto number_fallback;
             } else if(!in_list) {
                 read_error(p, "unexpected '.' character");
             } else {
