@@ -129,7 +129,6 @@ static void save_repl_history() {
     char* path = get_history_filename();
     write_history(path);
 }
-
 static void repl() {
     atexit(save_repl_history);
     char* path = get_history_filename();

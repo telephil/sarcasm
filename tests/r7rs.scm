@@ -131,7 +131,7 @@
 (is '(x y) (append '(x) '(y)))
 (is '(a b c d) (append '(a) '(b c d)))
 (is '(a (b) (c)) (append '(a (b)) '((c))))
-(is '(a b c .d) (append '(a b) '(c . d)))
+(is '(a b c . d) (append '(a b) '(c . d)))
 (is 'a (append '() 'a))
 (is '(c b a) (reverse '(a b c)))
 (is '((e (f)) d (b c) a) (reverse '(a (b c) d (e (f)))))
