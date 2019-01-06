@@ -5,11 +5,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SYNTAX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#|
+this break begin form in libraries
 (define-syntax begin
   (syntax-rules ()
     ((begin) (void))
     ((begin expr ...) ((lambda () expr ...)))))
-
+|#
 (define-syntax and
   (syntax-rules ()
     ((and) #t)

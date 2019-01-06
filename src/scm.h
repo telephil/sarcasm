@@ -115,3 +115,12 @@ void init_eval(scmval);
 scmval eval(scmval, scmval);
 
 #define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }
+
+// global symbols
+extern scmval scm_lambda;
+extern scmval scm_define;
+extern scmval scm_if;
+extern scmval scm_letrec_star;
+extern scmval scm_set;
+extern scmval scm_begin;
+extern scmval scm_apply;

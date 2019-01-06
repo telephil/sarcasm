@@ -5,7 +5,6 @@ static scmval library_cache;
 static scmval scm_export;
 static scmval scm_import;
 static scmval scm_include;
-static scmval scm_begin;
 
 scmval make_library(scmval name) {
     scm_library_t* lib = scm_new(scm_library_t);
@@ -68,6 +67,5 @@ void init_library(scmval env) {
     scm_export  = intern("export");
     scm_import  = intern("import");
     scm_include = intern("include");
-    scm_begin   = intern("begin");
 }
 

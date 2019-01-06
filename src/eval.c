@@ -1,26 +1,19 @@
 #include "scm.h"
 
-static scmval scm_apply;
-static scmval scm_define;
-static scmval scm_set;
+scmval scm_apply;
+scmval scm_lambda;
+scmval scm_if;
+scmval scm_set;
+scmval scm_define;
+scmval scm_begin;
 static scmval scm_define_syntax;
 static scmval scm_syntax_rules;
-static scmval scm_lambda;
-static scmval scm_case_lambda;
-static scmval scm_if;
-static scmval scm_set;
-static scmval scm_begin;
 static scmval scm_define_library;
 static scmval scm_import;
 static scmval scm_export;
 static scmval scm_include;
-static scmval scm_let;
-static scmval scm_let_star;
-static scmval scm_letrec;
-static scmval scm_letrec_star;
-static scmval scm_define_record_type;
 
-static void   list_to_args(scmval, int*, scmval**);
+static scmval eval_aux(scmval, scmval);
 static scmval stx_define(scmval, scmval);
 static scmval stx_define_syntax(scmval, scmval);
 static scmval stx_define_library(scmval, scmval);
@@ -28,14 +21,11 @@ static scmval stx_import(scmval, scmval);
 static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
-static scmval stx_case_lambda(scmval, scmval);
+static scmval stx_begin(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
-static scmval stx_let(scmval, scmval);
-static scmval stx_let_star(scmval, scmval);
-static scmval stx_letrec_star(scmval, scmval);
-static scmval stx_define_record_type(scmval, scmval);
 static scmval apply_subr(scmval, scmval, scmval);
 static scmval apply_closure(scmval, scmval, scmval);
+static void   list_to_args(scmval, int*, scmval**);
 
 ////////////////////////////////////////////////////////////////////////////////
 // STANDARD LIBRARY
@@ -60,30 +50,29 @@ void init_eval(scmval env) {
     scm_if              = intern("if");
     scm_set             = intern("set!");
     scm_lambda          = intern("lambda");
-    scm_case_lambda     = intern("case-lambda");
     scm_begin           = intern("begin");
     scm_define_library  = intern("define-library");
     scm_import          = intern("import");
     scm_export          = intern("export");
     scm_include         = intern("include");
-    scm_let             = intern("let");
-    scm_let_star        = intern("let*");
-    scm_letrec          = intern("letrec");
-    scm_letrec_star     = intern("letrec*");
-    scm_define_record_type = intern("define-record-type");
 
     define(env, "eval", scm_eval,      arity_exactly(2));
     define(env, "void", scm_void_subr, arity_at_least(0));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// E V A L U A T I O N
+////////////////////////////////////////////////////////////////////////////////
+scmval eval(scmval expr, scmval env) {
+    expr = expand(expr, env);
+    return eval_aux(expr, env);
 }
 
 #define COND if(false) {}
 #define CASE(SYMBOL) else if(is_eq(s, SYMBOL))
 #define DEFAULT else
 
-////////////////////////////////////////////////////////////////////////////////
-// E V A L U A T I O N
-////////////////////////////////////////////////////////////////////////////////
-scmval eval(scmval v, scmval e) {
+static scmval eval_aux(scmval v, scmval e) {
     scmval r = v;
 loop:
     //dbg("eval", v);
@@ -111,33 +100,14 @@ loop:
         CASE(scm_lambda) {
             r = stx_lambda(cdr(v), e);
         }
-        CASE(scm_case_lambda) {
-            v = stx_case_lambda(cdr(v), e);
-            goto loop;
-        }
-        CASE(scm_let) {
-            v = stx_let(cdr(v), e);
-            goto loop;
-        }
-        CASE(scm_let_star) {
-            v = stx_let_star(cdr(v), e);
-            goto loop;
-        }
-        CASE(scm_letrec) {
-            v = stx_letrec_star(cdr(v), e);
-            goto loop;
-        }
-        CASE(scm_letrec_star) {
-            v = stx_letrec_star(cdr(v), e);
-            goto loop;
-        }
         CASE(scm_if) {
             v = stx_if(cdr(v), e);
             goto loop;
         }
-        CASE(scm_define_record_type) {
-            r = stx_define_record_type(cdr(v), e);
-        } 
+        CASE(scm_begin) {
+            v = stx_begin(cdr(v), e);
+            goto loop;
+        }
         CASE(scm_import) {
             r = stx_import(cdr(v), e);
         }
@@ -154,7 +124,7 @@ loop:
             error(syntax_error_type, "unquote-splicing: not in quasiquote");
         }
         CASE(scm_apply) {
-            scmval args = eval(caddr(v), e);
+            scmval args = eval_aux(caddr(v), e);
             scmval head = scm_null, tail;
             foreach(arg, args) {
                 if(is_null(head)) {
@@ -169,7 +139,7 @@ loop:
             goto loop;
         }
         DEFAULT {
-            scmval f = is_callable(car(v)) ? car(v) : eval(car(v), e);
+            scmval f = is_callable(car(v)) ? car(v) : eval_aux(car(v), e);
             if(is_subr(f)) {
                 r = apply_subr(f, cdr(v), e);
             } else if(is_closure(f)) {
@@ -180,7 +150,7 @@ loop:
                 goto loop;
             } else if(is_syntax(f)) {
                 v = expand(f, v);
-                //dbg("E(v)", v);
+                dbg("E(v)", v);
                 goto loop;
             }
         }
@@ -202,7 +172,7 @@ static scmval apply_subr(scmval subr, scmval arglist, scmval env) {
         new_argv = scm_new_array(new_argc, scmval);
         for(int i = 0; i < new_argc; i++) {
             new_argv[i] = (i < argc)
-                ? eval(argv[i], env)
+                ? eval_aux(argv[i], env)
                 : scm_undef;
         }
     }
@@ -220,7 +190,7 @@ static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
     if(ac == -1) { // lambda arg
         scmval arglist = scm_null;
         for(int i = argc - 1; i >= 0; i--) {
-            scmval arg = eval(argv[i], e);
+            scmval arg = eval_aux(argv[i], e);
             arglist = cons(arg, arglist);
         }
         bind(env, av[0], arglist);
@@ -232,12 +202,12 @@ static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
                     is_undef(closure_name(closure)) ? "anonymous closure" : c_str(closure_name(closure)),
                     xac, argc);
         for(i = 0; i < xac; i++) {
-            scmval arg = eval(argv[i], e);
+            scmval arg = eval_aux(argv[i], e);
             bind(env, av[i], arg);
         }
         scmval tail = scm_null;
         for(int j = argc - 1; j >= xac; j--) {
-            scmval arg = eval(argv[j], e);
+            scmval arg = eval_aux(argv[j], e);
             tail = cons(arg, tail);
         }
         bind(env, av[i], tail);
@@ -247,7 +217,7 @@ static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
                     is_undef(closure_name(closure)) ? "anonymous closure" : c_str(closure_name(closure)),
                     ac, argc);
         for(int i = 0; i < argc; i++) {
-            scmval arg = eval(argv[i], e);
+            scmval arg = eval_aux(argv[i], e);
             bind(env, av[i], arg);
         }
     }
@@ -255,7 +225,7 @@ static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
         scmval expr = car(exprs);
         if(is_null(cdr(exprs)))
             return cons(env, expr);
-        eval(expr, env);
+        eval_aux(expr, env);
     }
     return scm_undef; // not reached
 }
@@ -286,6 +256,8 @@ static inline scmval transform_internal_definitions(scmval body) {
             }
         }
     }
+    if(is_null(rest))
+        rest = list1(scm_void);
     scmval result = cons(cons(scm_letrec_star, cons(defs, rest)), scm_null);
     return result;
 }
@@ -307,136 +279,6 @@ static scmval stx_lambda(scmval expr, scmval env) {
     }
     scmval body = transform_internal_definitions(cdr(expr));
     return make_closure(scm_undef, ac, av, env, body);
-}
-
-// PLAIN UGLY C MACRO EXPANSION :(
-static scmval stx_case_lambda(scmval expr, scmval env) {
-    if(is_null(expr)) error(syntax_error_type, "invalid case-lambda syntax");
-    // transform all clauses to if / apply
-    int len = list_length(expr);
-    scmval* transformed = scm_new_array(len+1, scmval);
-    int i = 0;
-    foreach(clause, expr) {
-        scmval p = list3(scm_if,
-                         list3(intern("="), intern("len"), scm_fix(list_length(car(clause)))),
-                         list3(scm_apply, cons(scm_lambda, clause), intern("args")));
-        transformed[i++] = p;
-    }
-    transformed[i] = list2(intern("error"), scm_str("no matching clause found"));
-    scmval body = cons(transformed[0], scm_null);
-    for(int i = 0; i < len; i++) {
-        setcdr(cddr(transformed[i]), cons(transformed[i+1], scm_null));
-    }
-    scmval result =
-        list3(scm_lambda, intern("args"),
-              cons(scm_let,
-                   cons(list1(list2(intern("len"), list2(intern("length"), intern("args")))),
-                        body)));
-    return result;
-}
-
-// (define-syntax let
-//   (syntax-rules ()
-//     ((let ((name val) ...) body1 body2 ...)
-//       ((lambda (name ...) body1 body2 ...)
-//         val ...))
-//     ((let tag ((name val) ...) body1 body2 ...)
-//       ((letrec ((tag (lambda (name ...)
-//                        body1 body2 ...)))
-//          tag)
-//       val ...))))
-static scmval stx_let(scmval expr, scmval env) {
-    int len = list_length(expr);
-    if(len < 2) error(syntax_error_type, "invalid let syntax: expected at least 2 arguments but received %d", len);
-    bool named = is_symbol(car(expr));
-    if(named && len < 3)
-        error(syntax_error_type, "invalid let syntax: expected at least 3 arguments but received %", len);
-    scmval name    = named ? car(expr) : scm_undef;
-    scmval arglist = named ? cadr(expr) : car(expr);
-    scmval body    = named ? cddr(expr) : cdr(expr);
-    scmval vars    = scm_null;
-    scmval vals    = scm_null;
-    scmval tvars, pvars, tvals, pvals;
-    foreach(arg, arglist) {
-        if(!is_list(arg))
-            error(syntax_error_type, "invalid let syntax: expected a list but received %s", scm_to_cstr(arg));
-        pvars = cons(car(arg), scm_null);
-        pvals = cons(cadr(arg), scm_null);
-        if(is_null(vars)) {
-            vars = tvars = pvars;
-            vals = tvals = pvals;
-        } else {
-            setcdr(tvars, pvars);
-            tvars = pvars;
-            setcdr(tvals, pvals);
-            tvals = pvals;
-        }
-    }
-    scmval ldef = cons(scm_lambda, cons(vars, body)); // (lambda (vars...) body...)
-    scmval result = scm_undef;
-    if(named) {
-        scmval lrdef = list3(scm_letrec, list1(cons(name, list1(ldef))), name);
-        result = cons(lrdef, vals);
-    } else {
-        result = cons(ldef, vals); // (ldef values...)
-    }
-    return result;
-}
-
-// (define-syntax let*
-//   (syntax-rules ()
-//     ((let* () body1 body2 ...)
-//       (let () body1 body2 ...))
-//     ((let* ((name1 val1) (name2 val2) ...) body1 body2 ...)
-//      (let ((name1 val1))
-//        (let* ((name2 val2) ...)
-//          body1 body2 ...)))))
-static scmval stx_let_star(scmval expr, scmval env) {
-    int len = list_length(expr);
-    if(len < 2) error(syntax_error_type, "invalid let* syntax");
-    scmval arglist = car(expr);
-    scmval body    = cdr(expr);
-    if(is_null(arglist))
-        return stx_let(expr, env);
-
-    scmval rest   = cons(scm_let_star, cons(cdr(arglist), body));
-    scmval result = cons(scm_let, cons(cons(car(arglist), scm_null), cons(rest, scm_null)));
-    return result;
-}
-
-// (define-syntax letrec*
-//   (syntax-rules ()
-//     ((letrec* ((var1 init1) ...) body1 body2 ...)
-//      (let ((var1 <undefined>) ...)
-//        (set! var1 init1)
-//        ...
-//        (let () body1 body2 ...)))))
-static scmval stx_letrec_star(scmval expr, scmval env) {
-    int len = list_length(expr);
-    if(len < 2) error(syntax_error_type, "invalid letrec* syntax");
-    scmval arglist = car(expr);
-    scmval body    = cons(scm_let, cons(scm_null, cdr(expr)));
-    scmval vars    = scm_null;
-    scmval vals    = scm_null;
-    scmval tvars, pvars, tvals, pvals;
-    foreach(arg, arglist) {
-        if(!is_list(arg))
-            error(syntax_error_type, "invalid letrec* syntax: expected a list but received %s", scm_to_cstr(arg));
-        pvars = list1(list2(car(arg), scm_void));    // ((var1 #undefined)...)
-        pvals = list1(list3(scm_set, car(arg), cadr(arg))); // (set! var1 val1)...
-        if(is_null(vars)) {
-            vars = tvars = pvars;
-            vals = tvals = pvals;
-        } else {
-            setcdr(tvars, pvars);
-            tvars = pvars;
-            setcdr(tvals, pvals);
-            tvals = pvals;
-        }
-    }
-    setcdr(tvals, cons(body, scm_null));
-    scmval result = cons(scm_let, cons(vars, vals)); // (let (vars...) vals... (let () body...))
-    return result;
 }
 
 // FIXME duplicate stx_lambda
@@ -465,7 +307,7 @@ static void define_symbol(scmval expr, scmval e) {
     int len = list_length(expr);
     if(len != 2) error(arity_error_type, "define expects 2 arguments but received %d", len);
     scmval name = car(expr);
-    scmval body = eval(cadr(expr), e);
+    scmval body = eval_aux(cadr(expr), e);
     set(e, name, body);
     if(is_closure(body)) {
         set_closure_name(body, name);
@@ -530,7 +372,7 @@ static scmval stx_define_library(scmval expr, scmval env) {
     scmval libenv = scm_environment(argc, argv);
     get_env(libenv)->next = env; // XXX: is that the proper solution ?
     foreach(expr, body) {
-        eval(expr, libenv);
+        eval_aux(expr, libenv);
     }
     scmval library = make_library(name);
     dict_copy(library_symbols(library), env_globals(libenv));
@@ -553,7 +395,7 @@ static scmval stx_set(scmval expr, scmval env) {
     if(len != 2) error(syntax_error_type, "invalid set! syntax");
     if(!is_symbol(car(expr)))
         error(syntax_error_type, "set!: expected symbol but got %s", scm_to_cstr(car(expr)));
-    if(!update(env, car(expr), eval(cadr(expr), env)))
+    if(!update(env, car(expr), eval_aux(cadr(expr), env)))
         error(syntax_error_type, "set!: symbol %s is not defined", scm_to_cstr(car(expr)));
     return scm_void;
 }
@@ -563,12 +405,12 @@ static scmval quasiquote(scmval expr, scmval env) {
         return expr;
     scmval result = scm_null;
     if(is_eq(car(expr), scm_unquote)) {
-        result = eval(cadr(expr), env);
+        result = eval_aux(cadr(expr), env);
     } else if(is_pair(car(expr)) && is_eq(caar(expr), scm_unquote_splicing)) {
         scmval rest = cdr(expr);
         scmval tail = scm_null;
         expr = car(expr);
-        result = eval(cadr(expr), env);
+        result = eval_aux(cadr(expr), env);
         for(tail = result; !is_null(cdr(tail)); tail = cdr(tail)) {
         }
         rest = quasiquote(rest, env);
@@ -592,98 +434,22 @@ static scmval stx_quasiquote(scmval expr, scmval env) {
 static scmval stx_if(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2 || len > 3) error(syntax_error_type, "invalid syntax %s", scm_to_cstr(expr));
-    scmval test = eval(car(expr), env);
+    scmval test = eval_aux(car(expr), env);
     scmval consequent = cadr(expr);
     scmval alternate  = (len == 3) ? caddr(expr) : scm_void;
     return !is_false(test) ? consequent : alternate;
 }
 
-static void define_record_predicate(scmval pred, scmval type, scmval env) {
-    scmval obj  = intern("obj");
-    scmval body =
-        list3(intern("and"), 
-              list2(intern("%record?"), obj),
-              list3(intern("eq?"), list2(intern("%record-type"), obj), list2(scm_quote, type)));
-    scmval proc =
-        list2(pred, list3(scm_lambda, list1(obj), body));
-    stx_define(proc, env);
-}
-
-static scmval codegen_record_field_accessor(scmval name, int index) {
-    scmval obj  = intern("obj");
-    scmval proc =
-        list2(name,
-                list3(scm_lambda, list1(obj),
-                    list3(intern("vector-ref"), list2(intern("%record-slots"), obj), scm_fix(index))));
-    return proc;
-}
-
-static scmval codegen_record_field_mutator(scmval name, int index) {
-    scmval obj  = intern("obj");
-    scmval val  = intern("val");
-    scmval proc =
-        list2(name, list3(scm_lambda, list2(obj, val),
-                    list4(intern("vector-set!"), list2(intern("%record-slots"), obj), scm_fix(index), val)));
-    return proc;
-}
-
-static void define_record_fields(scmval fields, scmval env) {
-    int index = 0;
-    foreach(field, fields) {
-        int len = list_length(field);
-        scmval mutator = scm_undef;
-        scmval accessor = scm_undef;
-        switch(len) {
-            case 3:
-                mutator = codegen_record_field_mutator(caddr(field), index);
-            case 2:
-                accessor = codegen_record_field_accessor(cadr(field), index);
-                break;
-            default:
-                error(syntax_error_type, "invalid record field syntax");
-        }
-        index++;
-        stx_define(accessor, env);
-        if(!is_undef(mutator))
-            stx_define(mutator, env);
-    }
-}
-
-static void define_record_ctor(scmval ctor, scmval type, scmval fields, scmval env) {
-    scmval sdef = cons(intern("vector"), scm_null), t = sdef;
-    foreach(field, fields) {
-        scmval fname = car(field);
-        bool   found = false;
-        foreach(fref, cdr(ctor)) {
-            if(is_eq(fref, fname)) {
-                found = true;
-                break;
-            }
-        }
-        setcdr(t, list1(found ? fname : list1(intern("void"))));
-        t = cdr(t);
-    }
-    scmval proc = list2(car(ctor),
-            list3(scm_lambda, cdr(ctor),
-                list3(intern("%make-record"), list2(scm_quote, type), sdef)));
-    stx_define(proc, env);
-    //dbg("ctor", proc);
-}
-static scmval stx_define_record_type(scmval expr, scmval env) {
+static scmval stx_begin(scmval expr, scmval env) {
     int len = list_length(expr);
-    if(len < 4) error(syntax_error_type, "invalid define-record-type syntax");
-    scmval type   = car(expr);
-    scmval ctor   = cadr(expr);
-    scmval pred   = caddr(expr);
-    scmval fields = cdddr(expr);
-    if(!is_symbol(type))
-        error(syntax_error_type, "invalid record name (expected a symbol but got %s", scm_to_cstr(type)); 
-    define_record_ctor(ctor, type, fields, env);
-    define_record_predicate(pred, type, env); 
-    define_record_fields(fields, env);
-    return scm_undef;
+    if(len == 0)
+        return scm_void;
+    scmval lst = expr;
+    for(lst = expr; !is_null(cdr(lst)); lst = cdr(lst)) {
+        eval(car(lst), env);
+    }
+    return car(lst);
 }
-
 static void list_to_args(scmval l, int* argc, scmval** argv) {
     int ac = list_length(l);
     if(ac > 0) {
