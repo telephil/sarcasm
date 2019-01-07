@@ -1,16 +1,11 @@
 #include "scm.h"
 
-// globals
-scmval scm_true;
-scmval scm_false;
-
 // constructor
 scmval make_bool(bool b) {
     scmval v = make_val(SCM_TYPE_BOOL);
     v.b = b;
     return v;
 }
-
 
 // helpers
 bool is_eqv(scmval x, scmval y) {
@@ -56,23 +51,23 @@ bool is_equal(scmval x, scmval y) {
 
 // standard library
 static scmval scm_boolean_p(scmval v) {
-    return scm_bool(is_bool(v));
+    return s_bool(is_bool(v));
 }
 
 scmval scm_not(scmval v) {
-    return scm_bool(is_false(v));
+    return s_bool(is_false(v));
 }
 
 static scmval scm_eq(scmval x, scmval y) {
-    return scm_bool(is_eq(x, y));
+    return s_bool(is_eq(x, y));
 }
 
 static scmval scm_eqv(scmval x, scmval y) {
-    return scm_bool(is_eqv(x, y));
+    return s_bool(is_eqv(x, y));
 }
 
 static scmval scm_equal(scmval x, scmval y) {
-    return scm_bool(is_equal(x, y));
+    return s_bool(is_equal(x, y));
 }
 
 static scmval scm_boolean_equal_p(int argc, scmval* argv) {
@@ -86,14 +81,11 @@ static scmval scm_boolean_equal_p(int argc, scmval* argv) {
 
 // initialization
 void init_bool(scmval env) {
-    scm_true  = make_bool(true);
-    scm_false = make_bool(false);
-
-    define(env, "boolean?", scm_boolean_p, arity_exactly(1));
-    define(env, "not", scm_not, arity_exactly(1));
+    define(env, "boolean?",  scm_boolean_p,       arity_exactly(1));
+    define(env, "not",       scm_not,             arity_exactly(1));
     define(env, "boolean=?", scm_boolean_equal_p, arity_at_least(2));
-    define(env, "eq?", scm_eq, arity_exactly(2));
-    define(env, "eqv?", scm_eqv, arity_exactly(2));
-    define(env, "equal?", scm_equal, arity_exactly(2));
+    define(env, "eq?",       scm_eq,              arity_exactly(2));
+    define(env, "eqv?",      scm_eqv,             arity_exactly(2));
+    define(env, "equal?",    scm_equal,           arity_exactly(2));
 }
 

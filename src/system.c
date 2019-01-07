@@ -12,7 +12,7 @@ static scmval commandline;
 ////////////////////////////////////////////////////////////////////////////////
 scmval load(const char* path, scmval env) {
     scmval r = scm_undef;
-    scmval p = scm_open_input_file(scm_str(path));
+    scmval p = scm_open_input_file(s_str(path));
     while(true) {
         scmval v = read(p);
         if(is_eof(v))
@@ -24,12 +24,10 @@ scmval load(const char* path, scmval env) {
 }
 
 static void set_features() {
-    int word  = 0x0001;
-    int le    = *((char*)&word);
     char* f[] = {
         "r7rs",
         "exact-closed", "ieee-float",
-        "posix", OS, ARCH, le ? "little-endian" : "big-endian",
+        "posix", OS, ARCH, ENDIANESS,
         IMPLEMENTATION_NAME, IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION,
         NULL
     };
@@ -45,7 +43,7 @@ static void set_features() {
 static void set_commandline(int argc, char* argv[]) {
     commandline = scm_null;
     for(int i = argc - 1; i >= 0; i--) {
-        commandline = cons(scm_str(argv[i]), commandline);
+        commandline = cons(s_str(argv[i]), commandline);
     }
 }
 
@@ -66,12 +64,12 @@ extern int access(const char*, int);
 
 scmval scm_file_exists_p(scmval filename) {
     check_arg("file-exists?", string_c, filename);
-    return scm_bool(access(c_cstr(filename), 0) != -1);
+    return s_bool(access(c_cstr(filename), 0) != -1);
 }
 
 static scmval scm_delete_file(scmval filename) {
     check_arg("delete-file", string_c, filename);
-    return scm_bool(remove(c_str(filename)) == 0);
+    return s_bool(remove(c_str(filename)) == 0);
 } 
 
 static scmval scm_command_line() {
@@ -105,7 +103,7 @@ static scmval scm_getenv_var(scmval name) {
     char* value = getenv(c_str(name));
     if(value == NULL)
         return scm_false;
-    return scm_str(value);
+    return s_str(value);
 }
 
 static scmval scm_getenv_vars() {
@@ -115,7 +113,7 @@ static scmval scm_getenv_vars() {
         char *s = strdup(*env);
         char *k = strtok(s, "=");
         char *v = strtok(NULL, "=");
-        l = cons(cons(scm_str(k), scm_str(v)), l);
+        l = cons(cons(s_str(k), s_str(v)), l);
         free(s);
     }
     return l;
@@ -126,7 +124,7 @@ static scmval scm_current_second() {
     clock_gettime(CLOCK_REALTIME, &ts);
     // TAI is 37s ahead of UTC (thanks Wikipedia)
     flonum res = 37 + ts.tv_sec + 0.000000001*ts.tv_nsec;
-    return scm_flo(res);
+    return s_flo(res);
 }
 
 static scmval scm_features() {

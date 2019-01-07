@@ -5,8 +5,8 @@ extern scmval scm_pos_inf;
 extern scmval scm_neg_inf;
 extern scmval scm_nan;
 // constructors
-scmval scm_fix(fixnum);
-scmval scm_flo(flonum);
+scmval s_fix(fixnum);
+scmval s_flo(flonum);
 // accessors
 static inline fixnum c_fix(scmval v) { return v.i; }
 static inline flonum c_flo(scmval v) { return v.d; }

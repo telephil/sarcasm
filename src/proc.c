@@ -1,12 +1,12 @@
 #include "scm.h"
 
 // constructor
-scmval make_subr(const char* name, subr_f fn, arity_t arity) {
-    scm_subr_t* subr = scm_new(scm_subr_t);
-    subr->name  = scm_str(name);
-    subr->f     = fn;
-    subr->arity = arity;
-    return make_ptr(SCM_TYPE_SUBR, subr);
+scmval make_primitive(const char* name, primitive_f fn, arity_t arity) {
+    scm_primitive_t* primitive = scm_new(scm_primitive_t);
+    primitive->name  = s_str(name);
+    primitive->f     = fn;
+    primitive->arity = arity;
+    return make_ptr(SCM_TYPE_PRIMITIVE, primitive);
 }
 
 scmval make_closure(scmval name, int argc, scmval* argv, scmval env, scmval body) {
@@ -21,8 +21,8 @@ scmval make_closure(scmval name, int argc, scmval* argv, scmval env, scmval body
 
 // arity
 static void arity_error(scmval v, int argc) {
-    arity_t arity = subr_arity(v);
-    char* n = c_cstr(subr_name(v));
+    arity_t arity = primitive_arity(v);
+    char* n = c_cstr(primitive_name(v));
     char* m;
     switch(arity.type) {
         case ARITY_EXACTLY:
@@ -43,7 +43,7 @@ static void arity_error(scmval v, int argc) {
 
 void check_arity(scmval v, int argc) {
     bool match = false;
-    arity_t arity = subr_arity(v);
+    arity_t arity = primitive_arity(v);
     switch(arity.type) {
         case ARITY_EXACTLY:  match = (argc == arity.min); break;
         case ARITY_OR:       match = (argc == arity.min || argc == arity.max); break;
@@ -54,9 +54,9 @@ void check_arity(scmval v, int argc) {
         arity_error(v, argc);
 }
 
-int argc_from_arity(scmval subr, int len) {
+int argc_from_arity(scmval primitive, int len) {
     int argc;
-    arity_t arity = subr_arity(subr);
+    arity_t arity = primitive_arity(primitive);
     switch(arity.type) {
         case ARITY_EXACTLY: // already checked
         case ARITY_AT_LEAST:
@@ -68,27 +68,5 @@ int argc_from_arity(scmval subr, int len) {
             break;
     }
     return argc;
-}
-
-scmval apply_funcall(scmval s, int argc, scmval* argv) {
-    scmval r = scm_undef;
-    if(subr_arity(s).type == ARITY_AT_LEAST) {
-        r = funcall(s, argc, argv);
-    } else {
-        switch(argc) {
-            case  0: r = funcall0(s); break;
-            case  1: r = funcall(s, argv[0]); break;
-            case  2: r = funcall(s, argv[0], argv[1]); break;
-            case  3: r = funcall(s, argv[0], argv[1], argv[2]); break;
-            case  4: r = funcall(s, argv[0], argv[1], argv[2], argv[3]); break;
-            case  5: r = funcall(s, argv[0], argv[1], argv[2], argv[3], argv[4]); break;
-            case  6: r = funcall(s, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]); break;
-            case  7: r = funcall(s, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]); break;
-            case  8: r = funcall(s, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]); break;
-            case  9: r = funcall(s, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]); break;
-            case 10: r = funcall(s, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8], argv[9]); break;
-        }
-    }
-    return r;
 }
 

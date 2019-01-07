@@ -5,9 +5,6 @@ struct scm_pair {
     scmval cdr;
 };
 
-// globals
-extern scmval scm_null;
-
 // constructor
 scmval make_pair(scmval car, scmval cdr);
 

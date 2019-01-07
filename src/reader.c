@@ -4,12 +4,6 @@
 #define MAX_TOK_SIZE 1024
 
 static scmval read_error_type;
-static scmval scm_close_paren;
-static scmval scm_dot;
-scmval scm_quote;
-scmval scm_quasiquote;
-scmval scm_unquote;
-scmval scm_unquote_splicing;
 
 // read helpers
 static scmval read_aux(scmval, bool);
@@ -29,13 +23,6 @@ static bool is_subsequent(char);
 static bool is_special_subsequent(char);
 
 void init_reader(scmval env) {
-    scm_close_paren = intern(")");
-    scm_dot         = intern(".");
-    read_error_type = intern("read-error");
-    scm_quote       = intern("quote");
-    scm_quasiquote  = intern("quasiquote");
-    scm_unquote     = intern("unquote");
-    scm_unquote_splicing = intern("unquote-splicing");
 }
 
 static void read_error(scmval p, const char* message, ...) {
@@ -86,20 +73,20 @@ start_read:
         case ')':
             if(!in_list) 
                 read_error(p, "unexpected ')' character");
-            v = scm_close_paren;
+            v = sym_close_paren;
             break;
         case '.':
             if(scm_peek(p) == '.') {// ellipsis ?
                 scm_getc(p);
                 c = scm_getc(p);
                 if(c != '.') read_error(p, "unexpected '%c' while reading ...");
-                v = scm_ellipsis;
+                v = sym_ellipsis;
             } else if(isdigit(scm_peek(p))) { // flonum with no starting 0
                 goto number_fallback;
             } else if(!in_list) {
                 read_error(p, "unexpected '.' character");
             } else {
-                v = scm_dot;
+                v = sym_dot;
             }
             break;
         case '"':
@@ -107,11 +94,11 @@ start_read:
             break;
         case '\'':
             v = read_aux(p, false);
-            v = cons(scm_quote, cons(v, scm_null));
+            v = cons(sym_quote, cons(v, scm_null));
             break;
         case '`':
             v = read_aux(p, false);
-            v = cons(scm_quasiquote, cons(v, scm_null));
+            v = cons(sym_quasiquote, cons(v, scm_null));
             break;
         case ',':
             if(scm_peek(p) == '@') {
@@ -119,7 +106,7 @@ start_read:
                 splicing = true;
             }
             v = read_aux(p, false);
-            v = cons(splicing ? scm_unquote_splicing : scm_unquote, cons(v, scm_null));
+            v = cons(splicing ? sym_unquote_splicing : sym_unquote, cons(v, scm_null));
             break;
         case '#':
             c = scm_getc(p);
@@ -268,7 +255,7 @@ static scmval read_char(scmval p) {
     buf[i] = '\0';
     c = buf[0];
     if(i == 1) {
-        v = make_char(c);
+        v = s_char(c);
     } else {
         if(c == 'a' && !strncmp(buf, "alarm", i))
             c = '\a';
@@ -288,7 +275,7 @@ static scmval read_char(scmval p) {
             c = 0xb;
         else
             read_error(p, "invalid character name '%s'", buf);
-        v = make_char(c);
+        v = s_char(c);
     }
     return v;
 }
@@ -325,7 +312,7 @@ static scmval read_string(scmval p) {
         buf[i++] = c;
     }
     buf[i] = '\0';
-    v = scm_str(buf);
+    v = s_str(buf);
     return v;
 }
 
@@ -334,14 +321,14 @@ static scmval read_list(scmval p) {
     scmval v;
     h = t = scm_null;
     v = read_aux(p, true);
-    while(!is_eq(v, scm_close_paren)) {
+    while(!is_eq(v, sym_close_paren)) {
         if(is_eof(v))
             read_error(p, "unexpected end of file while reading list");
-        if(is_eq(v, scm_dot)) {
+        if(is_eq(v, sym_dot)) {
             v = read_aux(p, true);
             if(is_eof(v))
                 read_error(p, "unexpected end of file after . in list");
-            if(is_eq(v, scm_close_paren))
+            if(is_eq(v, sym_close_paren))
                 read_error(p, "unexpected ) after . in list");
             if(is_null(h))
                 read_error(p, "unexpected . in empty list");
@@ -349,7 +336,7 @@ static scmval read_list(scmval p) {
             v = read_aux(p, true);
             if(is_eof(v))
                 read_error(p, "unexpected end of file in dotted list - expected )");
-            if(!is_eq(v, scm_close_paren))
+            if(!is_eq(v, sym_close_paren))
                 read_error(p, "unexpected value in dotted list - expected )");
             return h;
         }
@@ -371,7 +358,7 @@ static scmval read_vector(scmval p) {
     int size = 0;
     h = t = scm_null;
     v = read_aux(p, true);
-    while(!is_eq(v, scm_close_paren)) {
+    while(!is_eq(v, sym_close_paren)) {
         if(is_eof(v))
             read_error(p, "unexpected end of file while reading vector");
         scmval c = cons(v, scm_null);
@@ -394,7 +381,7 @@ static scmval read_bytevector(scmval p) {
     int size = 0;
     h = t = scm_null;
     v = read_aux(p, true);
-    while(!is_eq(v, scm_close_paren)) {
+    while(!is_eq(v, sym_close_paren)) {
         if(is_eof(v))
             read_error(p, "unexpected end of file while reading bytevector");
         if(!is_byte(v))

@@ -21,7 +21,7 @@ static inline scm_dict_t*   env_bindings(scmval v) { return get_env(v)->bindings
 static inline scmval        env_next(scmval v) { return get_env(v)->next; }
 
 // standard library
-void define(scmval, const char*, subr_f, arity_t);
+void define(scmval, const char*, primitive_f, arity_t);
 scmval lookup(scmval, scmval);
 void set(scmval, scmval, scmval);
 bool update(scmval, scmval, scmval);

@@ -1,18 +1,5 @@
 #include "scm.h"
 
-scmval scm_apply;
-scmval scm_lambda;
-scmval scm_if;
-scmval scm_set;
-scmval scm_define;
-scmval scm_begin;
-static scmval scm_define_syntax;
-static scmval scm_syntax_rules;
-static scmval scm_define_library;
-static scmval scm_import;
-static scmval scm_export;
-static scmval scm_include;
-
 static scmval eval_aux(scmval, scmval);
 static scmval stx_define(scmval, scmval);
 static scmval stx_define_syntax(scmval, scmval);
@@ -23,8 +10,8 @@ static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
 static scmval stx_begin(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
-static scmval apply_subr(scmval, scmval, scmval);
-static scmval apply_closure(scmval, scmval, scmval);
+static scmval call_primitive(scmval, scmval, scmval);
+static scmval call_closure(scmval, scmval, scmval);
 static void   list_to_args(scmval, int*, scmval**);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +22,7 @@ static scmval scm_eval(scmval expr, scmval env) {
     return eval(expr, env);
 }
 
-static scmval scm_void_subr(int argc, scmval *argv) {
+static scmval scm_void_(int argc, scmval *argv) {
     return scm_void;
 }
 
@@ -43,21 +30,8 @@ static scmval scm_void_subr(int argc, scmval *argv) {
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
 void init_eval(scmval env) {
-    scm_apply           = intern("apply");
-    scm_define          = intern("define");
-    scm_define_syntax   = intern("define-syntax");
-    scm_syntax_rules    = intern("syntax-rules");
-    scm_if              = intern("if");
-    scm_set             = intern("set!");
-    scm_lambda          = intern("lambda");
-    scm_begin           = intern("begin");
-    scm_define_library  = intern("define-library");
-    scm_import          = intern("import");
-    scm_export          = intern("export");
-    scm_include         = intern("include");
-
-    define(env, "eval", scm_eval,      arity_exactly(2));
-    define(env, "void", scm_void_subr, arity_at_least(0));
+    define(env, "eval", scm_eval,  arity_exactly(2));
+    define(env, "void", scm_void_, arity_at_least(0));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -85,52 +59,52 @@ loop:
     } else if(is_pair(v)) {
         scmval s = car(v);
         COND 
-        CASE(scm_define_library) {
+        CASE(sym_define_library) {
             r = stx_define_library(cdr(v), e);
         }
-        CASE(scm_define) {
+        CASE(sym_define) {
             r = stx_define(cdr(v), e);
         }
-        CASE(scm_define_syntax) {
+        CASE(sym_define_syntax) {
             r = stx_define_syntax(cdr(v), e);
         }
-        CASE(scm_set) {
+        CASE(sym_set) {
             r = stx_set(cdr(v), e);
         }
-        CASE(scm_lambda) {
+        CASE(sym_lambda) {
             r = stx_lambda(cdr(v), e);
         }
-        CASE(scm_if) {
+        CASE(sym_if) {
             v = stx_if(cdr(v), e);
             goto loop;
         }
-        CASE(scm_begin) {
+        CASE(sym_begin) {
             v = stx_begin(cdr(v), e);
             goto loop;
         }
-        CASE(scm_import) {
+        CASE(sym_import) {
             r = stx_import(cdr(v), e);
         }
-        CASE(scm_quote) {
+        CASE(sym_quote) {
             r = cadr(v);
         }
-        CASE(scm_quasiquote) {
+        CASE(sym_quasiquote) {
             r = stx_quasiquote(cdr(v), e);
         }
-        CASE(scm_unquote) {
+        CASE(sym_unquote) {
             error(syntax_error_type, "unquote: not in quasiquote");
         }
-        CASE(scm_unquote_splicing) {
+        CASE(sym_unquote_splicing) {
             error(syntax_error_type, "unquote-splicing: not in quasiquote");
         }
-        CASE(scm_apply) {
+        CASE(sym_apply) {
             scmval args = eval_aux(caddr(v), e);
             scmval head = scm_null, tail;
             foreach(arg, args) {
                 if(is_null(head)) {
-                    head = tail = cons(cons(scm_quote, cons(arg, scm_null)), scm_null);
+                    head = tail = cons(cons(sym_quote, cons(arg, scm_null)), scm_null);
                 } else {
-                    setcdr(tail, cons(cons(scm_quote, cons(arg, scm_null)), scm_null));
+                    setcdr(tail, cons(cons(sym_quote, cons(arg, scm_null)), scm_null));
                     tail = cdr(tail);
                 }
             }
@@ -140,10 +114,10 @@ loop:
         }
         DEFAULT {
             scmval f = is_callable(car(v)) ? car(v) : eval_aux(car(v), e);
-            if(is_subr(f)) {
-                r = apply_subr(f, cdr(v), e);
+            if(is_primitive(f)) {
+                r = call_primitive(f, cdr(v), e);
             } else if(is_closure(f)) {
-                v = apply_closure(f, cdr(v), e);
+                v = call_closure(f, cdr(v), e);
                 // result is a cons (<env> . <tailexpr>)
                 e = car(v);
                 v = cdr(v);
@@ -160,13 +134,13 @@ loop:
     return r;
 }
 
-static scmval apply_subr(scmval subr, scmval arglist, scmval env) {
+static scmval call_primitive(scmval prim, scmval arglist, scmval env) {
     scmval r = scm_undef;
     int     argc;
     scmval* argv;
     list_to_args(arglist, &argc, &argv);
-    check_arity(subr, argc);
-    int new_argc = argc_from_arity(subr, argc);
+    check_arity(prim, argc);
+    int new_argc = argc_from_arity(prim, argc);
     scmval *new_argv = argv;
     if(new_argc > 0) {
         new_argv = scm_new_array(new_argc, scmval);
@@ -176,11 +150,39 @@ static scmval apply_subr(scmval subr, scmval arglist, scmval env) {
                 : scm_undef;
         }
     }
-    r = apply_funcall(subr, new_argc, new_argv);
+    if(primitive_arity(prim).type == ARITY_AT_LEAST) {
+        r = funcall(prim, new_argc, new_argv);
+    } else {
+        switch(new_argc) {
+            case  0: r = funcall0(prim); break;
+            case  1: r = funcall(prim, new_argv[0]); break;
+            case  2: r = funcall(prim, new_argv[0], new_argv[1]); break;
+            case  3: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2]); break;
+            case  4: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3]); break;
+            case  5: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3], new_argv[4]); break;
+            case  6: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3], new_argv[4], new_argv[5]); break;
+            case  7: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3], new_argv[4], new_argv[5],
+                                       new_argv[6]); break;
+            case  8: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3], new_argv[4], new_argv[5],
+                                       new_argv[6], new_argv[7]); break;
+            case  9: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3], new_argv[4], new_argv[5],
+                                       new_argv[6], new_argv[7], new_argv[8]); break;
+            case 10: r = funcall(prim, new_argv[0], new_argv[1], new_argv[2],
+                                       new_argv[3], new_argv[4], new_argv[5],
+                                       new_argv[6], new_argv[7], new_argv[8],
+                                       new_argv[9]); break;
+        }
+    }
     return r;
 }
 
-static scmval apply_closure(scmval closure, scmval arglist, scmval e) {
+static scmval call_closure(scmval closure, scmval arglist, scmval e) {
     int     argc;
     scmval* argv;
     list_to_args(arglist, &argc, &argv);
@@ -236,7 +238,7 @@ static inline scmval transform_internal_definitions(scmval body) {
     scmval defs = scm_null, td;
     scmval rest = scm_null, tr;
     foreach(expr, body) {
-        if(is_list(expr) && is_eq(car(expr), scm_define)) {
+        if(is_list(expr) && is_eq(car(expr), sym_define)) {
             if(done) error(syntax_error_type, "internal definitions must appear at the beginning of the body");
             if(is_null(defs)) {
                 defs = td = cons(cdr(expr), scm_null);
@@ -258,7 +260,7 @@ static inline scmval transform_internal_definitions(scmval body) {
     }
     if(is_null(rest))
         rest = list1(scm_void);
-    scmval result = cons(cons(scm_letrec_star, cons(defs, rest)), scm_null);
+    scmval result = cons(cons(sym_letrec_star, cons(defs, rest)), scm_null);
     return result;
 }
 
@@ -299,7 +301,7 @@ static void define_closure(scmval expr, scmval env) {
         }
     }
     body = transform_internal_definitions(body);
-    scmval c = make_closure(scm_str(c_str(name)), ac, av, env, body);
+    scmval c = make_closure(s_str(c_str(name)), ac, av, env, body);
     set(env, name, c);
 }
 
@@ -330,7 +332,7 @@ static scmval stx_define_syntax(scmval expr, scmval env) {
     scmval rule_list = cadr(expr);
     if(!is_pair(rule_list))
         error(syntax_error_type, "define-syntax: expected a list of syntax-rules but received %s", scm_to_cstr(rule_list));
-    if(!is_eq(car(rule_list), scm_syntax_rules))
+    if(!is_eq(car(rule_list), sym_syntax_rules))
         error(syntax_error_type, "define-syntax: expected syntax-rules but got %s", scm_to_cstr(car(rule_list)));
     if(!is_pair(cadr(rule_list)))
         error(syntax_error_type, "define-syntax: expected a list of literals but got %s", scm_to_cstr(cadr(rule_list)));
@@ -354,13 +356,13 @@ static scmval stx_define_library(scmval expr, scmval env) {
     foreach(obj, cdr(expr)) {
         if(!is_list(obj))
             error(syntax_error_type, "define-library: %s is not a valid library declaration", scm_to_cstr(name));
-        if(is_eq(car(obj), scm_export)) {
+        if(is_eq(car(obj), sym_export)) {
             exports = cdr(obj);
-        } else if(is_eq(car(obj), scm_import)) {
+        } else if(is_eq(car(obj), sym_import)) {
             imports = cons(cadr(obj), imports);
-        } else if(is_eq(car(obj), scm_include)) {
+        } else if(is_eq(car(obj), sym_include)) {
             includes = cons(cdr(obj), includes);
-        } else if(is_eq(car(obj), scm_begin)) {
+        } else if(is_eq(car(obj), sym_begin)) {
             body = cdr(obj);
         }
     }
@@ -404,9 +406,9 @@ static scmval quasiquote(scmval expr, scmval env) {
     if(is_null(expr) || !is_pair(expr))
         return expr;
     scmval result = scm_null;
-    if(is_eq(car(expr), scm_unquote)) {
+    if(is_eq(car(expr), sym_unquote)) {
         result = eval_aux(cadr(expr), env);
-    } else if(is_pair(car(expr)) && is_eq(caar(expr), scm_unquote_splicing)) {
+    } else if(is_pair(car(expr)) && is_eq(caar(expr), sym_unquote_splicing)) {
         scmval rest = cdr(expr);
         scmval tail = scm_null;
         expr = car(expr);

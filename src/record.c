@@ -12,7 +12,7 @@ scmval scm_make_record(scmval type, scmval slots) {
 }
 
 scmval scm_record_p(scmval obj) {
-    return scm_bool(is_record(obj));
+    return s_bool(is_record(obj));
 }
 
 scmval scm_record_type(scmval obj) {

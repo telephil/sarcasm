@@ -4,51 +4,14 @@
 #include "scm.h"
 
 static void default_error_handler(scmval err);
-static void fatal_error_handler(scmval err);
 static void repl();
 static void run(const char*);
-
-////////////////////////////////////////////////////////////////////////////////
-// I N I T I A L I Z A T I O N
-////////////////////////////////////////////////////////////////////////////////
-static void scm_init(int argc, char* argv[]) {
-    GC_INIT();
-    mp_set_memory_functions(scm_gc_malloc, scm_gc_realloc, scm_gc_free);
-
-    scmval env = make_env(scm_undef);
-
-    init_symbol(env);
-    init_errors(env);
-    init_bool(env);
-    init_number(env);
-    init_char(env);
-    init_string(env);
-    init_pair(env);
-    init_vector(env);
-    init_bytevector(env);
-    init_port(env);
-    init_syntax(env);
-    init_reader(env);
-    init_eval(env);
-    init_system(env, argc, argv);
-    init_record(env);
-    init_library(env);
-    init_env(env);
-    // load scheme defined procedures / syntax
-    with_error_handler(fatal_error_handler) {
-        load("./lib/sarcasm/init.scm", env);
-    }
-    // create core library
-    make_core_library(env);
-    // then create standard environments
-    post_init_env();
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // M A I N
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
-    scm_init(argc, argv);
+    scm_boot(argc, argv);
     if(argc == 2) {
         run(argv[1]);
     } else {
@@ -74,12 +37,7 @@ void run(const char* filename) {
 ////////////////////////////////////////////////////////////////////////////////
 static void default_error_handler(scmval err) {
     write(scm_current_error_port(), err, scm_mode_display);
-    write(scm_current_error_port(), make_char('\n'), scm_mode_display);
-}
-
-static void fatal_error_handler(scmval err) {
-    default_error_handler(err);
-    exit(1);
+    write(scm_current_error_port(), s_char('\n'), scm_mode_display);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

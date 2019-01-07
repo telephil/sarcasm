@@ -7,8 +7,6 @@ struct scm_syntax {
 };
 // globals
 extern scmval syntax_error_type;
-extern scmval scm_underscore;
-extern scmval scm_ellipsis;
 
 // constructor
 scmval make_syntax(scmval, scmval, scmval);

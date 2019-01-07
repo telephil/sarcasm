@@ -72,8 +72,8 @@ void write(scmval p, scmval v, short flags) {
         case SCM_TYPE_ENV:
             scm_puts(p, "#<environment>");
             break;
-        case SCM_TYPE_SUBR:
-            scm_printf(p, "#<primitive:%s>", c_str(subr_name(v)));
+        case SCM_TYPE_PRIMITIVE:
+            scm_printf(p, "#<primitive:%s>", c_str(primitive_name(v)));
             break;
         case SCM_TYPE_CLOSURE:
             if(is_undef(closure_name(v)))
@@ -124,7 +124,7 @@ static void write_char(scmval p, scmval v, short flags) {
 
 static void write_pair(scmval p, scmval v, short flags) {
     if(flags & scm_mode_pp_quote) {
-        if(!is_null(v) && is_eq(car(v), scm_quote)) {
+        if(!is_null(v) && is_eq(car(v), sym_quote)) {
             scm_putc(p, '\'');
             write(p, cadr(v), flags);
             return;

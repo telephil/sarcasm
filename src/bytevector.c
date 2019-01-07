@@ -33,7 +33,7 @@ scmval make_bytevector_from_data(int size, byte* data) {
 
 // standard library
 static scmval scm_bytevector_p(scmval v) {
-    return scm_bool(is_bytevector(v));
+    return s_bool(is_bytevector(v));
 }
 
 static scmval scm_make_bytevector(scmval size, scmval initial) {
@@ -53,7 +53,7 @@ static scmval scm_bytevector(int argc, scmval* argv) {
 
 static scmval scm_bytevector_length(scmval b) {
     check_arg("bytevector-length", bytevector_c, b);
-    return scm_fix(bytevector_size(b));
+    return s_fix(bytevector_size(b));
 }
 
 static scmval scm_bytevector_ref(scmval b, scmval k) {
@@ -74,7 +74,7 @@ static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
 
 static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end, scm_fix(bytevector_size(b) - 1));
+    opt_arg(end, s_fix(bytevector_size(b) - 1));
     check_arg("bytevector-copy", bytevector_c, b);
     check_arg("bytevector-copy", fixnum_c, start);
     check_arg("bytevector-copy", fixnum_c, end);
@@ -89,7 +89,7 @@ static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
 
 static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end, scm_fix(bytevector_size(from) - 1));
+    opt_arg(end, s_fix(bytevector_size(from) - 1));
     check_arg("bytevector-copy!", bytevector_c, to);
     check_arg("bytevector-copy!", fixnum_c, at);
     check_arg("bytevector-copy!", bytevector_c, from);
@@ -128,22 +128,22 @@ static scmval scm_bytevector_append(int argc, scmval* argv) {
 
 static scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end  , scm_fix(bytevector_size(b)));
+    opt_arg(end  , s_fix(bytevector_size(b)));
     check_arg("utf8->string", bytevector_c, b);
     check_arg("utf8->string", fixnum_c, start);
     check_arg("utf8->string", fixnum_c, end);
     check_range("utf8->string", c_fix(start), 0, bytevector_size(b));
     check_range("utf8->string", c_fix(end), c_fix(start), bytevector_size(b));
     int size = (c_fix(end)-c_fix(start)) + 1;
-    char* s = scm_new_array(size, char);
+    char* s = scm_new_atomic(size, char);
     memcpy(s, get_bytevector(b)->elts + c_fix(start), size);
     s[size] = '\0';
-    return scm_str(s);
+    return s_str(s);
 }
 
 static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end  , scm_fix(string_length(s)));
+    opt_arg(end  , s_fix(string_length(s)));
     check_arg("string->utf8", string_c, s);
     check_arg("string->utf8", fixnum_c, start);
     check_arg("string->utf8", fixnum_c, end);
@@ -169,5 +169,4 @@ void init_bytevector(scmval env) {
     define(env, "utf8->string",       scm_utf8_to_string,     arity_between(1, 3));
     define(env, "string->utf8",       scm_string_to_utf8,     arity_between(1, 3));
 }
-
 

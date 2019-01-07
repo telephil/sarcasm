@@ -48,32 +48,32 @@ static scmval make_bytevector_output_port();
 
 // port procedures
 static scmval scm_port_p(scmval v) {
-    return scm_bool(is_port(v));
+    return s_bool(is_port(v));
 }
 
 static scmval scm_input_port_p(scmval v) {
-    return scm_bool(is_input_port(v));
+    return s_bool(is_input_port(v));
 }
 
 static scmval scm_output_port_p(scmval v) {
-    return scm_bool(is_output_port(v));
+    return s_bool(is_output_port(v));
 }
 
 static scmval scm_textual_port_p(scmval v) {
-    return scm_bool(is_textual_port(v));
+    return s_bool(is_textual_port(v));
 }
 
 static scmval scm_binary_port_p(scmval v) {
-    return scm_bool(is_binary_port(v));
+    return s_bool(is_binary_port(v));
 }
 
 static scmval scm_eof_p(scmval v) {
-    return scm_bool(is_eof(v));
+    return s_bool(is_eof(v));
 }
 
 static scmval scm_port_open_p(scmval v) {
     check_arg("port-open?", port_c, v);
-    return scm_bool(is_port_open(v));
+    return s_bool(is_port_open(v));
 }
 
 static scmval scm_eof_object() {
@@ -215,7 +215,7 @@ static scmval scm_read_line(scmval p) {
     if(i == 0 && c == EOF)
         return scm_eof;
     buf[i] = '\0';
-    v = scm_str(buf);
+    v = s_str(buf);
     return v;
 }
 
@@ -232,7 +232,7 @@ static scmval scm_read_string(scmval k, scmval port) {
         buf[i] = c;
     }
     buf[i] = '\0';
-    return scm_str(buf);
+    return s_str(buf);
 }
 
 static scmval scm_read_u8(scmval port) {
@@ -271,7 +271,7 @@ static scmval scm_read_bytevector(scmval k, scmval port) {
 static scmval scm_read_bytevector_mut(scmval bv, scmval port, scmval start, scmval end) {
     opt_arg(port,   scm_current_output_port());
     opt_arg(start,  scm_0);
-    opt_arg(end,    scm_fix(bytevector_size(bv)-1));
+    opt_arg(end,    s_fix(bytevector_size(bv)-1));
     check_arg("read-bytevector!", bytevector_c, bv);
     check_arg("read-bytevector!", binary_input_port_c, port);
     check_arg("read-bytevector!", fixnum_c, start);
@@ -288,7 +288,7 @@ static scmval scm_read_bytevector_mut(scmval bv, scmval port, scmval start, scmv
         bytevector_set(bv, i, b);
         ++count;
     }
-    return scm_fix(count);
+    return s_fix(count);
 }
 
 static scmval scm_write(scmval v, scmval p) {
@@ -308,7 +308,7 @@ static scmval scm_write_char(scmval v, scmval p) {
 static scmval scm_write_string(scmval str, scmval port, scmval start, scmval end) {
     opt_arg(port,   scm_current_output_port());
     opt_arg(start,  scm_0);
-    opt_arg(end,    scm_fix(string_length(str)-1));
+    opt_arg(end,    s_fix(string_length(str)-1));
     check_arg("write-string", string_c, str);
     check_arg("write-string", textual_output_port_c, port);
     check_arg("write-string", fixnum_c, start);
@@ -333,7 +333,7 @@ static scmval scm_write_u8(scmval b, scmval port) {
 static scmval scm_write_bytevector(scmval bv, scmval port, scmval start, scmval end) {
     opt_arg(port,   scm_current_output_port());
     opt_arg(start,  scm_0);
-    opt_arg(end,    scm_fix(bytevector_size(bv)-1));
+    opt_arg(end,    s_fix(bytevector_size(bv)-1));
     check_arg("write-bytevector", bytevector_c, bv);
     check_arg("write-bytevector", binary_output_port_c, port);
     check_arg("write-bytevector", fixnum_c, start);
@@ -356,7 +356,7 @@ static scmval scm_display(scmval v, scmval p) {
 static scmval scm_newline(scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("newline", textual_output_port_c, p);
-    port_putc(p, make_char('\n'));
+    port_putc(p, s_char('\n'));
     return scm_void;
 }
 
@@ -374,64 +374,63 @@ static scmval scm_close_port(scmval p) {
 }
 
 void init_port(scmval env) {
-    scm_eof   = make_val(SCM_TYPE_EOF);
-
+    // XXX convert to parameters
     scm_g_current_output_port = make_file_output_port(stdout, "stdout", scm_port_text);
     scm_g_current_error_port  = make_file_output_port(stderr, "stderr", scm_port_text);
     scm_g_current_input_port  = make_file_input_port(stdin, "stdin", scm_port_text);
 
-    define(env, "port?", scm_port_p, arity_exactly(1));
-    define(env, "input-port?", scm_input_port_p, arity_exactly(1));
-    define(env, "output-port?", scm_output_port_p, arity_exactly(1));
-    define(env, "eof-object?", scm_eof_p, arity_exactly(1));
-    define(env, "eof-object", scm_eof_object, arity_exactly(0));
-    define(env, "port-open?", scm_port_open_p, arity_exactly(1));
-    define(env, "binary-port?", scm_binary_port_p, arity_exactly(1));
-    define(env, "textual-port?", scm_textual_port_p, arity_exactly(1));
-    define(env, "current-input-port", scm_current_input_port, arity_exactly(0));
-    define(env, "current-output-port", scm_current_output_port, arity_exactly(0));
-    define(env, "current-error-port", scm_current_error_port, arity_exactly(0));
-    define(env, "%set-current-output-port", scm_set_current_output_port, arity_exactly(1));
-    define(env, "%set-current-input-port", scm_set_current_input_port, arity_exactly(1));
-    define(env, "open-input-string", scm_open_input_string, arity_exactly(1));
-    define(env, "open-input-file", scm_open_input_file, arity_exactly(1));
-    define(env, "open-binary-input-file", scm_open_binary_input_file, arity_exactly(1));
-    define(env, "close-input-port", scm_close_input_port, arity_exactly(1));
-    define(env, "open-output-string", scm_open_output_string, arity_exactly(0));
-    define(env, "get-output-string", scm_get_output_string, arity_exactly(1));
-    define(env, "open-input-bytevector", scm_open_input_bytevector, arity_exactly(1));
-    define(env, "open-output-bytevector", scm_open_output_bytevector, arity_exactly(0));
-    define(env, "get-output-bytevector", scm_get_output_bytevector, arity_exactly(1));
-    define(env, "open-output-file", scm_open_output_file, arity_exactly(1));
-    define(env, "open-binary-output-file", scm_open_binary_output_file, arity_exactly(1));
-    define(env, "close-output-port", scm_close_output_port, arity_exactly(1));
-    define(env, "close-port", scm_close_port, arity_exactly(1));
-    define(env, "char-ready?", scm_char_ready_p, arity_or(0, 1));
-    define(env, "read",      scm_read,      arity_or(0, 1));
-    define(env, "read-char", scm_read_char, arity_or(0, 1));
-    define(env, "peek-char", scm_peek_char, arity_or(0, 1));
-    define(env, "read-line", scm_read_line, arity_or(0, 1));
-    define(env, "read-string", scm_read_string, arity_or(1, 2));
-    define(env, "read-u8", scm_read_u8, arity_or(0, 1));
-    define(env, "peek-u8", scm_peek_u8, arity_or(0, 1));
-    define(env, "u8-ready?", scm_u8_ready_p, arity_or(0, 1));
-    define(env, "read-bytevector", scm_read_bytevector, arity_or(1, 2));
-    define(env, "read-bytevector!", scm_read_bytevector_mut, arity_between(1, 4));
-    define(env, "write", scm_write, arity_or(1, 2));
-    define(env, "write-char", scm_write_char, arity_or(1, 2));
-    define(env, "write-string", scm_write_string, arity_between(1, 4));
-    define(env, "write-u8", scm_write_u8, arity_or(1, 2));
-    define(env, "write-bytevector", scm_write_bytevector, arity_between(1, 4));
-    define(env, "display", scm_display, arity_or(1, 2));
-    define(env, "newline", scm_newline, arity_or(0, 1));
-    define(env, "flush-output-port", scm_flush_output_port, arity_or(0, 1));
+    define(env, "port?",                    scm_port_p,                     arity_exactly(1));
+    define(env, "input-port?",              scm_input_port_p,               arity_exactly(1));
+    define(env, "output-port?",             scm_output_port_p,              arity_exactly(1));
+    define(env, "eof-object?",              scm_eof_p,                      arity_exactly(1));
+    define(env, "eof-object",               scm_eof_object,                 arity_exactly(0));
+    define(env, "port-open?",               scm_port_open_p,                arity_exactly(1));
+    define(env, "binary-port?",             scm_binary_port_p,              arity_exactly(1));
+    define(env, "textual-port?",            scm_textual_port_p,             arity_exactly(1));
+    define(env, "current-input-port",       scm_current_input_port,         arity_exactly(0));
+    define(env, "current-output-port",      scm_current_output_port,        arity_exactly(0));
+    define(env, "current-error-port",       scm_current_error_port,         arity_exactly(0));
+    define(env, "%set-current-output-port", scm_set_current_output_port,    arity_exactly(1));
+    define(env, "%set-current-input-port",  scm_set_current_input_port,     arity_exactly(1));
+    define(env, "open-input-string",        scm_open_input_string,          arity_exactly(1));
+    define(env, "open-input-file",          scm_open_input_file,            arity_exactly(1));
+    define(env, "open-binary-input-file",   scm_open_binary_input_file,     arity_exactly(1));
+    define(env, "close-input-port",         scm_close_input_port,           arity_exactly(1));
+    define(env, "open-output-string",       scm_open_output_string,         arity_exactly(0));
+    define(env, "get-output-string",        scm_get_output_string,          arity_exactly(1));
+    define(env, "open-input-bytevector",    scm_open_input_bytevector,      arity_exactly(1));
+    define(env, "open-output-bytevector",   scm_open_output_bytevector,     arity_exactly(0));
+    define(env, "get-output-bytevector",    scm_get_output_bytevector,      arity_exactly(1));
+    define(env, "open-output-file",         scm_open_output_file,           arity_exactly(1));
+    define(env, "open-binary-output-file",  scm_open_binary_output_file,    arity_exactly(1));
+    define(env, "close-output-port",        scm_close_output_port,          arity_exactly(1));
+    define(env, "close-port",               scm_close_port,                 arity_exactly(1));
+    define(env, "char-ready?",              scm_char_ready_p,               arity_or(0, 1));
+    define(env, "read",                     scm_read,                       arity_or(0, 1));
+    define(env, "read-char",                scm_read_char,                  arity_or(0, 1));
+    define(env, "peek-char",                scm_peek_char,                  arity_or(0, 1));
+    define(env, "read-line",                scm_read_line,                  arity_or(0, 1));
+    define(env, "read-string",              scm_read_string,                arity_or(1, 2));
+    define(env, "read-u8",                  scm_read_u8,                    arity_or(0, 1));
+    define(env, "peek-u8",                  scm_peek_u8,                    arity_or(0, 1));
+    define(env, "u8-ready?",                scm_u8_ready_p,                 arity_or(0, 1));
+    define(env, "read-bytevector",          scm_read_bytevector,            arity_or(1, 2));
+    define(env, "read-bytevector!",         scm_read_bytevector_mut,        arity_between(1, 4));
+    define(env, "write",                    scm_write,                      arity_or(1, 2));
+    define(env, "write-char",               scm_write_char,                 arity_or(1, 2));
+    define(env, "write-string",             scm_write_string,               arity_between(1, 4));
+    define(env, "write-u8",                 scm_write_u8,                   arity_or(1, 2));
+    define(env, "write-bytevector",         scm_write_bytevector,           arity_between(1, 4));
+    define(env, "display",                  scm_display,                    arity_or(1, 2));
+    define(env, "newline",                  scm_newline,                    arity_or(0, 1));
+    define(env, "flush-output-port",        scm_flush_output_port,          arity_or(0, 1));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // U T I L I T I E S
 ////////////////////////////////////////////////////////////////////////////////
 scmval open_input_string(const char* s) {
-    return scm_str_input_port(scm_str(s));
+    return scm_str_input_port(s_str(s));
 }
 
 scmval scm_to_string(scmval v) {
@@ -451,18 +450,18 @@ char scm_getc(scmval p) {
 }
 
 void scm_ungetc(scmval p, char c) {
-    port_ungetc(p, make_char(c));
+    port_ungetc(p, s_char(c));
     if(c == '\n') port_line(p)--;
     port_pos(p)--;
 }
 
 char scm_peek(scmval p) {
     char c = scm_getc(p);
-    port_ungetc(p, make_char(c));
+    port_ungetc(p, s_char(c));
     return c;
 }
 void scm_putc(scmval p, char c) { 
-    port_putc(p, make_char(c)); 
+    port_putc(p, s_char(c)); 
 }
 
 void scm_puts(scmval p, CORD c) {
@@ -496,7 +495,7 @@ static scmval file_getc(scmval p) {
     char c = getc(fp);
     if(c == EOF)
         return scm_eof;
-    return make_char(c);
+    return s_char(c);
 }
 
 static scmval file_ungetc(scmval p, scmval c) {
@@ -504,7 +503,7 @@ static scmval file_ungetc(scmval p, scmval c) {
     if(feof(fp))
         return scm_eof;
     char ch = ungetc(c_char(c), fp);
-    return make_char(ch);
+    return s_char(ch);
 }
 
 static scmval file_getb(scmval p) {
@@ -517,9 +516,9 @@ static scmval file_getb(scmval p) {
         if(feof(fp))
             return scm_eof;
         if(ferror(fp))
-            file_error("unable to read u8 from port %s (%s)", scm_str(port_name(p)), strerror(errno));
+            file_error("unable to read u8 from port %s (%s)", s_str(port_name(p)), strerror(errno));
     }
-    return scm_fix(b[0]);
+    return s_fix(b[0]);
 }
 
 static scmval file_peekb(scmval p) {
@@ -529,11 +528,11 @@ static scmval file_peekb(scmval p) {
     fpos_t pos;
     int ret = fgetpos(fp, &pos);
     if(ret != 0)
-        file_error("unable to peek at port %s (%s)", scm_str(port_name(p)), strerror(errno));
+        file_error("unable to peek at port %s (%s)", s_str(port_name(p)), strerror(errno));
     scmval b = file_getb(p);
     ret = fsetpos(fp, &pos);
     if(ret != 0)
-        file_error("unable to peek at port %s (%s)", scm_str(port_name(p)), strerror(errno));
+        file_error("unable to peek at port %s (%s)", s_str(port_name(p)), strerror(errno));
     return b;
 }
 
@@ -559,7 +558,7 @@ static void file_putb(scmval p, scmval v) {
     size_t size = fwrite(b, sizeof(byte), 1, fp);
     if(size != 1) {
         if(ferror(fp))
-            file_error("unable to write byte to port %s (%s)", scm_str(port_name(p)), strerror(errno));
+            file_error("unable to write byte to port %s (%s)", s_str(port_name(p)), strerror(errno));
     }
 }
 
@@ -622,7 +621,7 @@ static scmval string_getc(scmval p) {
     if(in->idx >= in->len)
         return scm_eof;
     char c = in->buf[in->idx++];
-    return make_char(c);
+    return s_char(c);
 }
 
 static scmval string_ungetc(scmval p, scmval c) {
@@ -635,7 +634,7 @@ static scmval string_ungetc(scmval p, scmval c) {
 
 static scmval string_char_ready(scmval p) {
     scm_input_string_t* in = port_data(p);
-    return scm_bool(in->idx >= in->len);
+    return s_bool(in->idx >= in->len);
 }
 
 static void string_putc(scmval p, scmval v) {
@@ -683,14 +682,14 @@ static scmval bytevector_getb(scmval p) {
     if(in->idx >= in->len)
         return scm_eof;
     byte b = in->data[in->idx++];
-    return scm_fix(b);
+    return s_fix(b);
 }
 
 static scmval bytevector_peekb(scmval p) {
     scm_bytes_buffer_t* in = port_data(p);
     if(in->idx >= in->len)
         return scm_eof;
-    return scm_fix(in->data[in->idx]);
+    return s_fix(in->data[in->idx]);
 }
 
 static scmval bytevector_ready(scmval p) {

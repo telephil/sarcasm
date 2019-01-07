@@ -12,7 +12,7 @@ scmval make_bytevector_from_data(int, byte*);
 // accessors
 static inline scm_bytevector_t* get_bytevector(scmval v) { return (scm_bytevector_t*)v.o; }
 static inline size_t  bytevector_size(scmval v) { return get_bytevector(v)->size; }
-static inline scmval  bytevector_ref(scmval v, int i) { return scm_fix(get_bytevector(v)->elts[i]); }
+static inline scmval  bytevector_ref(scmval v, int i) { return s_fix(get_bytevector(v)->elts[i]); }
 static inline void    bytevector_set(scmval v, int i, scmval x) { get_bytevector(v)->elts[i] = c_fix(x); }
 // predicate
 static inline bool is_bytevector(scmval v) { return type_of(v) == SCM_TYPE_BYTEVECTOR; }

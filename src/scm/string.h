@@ -7,7 +7,7 @@ struct scm_string {
 };
 
 // constructors
-scmval scm_str(const char*);
+scmval s_str(const char*);
 scmval scm_str_from_cord(CORD);
 
 // predicates

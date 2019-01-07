@@ -53,7 +53,7 @@ static scmval scm_error(int argc, scmval* argv) {
 }
 
 static scmval scm_error_object_p(scmval obj) {
-    return scm_bool(is_error(obj));
+    return s_bool(is_error(obj));
 }
 
 static scmval scm_error_object_message(scmval obj) {
@@ -67,7 +67,7 @@ static scmval scm_error_object_irritants(scmval obj) {
 }
 
 static scmval scm_file_error_p(scmval v) {
-    return scm_bool(is_error(v) && is_eq(error_type(v), file_error_type));
+    return s_bool(is_error(v) && is_eq(error_type(v), file_error_type));
 }
 
 // initialization

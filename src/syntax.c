@@ -1,13 +1,5 @@
 #include "scm.h"
 
-static scmval scm_case_lambda;
-static scmval scm_let;
-static scmval scm_let_star;
-static scmval scm_letrec;
-static scmval scm_define_record_type;
-scmval scm_letrec_star;
-scmval scm_underscore;
-scmval scm_ellipsis;
 scmval syntax_error_type;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,15 +17,6 @@ scmval make_syntax(scmval name, scmval literals, scmval rules) {
 // INITIALIZATION
 ////////////////////////////////////////////////////////////////////////////////
 void init_syntax(scmval env) {
-    scm_case_lambda         = intern("case-lambda");
-    scm_let                 = intern("let");
-    scm_let_star            = intern("let*");
-    scm_letrec              = intern("letrec");
-    scm_letrec_star         = intern("letrec*");
-    scm_define_record_type  = intern("define-record-type");
-    scm_underscore          = intern("_");
-    scm_ellipsis            = intern("...");
-    syntax_error_type       = intern("syntax-error");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,17 +56,17 @@ scmval expand(scmval expr, scmval env) {
         setcdr(result, cdr(expr));
     }
     scmval expanded = result;
-    if(is_eq(car(result), scm_case_lambda)) {
+    if(is_eq(car(result), sym_case_lambda)) {
         expanded = stx_case_lambda(cdr(result), env);
-    } else if(is_eq(car(result), scm_let)) {
+    } else if(is_eq(car(result), sym_let)) {
         expanded = stx_let(cdr(result), env);
-    } else if(is_eq(car(result), scm_let_star)) {
+    } else if(is_eq(car(result), sym_let_star)) {
         expanded = stx_let_star(cdr(result), env);
-    } else if(is_eq(car(result), scm_letrec)) {
+    } else if(is_eq(car(result), sym_letrec)) {
         expanded = stx_letrec_star(cdr(result), env);
-    } else if(is_eq(car(result), scm_letrec_star)) {
+    } else if(is_eq(car(result), sym_letrec_star)) {
         expanded = stx_letrec_star(cdr(result), env);
-    } else if(is_eq(car(result), scm_define_record_type)) {
+    } else if(is_eq(car(result), sym_define_record_type)) {
         expanded = stx_define_record_type(cdr(result), env);
     } else if(is_symbol(car(result))) {
         scmval v = lookup(env, car(result));
@@ -114,7 +97,7 @@ static scmval expand_syntax(scmval stx, scmval expr) {
     // apply template
     scmval result = scm_undef;
     // XXX is it really necessary ?
-    if(!is_eq(car(pattern), scm_underscore) && !is_eq(car(pattern), car(expr))) {
+    if(!is_eq(car(pattern), sym_underscore) && !is_eq(car(pattern), car(expr))) {
         error(syntax_error_type, "pattern does not match expression %s", scm_to_cstr(car(expr)));
     }
     if(is_null(cdr(pattern))) {
@@ -140,7 +123,7 @@ static scmval template_instantiate(scmval stx, scmval template, scm_dict_t* vars
         if(is_symbol(expr)) {
             scmval val = dict_ref(vars, expr);
             if(!is_undef(val)) {
-                if(!is_eq(expr, scm_ellipsis)) {
+                if(!is_eq(expr, sym_ellipsis)) {
                     expr = cons(val, scm_null);
                 } else {
                     expr = val;
@@ -167,7 +150,7 @@ static scm_dict_t* pattern_bind_vars(scmval pattern, scmval arglist) {
     scm_dict_t* dict = make_dict();
     for(scmval pvar = cdr(pattern); !is_null(pvar); pvar = cdr(pvar)) {
         scmval val = scm_null;
-        if(is_eq(car(pvar), scm_ellipsis)) {
+        if(is_eq(car(pvar), sym_ellipsis)) {
             if(!is_null(arglist))
                 val = arglist;
         } else {
@@ -185,7 +168,7 @@ static bool pattern_match(scmval pattern, int argc) {
     bool more = false;
     while(!is_null(l)) {
         ++count;
-        if(is_eq(car(l), scm_ellipsis))
+        if(is_eq(car(l), sym_ellipsis))
             more = true;
         l = cdr(l);
     }
@@ -218,19 +201,19 @@ static scmval stx_case_lambda(scmval expr, scmval env) {
     scmval* transformed = scm_new_array(len+1, scmval);
     int i = 0;
     foreach(clause, expr) {
-        scmval p = list3(scm_if,
-                         list3(intern("="), intern("len"), scm_fix(list_length(car(clause)))),
-                         list3(scm_apply, cons(scm_lambda, clause), intern("args")));
+        scmval p = list3(sym_if,
+                         list3(intern("="), intern("len"), s_fix(list_length(car(clause)))),
+                         list3(sym_apply, cons(sym_lambda, clause), intern("args")));
         transformed[i++] = p;
     }
-    transformed[i] = list2(intern("error"), scm_str("no matching clause found"));
+    transformed[i] = list2(intern("error"), s_str("no matching clause found"));
     scmval body = cons(transformed[0], scm_null);
     for(int i = 0; i < len; i++) {
         setcdr(cddr(transformed[i]), cons(transformed[i+1], scm_null));
     }
     scmval result =
-        list3(scm_lambda, intern("args"),
-              cons(scm_let,
+        list3(sym_lambda, intern("args"),
+              cons(sym_let,
                    cons(list1(list2(intern("len"), list2(intern("length"), intern("args")))),
                         body)));
     return result;
@@ -273,10 +256,10 @@ static scmval stx_let(scmval expr, scmval env) {
             tvals = pvals;
         }
     }
-    scmval ldef = cons(scm_lambda, cons(vars, body)); // (lambda (vars...) body...)
+    scmval ldef = cons(sym_lambda, cons(vars, body)); // (lambda (vars...) body...)
     scmval result = scm_undef;
     if(named) {
-        scmval lrdef = list3(scm_letrec, list1(cons(name, list1(ldef))), name);
+        scmval lrdef = list3(sym_letrec, list1(cons(name, list1(ldef))), name);
         result = cons(lrdef, vals);
     } else {
         result = cons(ldef, vals); // (ldef values...)
@@ -300,8 +283,8 @@ static scmval stx_let_star(scmval expr, scmval env) {
     if(is_null(arglist))
         return stx_let(expr, env);
 
-    scmval rest   = cons(scm_let_star, cons(cdr(arglist), body));
-    scmval result = cons(scm_let, cons(cons(car(arglist), scm_null), cons(rest, scm_null)));
+    scmval rest   = cons(sym_let_star, cons(cdr(arglist), body));
+    scmval result = cons(sym_let, cons(cons(car(arglist), scm_null), cons(rest, scm_null)));
     return result;
 }
 
@@ -316,7 +299,7 @@ static scmval stx_letrec_star(scmval expr, scmval env) {
     int len = list_length(expr);
     if(len < 2) error(syntax_error_type, "invalid letrec* syntax");
     scmval arglist = car(expr);
-    scmval body    = cons(scm_let, cons(scm_null, cdr(expr)));
+    scmval body    = cons(sym_let, cons(scm_null, cdr(expr)));
     scmval vars    = scm_null;
     scmval vals    = scm_null;
     scmval tvars, pvars, tvals, pvals;
@@ -324,7 +307,7 @@ static scmval stx_letrec_star(scmval expr, scmval env) {
         if(!is_list(arg))
             error(syntax_error_type, "invalid letrec* syntax: expected a list but received %s", scm_to_cstr(arg));
         pvars = list1(list2(car(arg), scm_void));    // ((var1 #undefined)...)
-        pvals = list1(list3(scm_set, car(arg), cadr(arg))); // (set! var1 val1)...
+        pvals = list1(list3(sym_set, car(arg), cadr(arg))); // (set! var1 val1)...
         if(is_null(vars)) {
             vars = tvars = pvars;
             vals = tvals = pvals;
@@ -336,7 +319,7 @@ static scmval stx_letrec_star(scmval expr, scmval env) {
         }
     }
     setcdr(tvals, cons(body, scm_null));
-    scmval result = cons(scm_let, cons(vars, vals)); // (let (vars...) vals... (let () body...))
+    scmval result = cons(sym_let, cons(vars, vals)); // (let (vars...) vals... (let () body...))
     return result;
 }
 
@@ -346,18 +329,18 @@ static scmval define_record_predicate(scmval pred, scmval type, scmval env) {
     scmval body =
         list3(intern("and"), 
               list2(intern("%record?"), obj),
-              list3(intern("eq?"), list2(intern("%record-type"), obj), list2(scm_quote, type)));
+              list3(intern("eq?"), list2(intern("%record-type"), obj), list2(sym_quote, type)));
     scmval proc =
-        list3(scm_define, pred, list3(scm_lambda, list1(obj), body));
+        list3(sym_define, pred, list3(sym_lambda, list1(obj), body));
     return proc;
 }
 
 static scmval codegen_record_field_accessor(scmval name, int index) {
     scmval obj  = intern("obj");
     scmval proc =
-        list3(scm_define, name,
-                list3(scm_lambda, list1(obj),
-                    list3(intern("vector-ref"), list2(intern("%record-slots"), obj), scm_fix(index))));
+        list3(sym_define, name,
+                list3(sym_lambda, list1(obj),
+                    list3(intern("vector-ref"), list2(intern("%record-slots"), obj), s_fix(index))));
     return proc;
 }
 
@@ -365,9 +348,9 @@ static scmval codegen_record_field_mutator(scmval name, int index) {
     scmval obj  = intern("obj");
     scmval val  = intern("val");
     scmval proc =
-        list3(scm_define, name,
-                list3(scm_lambda, list2(obj, val),
-                    list4(intern("vector-set!"), list2(intern("%record-slots"), obj), scm_fix(index), val)));
+        list3(sym_define, name,
+                list3(sym_lambda, list2(obj, val),
+                    list4(intern("vector-set!"), list2(intern("%record-slots"), obj), s_fix(index), val)));
     return proc;
 }
 
@@ -406,13 +389,13 @@ static scmval define_record_ctor(scmval ctor, scmval type, scmval fields, scmval
                 break;
             }
         }
-        setcdr(t, list1(found ? fname : list1(intern("void"))));
+        setcdr(t, list1(found ? fname : list1(sym_void)));
         t = cdr(t);
     }
     scmval proc =
-        list3(scm_define, car(ctor),
-            list3(scm_lambda, cdr(ctor),
-                list3(intern("%make-record"), list2(scm_quote, type), sdef)));
+        list3(sym_define, car(ctor),
+            list3(sym_lambda, cdr(ctor),
+                list3(intern("%make-record"), list2(sym_quote, type), sdef)));
     return proc;
 }
 static scmval stx_define_record_type(scmval expr, scmval env) {
@@ -425,7 +408,7 @@ static scmval stx_define_record_type(scmval expr, scmval env) {
     if(!is_symbol(type))
         error(syntax_error_type, "invalid record name (expected a symbol but got %s", scm_to_cstr(type)); 
     scmval code =
-        cons(scm_begin,
+        cons(sym_begin,
                 cons(define_record_ctor(ctor, type, fields, env),
                     cons(define_record_predicate(pred, type, env),
                         define_record_fields(fields, env))));

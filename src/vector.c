@@ -27,7 +27,7 @@ scmval make_vector_from_list(int size, scmval l) {
 
 // standard library
 static scmval scm_vector_p(scmval v) {
-    return scm_bool(is_vector(v));
+    return s_bool(is_vector(v));
 }
 
 static scmval scm_make_vector(scmval s, scmval i) {
@@ -47,7 +47,7 @@ static scmval scm_vector(int argc, scmval* argv) {
 
 static scmval scm_vector_length(scmval vec) {
     check_arg("vector-length", vector_c, vec);
-    return scm_fix(vector_size(vec));
+    return s_fix(vector_size(vec));
 }
 
 static scmval scm_vector_ref(scmval v, scmval i) {
@@ -67,7 +67,7 @@ static scmval scm_vector_set(scmval v, scmval i, scmval x) {
 
 static scmval scm_vector_to_list(scmval v, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(vector_size(v) - 1));
+    opt_arg(end,   s_fix(vector_size(v) - 1));
     check_arg("vector->list", vector_c, v);
     check_arg("vector->list", fixnum_c, start);
     check_arg("vector->list", fixnum_c, end);
@@ -92,7 +92,7 @@ static scmval scm_list_to_vector(scmval l) {
 
 static scmval scm_vector_to_string(scmval v, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(vector_size(v) - 1));
+    opt_arg(end,   s_fix(vector_size(v) - 1));
     check_arg("vector->string", vector_c, v);
     check_arg("vector->string", fixnum_c, start);
     check_arg("vector->string", fixnum_c, end);
@@ -106,12 +106,12 @@ static scmval scm_vector_to_string(scmval v, scmval start, scmval end) {
         s[j] = c_char(x);
     }
     s[size-1] = '\0';
-    return scm_str(s);
+    return s_str(s);
 }
 
 static scmval scm_string_to_vector(scmval s, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(string_length(s) - 1));
+    opt_arg(end,   s_fix(string_length(s) - 1));
     check_arg("string->vector", string_c, s);
     check_arg("string->vector", fixnum_c, start);
     check_arg("string->vector", fixnum_c, end);
@@ -123,14 +123,14 @@ static scmval scm_string_to_vector(scmval s, scmval start, scmval end) {
     v->elts = scm_new_array(size, scmval);
     char* str = c_cstr(s);
     for(int i = c_fix(start), j = 0; i <= c_fix(end); i++, j++) {
-        v->elts[j] = make_char(str[i]);
+        v->elts[j] = s_char(str[i]);
     }
     return make_ptr(SCM_TYPE_VECTOR, v);
 }
 
 static scmval scm_vector_copy(scmval v, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(vector_size(v) - 1));
+    opt_arg(end,   s_fix(vector_size(v) - 1));
     check_arg("vector-copy", vector_c, v);
     check_arg("vector-copy", fixnum_c, start);
     check_arg("vector-copy", fixnum_c, end);
@@ -145,7 +145,7 @@ static scmval scm_vector_copy(scmval v, scmval start, scmval end) {
 
 static scmval scm_vector_mcopy(scmval to, scmval at, scmval from, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end, scm_fix(vector_size(from) - 1));
+    opt_arg(end, s_fix(vector_size(from) - 1));
     check_arg("vector-copy!", vector_c, to);
     check_arg("vector-copy!", fixnum_c, at);
     check_arg("vector-copy!", vector_c, from);
@@ -185,7 +185,7 @@ static scmval scm_vector_append(int argc, scmval* argv) {
 
 static scmval scm_vector_fill(scmval v, scmval fill, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(vector_size(v) - 1));
+    opt_arg(end,   s_fix(vector_size(v) - 1));
     check_arg("vector-fill!", vector_c, v);
     check_arg("vector-fill!", fixnum_c, start);
     check_arg("vector-fill!", fixnum_c, end);

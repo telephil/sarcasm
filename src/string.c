@@ -2,7 +2,7 @@
 #include "scm.h"
 
 // constructor
-scmval scm_str(const char* s) {
+scmval s_str(const char* s) {
     scm_string_t* c = scm_new(scm_string_t);
     c->value = CORD_from_char_star(s);
     return make_ptr(SCM_TYPE_STRING, c);
@@ -16,11 +16,11 @@ scmval scm_str_from_cord(CORD c) {
 
 // standard library
 static scmval scm_string_p(scmval v) {
-    return scm_bool(is_string(v));
+    return s_bool(is_string(v));
 }
 
 static scmval scm_make_string(scmval k, scmval c) {
-    opt_arg(c, make_char(' '));
+    opt_arg(c, s_char(' '));
     check_arg("make-string", fixnum_c, k);
     check_arg("make-string", char_c, c);
     return scm_str_from_cord(CORD_chars(c_char(c), c_fix(k)));
@@ -28,17 +28,17 @@ static scmval scm_make_string(scmval k, scmval c) {
 
 static scmval scm_string(int argc, scmval* argv) {
     check_args("string", char_c, argc, argv);
-    char* s = scm_new_array(argc+1, char);
+    char* s = scm_new_atomic(argc+1, char);
     for(int i = 0; i < argc; i++) {
         s[i] = c_char(argv[i]);
     }
     s[argc] = '\0';
-    return scm_str(s);
+    return s_str(s);
 }
 
 static scmval scm_string_length(scmval s) {
     check_arg("string-length", string_c, s);
-    return scm_fix(string_length(s));
+    return s_fix(string_length(s));
 }
 
 static scmval scm_string_ref(scmval s, scmval k) {
@@ -46,7 +46,7 @@ static scmval scm_string_ref(scmval s, scmval k) {
     check_arg("string-ref", fixnum_c, k);
     check_range("string-ref", c_fix(k), 0, string_length(s));
     char c = CORD_fetch(c_str(s), c_fix(k));
-    return make_char(c);
+    return s_char(c);
 }
 
 static scmval scm_string_set(scmval s, scmval k, scmval c) {
@@ -109,14 +109,14 @@ static scmval scm_string_upcase(scmval s) {
     check_arg("string-upcase", string_c, s);
     char *r = c_cstr(s);
     for(char* p = r; (*p = toupper(*p)); p++) {}
-    return scm_str(r);
+    return s_str(r);
 }
 
 static scmval scm_string_downcase(scmval s) {
     check_arg("string-downcase", string_c, s);
     char *r = c_cstr(s);
     for(char* p = r; (*p = tolower(*p)); p++) {}
-    return scm_str(r);
+    return s_str(r);
 }
 
 static scmval scm_string_append(int argc, scmval* argv) {
@@ -130,7 +130,7 @@ static scmval scm_string_append(int argc, scmval* argv) {
 
 static scmval scm_string_to_list(scmval s, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(string_length(s)-1));
+    opt_arg(end,   s_fix(string_length(s)-1));
     check_arg("string->list", string_c, s);
     check_arg("string->list", fixnum_c, start);
     check_arg("string->list", fixnum_c, end);
@@ -142,7 +142,7 @@ static scmval scm_string_to_list(scmval s, scmval start, scmval end) {
     for(int i = 0; i < (c_fix(end) - c_fix(start) + 1); i++) {
         char c = CORD_pos_fetch(pos);
         CORD_next(pos);
-        scmval v = cons(make_char(c), scm_null);
+        scmval v = cons(s_char(c), scm_null);
         if(is_null(l)) {
             h = l = v;
         } else {
@@ -166,7 +166,7 @@ static scmval scm_list_to_string(scmval list) {
 
 static scmval scm_string_fill(scmval s, scmval fill, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(string_length(end)));
+    opt_arg(end,   s_fix(string_length(end)));
     check_arg("string-fill!", string_c, s);
     check_arg("string-fill!", char_c, fill);
     check_arg("string-fill!", fixnum_c, start);
@@ -201,7 +201,7 @@ static scmval scm_string_copy(scmval s, scmval start, scmval end) {
 
 static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, scmval end) {
     opt_arg(start, scm_0);
-    opt_arg(end,   scm_fix(string_length(from)-1));
+    opt_arg(end,   s_fix(string_length(from)-1));
     check_arg("string-copy!", string_c, to);
     check_arg("string-copy!", fixnum_c, at);
     check_arg("string-copy!", string_c, from);

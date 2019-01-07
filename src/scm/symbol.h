@@ -1,7 +1,3 @@
-// globals 
-extern scmval scm_undef;
-extern scmval scm_void;
-
 // constructors
 scmval make_symbol(const char*);
 
@@ -19,7 +15,13 @@ static inline scm_string_t* get_symbol(scmval v) { return (scm_string_t*)v.o; }
 // initialization
 void init_symbol(scmval);
 
-// standard library
+// intern pool
+void init_intern_pool();
 scmval intern(const char*);
+
+#define define_symbol(CNAME,SNAME) extern scmval CNAME;
+#include "symbols.inc"
+#undef define_symbol
+
 
 

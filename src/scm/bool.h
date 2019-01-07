@@ -1,10 +1,6 @@
-// globals
-extern scmval scm_true;
-extern scmval scm_false;
-
 // constructors
 scmval make_bool(bool);
-static inline scmval scm_bool(bool b) { return b ? scm_true : scm_false; }
+static inline scmval s_bool(bool b) { return b ? scm_true : scm_false; }
 
 // predicates
 static inline bool is_bool(scmval v) { return type_of(v) == SCM_TYPE_BOOL; }

@@ -28,7 +28,7 @@ static scmval scm_list_p(scmval v) {
 }
 
 static scmval scm_null_p(scmval v) {
-    return scm_bool(is_null(v));
+    return s_bool(is_null(v));
 }
 
 static scmval scm_make_list(scmval s, scmval f) {
@@ -81,7 +81,7 @@ static scmval scm_length(scmval l) {
     int i = 0;
     for(i = 0; !is_null(l); i++, l = cdr(l))
         ;
-    return scm_fix(i);
+    return s_fix(i);
 }
 
 static scmval scm_append(int argc, scmval* argv) {
@@ -130,8 +130,6 @@ static scmval scm_list_set(scmval lst, scmval k, scmval obj) {
 
 // initialization
 void init_pair(scmval env) {
-    scm_null  = make_val(SCM_TYPE_NULL);
-
     define(env, "pair?",        scm_pair_p,     arity_exactly(1));
     define(env, "list?",        scm_list_p,     arity_exactly(1));
     define(env, "null?",        scm_null_p,     arity_exactly(1));

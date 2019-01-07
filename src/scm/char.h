@@ -1,5 +1,5 @@
 // constructor
-scmval make_char(char);
+scmval s_char(char);
 // predicate
 static inline bool is_char(scmval v) { return type_of(v) == SCM_TYPE_CHAR; }
 // contract

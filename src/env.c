@@ -14,8 +14,8 @@ scmval make_env(scmval n) {
 }
 
 // utilities
-void define(scmval env, const char* name, subr_f fun, arity_t arity) {
-    scmval s = make_subr(name, fun, arity);
+void define(scmval env, const char* name, primitive_f fun, arity_t arity) {
+    scmval s = make_primitive(name, fun, arity);
     dict_set(env_globals(env), intern(name), s);
 }
 
