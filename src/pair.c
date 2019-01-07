@@ -1,8 +1,5 @@
 #include "scm.h"
 
-// globals
-scmval scm_null;
-
 // constructor
 scmval make_pair(scmval car, scmval cdr) {
     scm_pair_t* l = scm_new(scm_pair_t);
