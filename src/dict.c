@@ -8,10 +8,15 @@
 
 #include "khash.h"
 
-#define kh_scm_str_hash(a) (kh_str_hash_func(c_cstr(a)))
-#define kh_scm_str_cmp(a, b) (kh_str_hash_equal(c_cstr(a), c_cstr(b)))
+static inline khint_t scm_symbol_hash(scmval v) {
+    return kh_str_hash_func(c_cstr(v));
+}
 
-KHASH_INIT(dict, scmval, scmval, 1, kh_scm_str_hash, kh_scm_str_cmp) //;
+static inline bool scm_symbol_equal(scmval s1, scmval s2) {
+    return CORD_cmp(c_str(s1), c_str(s2)) == 0;
+}
+
+KHASH_INIT(dict, scmval, scmval, 1, scm_symbol_hash, scm_symbol_equal)
 
 scm_dict_t* make_dict() {
     scm_dict_t* dict = kh_init(dict);
