@@ -119,12 +119,19 @@ static scmval scm_getenv_vars() {
     return l;
 }
 
+#define TAI_OFFSET 37
 static scmval scm_current_second() {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    // TAI is 37s ahead of UTC (thanks Wikipedia)
-    flonum res = 37 + ts.tv_sec + 0.000000001*ts.tv_nsec;
-    return s_flo(res);
+    time_t t = time(NULL);
+    return s_flo(t + TAI_OFFSET);
+}
+
+static scmval scm_current_jiffy() {
+    clock_t jiffy = clock();
+    return s_flo(jiffy);
+}
+
+static scmval scm_jiffies_per_second() {
+    return s_flo(CLOCKS_PER_SEC);
 }
 
 static scmval scm_features() {
@@ -132,16 +139,18 @@ static scmval scm_features() {
 }
 
 void init_system(scmval env, int argc, char* argv[]) {
-    define(env, "load",                       scm_load,           arity_or(1, 2));
-    define(env, "file-exists?",               scm_file_exists_p,  arity_exactly(1));
-    define(env, "delete-file",                scm_delete_file,    arity_exactly(1));
-    define(env, "command-line",               scm_command_line,   arity_exactly(0));
-    define(env, "exit",                       scm_exit,           arity_or(0, 1));
-    define(env, "emergency-exit",             scm_emergency_exit, arity_or(0, 1));
-    define(env, "current-second",             scm_current_second, arity_exactly(0));
-    define(env, "features",                   scm_features,       arity_exactly(0));
-    define(env, "get-environment-variable",   scm_getenv_var,     arity_exactly(1));
-    define(env, "get-environment-variables",  scm_getenv_vars,    arity_exactly(0));
+    define(env, "load",                       scm_load,                 arity_or(1, 2));
+    define(env, "file-exists?",               scm_file_exists_p,        arity_exactly(1));
+    define(env, "delete-file",                scm_delete_file,          arity_exactly(1));
+    define(env, "command-line",               scm_command_line,         arity_exactly(0));
+    define(env, "exit",                       scm_exit,                 arity_or(0, 1));
+    define(env, "emergency-exit",             scm_emergency_exit,       arity_or(0, 1));
+    define(env, "current-second",             scm_current_second,       arity_exactly(0));
+    define(env, "current-jiffy",              scm_current_jiffy,        arity_exactly(0));
+    define(env, "jiffies-per-second",         scm_jiffies_per_second,   arity_exactly(0));
+    define(env, "features",                   scm_features,             arity_exactly(0));
+    define(env, "get-environment-variable",   scm_getenv_var,           arity_exactly(1));
+    define(env, "get-environment-variables",  scm_getenv_vars,          arity_exactly(0));
 
     set_features();
     set_commandline(argc, argv);
