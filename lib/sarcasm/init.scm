@@ -147,4 +147,47 @@ this break begin form in libraries
     (close-port port)
     result))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CONTROL FEATURES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (collect-by f lst)
+  (let loop ((args lst))
+    (if (or (null? args) (null? (car args)))
+        '()
+        (cons (f args) (loop (cdr args))))))
+
+(define (%list-mapper-arg-lists lst) 
+  (let loop ((args lst))
+    (if (or (null? args) (null? (car args)))
+        '()
+        (cons (collect-by caar args) (loop (collect-by cdar args))))))
+
+(define (%list-mapper-check-lengths proc frst lst)
+  (unless (null? lst)
+    (unless (= (length (car lst)) (length frst))
+      (error
+        (let ((p (open-output-string)))
+          (display proc p)
+          (display ": lists " p)
+          (display frst p)
+          (display " and " p)
+          (display (car lst) p)
+          (display " differ in size" p)
+          (get-output-string p))))
+    (%list-mapper-check-lengths proc frst (cdr lst))))
+
+(define (%list-mapper name accumulator f lists)
+  (%list-mapper-check-lengths name (car lists) (cdr lists))
+  (let loop ((args (%list-mapper-arg-lists lists)))
+    (if (null? args) '()
+        (accumulator (apply f (car args))
+                     (loop (cdr args))))))
+
+(define map
+  (lambda (f . lists)
+    (%list-mapper "map" cons f lists)))
+
+(define for-each 
+  (lambda (f . lists)
+    (%list-mapper "for-each" void f lists)))
 

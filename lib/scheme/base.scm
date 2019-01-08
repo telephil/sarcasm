@@ -89,7 +89,7 @@
     ;floor-remainder
     ;floor/
     flush-output-port
-    ;for-each
+    for-each
     ;gcd
     get-output-bytevector
     get-output-string
@@ -127,7 +127,7 @@
     ;make-parameter
     make-string
     make-vector
-    ;map
+    map
     max
     member
     memq
