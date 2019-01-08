@@ -31,6 +31,8 @@ static inline scmval cons(scmval car, scmval cdr) { return make_pair(car, cdr); 
 
 #define foreach(E,L) for(scmval E, _lst=L; !is_null(_lst)&&!is_undef(E=car(_lst));_lst=cdr(_lst))
 
+#define push(V,L) L = cons(V, L)
+
 #define caar(V) car(car(V))
 #define cadr(V) car(cdr(V))
 #define cdar(V) cdr(car(V))
