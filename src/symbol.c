@@ -59,13 +59,8 @@ void init_intern_pool() {
 }
 
 scmval intern(const char* name) {
-    scmval r, s;
-    s = make_symbol(name);
-    r = dict_ref(scm_g_symbols, s);
-    if(is_undef(r)) {
-        dict_set(scm_g_symbols, s, s);
-        r = s;
-    }
+    scmval s = make_symbol(name);
+    scmval r = dict_maybe_set(scm_g_symbols, s, s);
     return r;
 }
 

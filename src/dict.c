@@ -29,7 +29,17 @@ void dict_set(scm_dict_t* d, scmval k, scmval v) {
     it = kh_put(dict, d, k, &ret);
     // TODO ret
     kh_value(d, it) = v;
-//    printf("*** added symbol '%s' to globals\n", c_cstr(k));
+}
+
+scmval dict_maybe_set(scm_dict_t* d, scmval k, scmval v) {
+    int ret;
+    khiter_t it;
+    it = kh_put(dict, d, k, &ret);
+    if(ret == 0) { // key already exist -> return it
+        return kh_value(d, it);
+    }
+    kh_value(d, it) = v;
+    return v;
 }
 
 scmval dict_ref(scm_dict_t* d, scmval k) {
