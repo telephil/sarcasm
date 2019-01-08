@@ -1,4 +1,3 @@
-#include <float.h>
 #include "scm.h"
 
 static void write_char(scmval, scmval, short);
@@ -25,21 +24,9 @@ void write(scmval p, scmval v, short flags) {
             scm_puts(p, is_true(v) ? "#t" : "#f");
             break;
         case SCM_TYPE_FIXNUM:
-            scm_printf(p, "%lld", c_fix(v));
-            break;
         case SCM_TYPE_BIGNUM:
-            printf("%s", mpz_get_str(NULL, 10, c_big(v)));
-            break;
         case SCM_TYPE_FLONUM:
-            if(is_nan(v)) {
-                scm_puts(p, "+nan.0");
-            } else if(is_pos_inf(v)) {
-                scm_puts(p, "+inf.0");
-            } else if(is_neg_inf(v)) {
-                scm_puts(p, "-inf.0");
-            } else {
-                scm_printf(p, "%.*g", DBL_DECIMAL_DIG, c_flo(v));
-            }
+            scm_puts(p, c_str(number_to_string(v, s_fix(10))));
             break;
         case SCM_TYPE_CHAR:
             if(flags & scm_mode_write) {

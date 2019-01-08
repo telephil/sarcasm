@@ -28,6 +28,7 @@ define_contract(integer_c, "integer", is_integer);
 define_contract(radix_c, "a valid radix (2, 8, 10 or 16)", is_radix);
 // standard library
 void init_number();
+scmval number_to_string(scmval, scmval);
 scmval string_to_number(char*);
 bool numeq(scmval x, scmval y);
 

@@ -1,3 +1,4 @@
+#include <float.h>
 #include "scm.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -510,41 +511,11 @@ static scmval scm_exact(scmval n) {
     return s_fix((fixnum)c_flo(n));
 }
 
-static char* number_to_binary(fixnum z, char *result) {
-  if(z > 1) {
-    result = number_to_binary(z>>1, result);
-  }
-  *result = z & 1 ? '1' : '0';
-  return result + 1;
-}
-
 static scmval scm_number_to_string(scmval z, scmval radix) {
     opt_arg(radix, s_fix(10));
     check_arg("number->string", number_c, z);
     check_arg("number->string", radix_c, radix);
-    if(is_flonum(z))
-        return scm_to_string(z);
-    else if(is_bignum(z))
-        return s_str(mpz_get_str(NULL, c_fix(radix), c_big(z)));
-
-    scmval result;
-    char *buf;
-    fixnum i = c_fix(z);
-    fixnum r = c_fix(radix);
-    if(r == 2) {
-        buf = scm_new_atomic(512, char);
-        number_to_binary(i, buf);
-    } else {
-        char *fmt;
-        switch(r) {
-            case 8:  fmt = "%o"; break;
-            case 10: fmt = "%ld";  break;
-            case 16: fmt = "%x"; break;
-        }
-        asprintf(&buf, fmt, i);
-        result = s_str(buf);
-    }
-    return s_str(buf);
+    return number_to_string(z, radix);
 }
 
 static scmval scm_string_to_number(scmval s) {
@@ -616,6 +587,47 @@ void init_number(scmval env) {
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
+static char* number_to_binary(fixnum z, char *result) {
+  if(z > 1) {
+    result = number_to_binary(z>>1, result);
+  }
+  *result = z & 1 ? '1' : '0';
+  return result + 1;
+}
+
+scmval number_to_string(scmval v, scmval radix) {
+    if(is_nan(v))           return s_str("+nan.0");
+    else if(is_pos_inf(v))  return s_str("+inf.0");
+    else if(is_neg_inf(v))  return s_str("-inf.0");
+
+    scmval res = scm_0;
+    if(is_flonum(v)) {
+        char *buf;
+        asprintf(&buf, "%.*g", DBL_DECIMAL_DIG, c_flo(v));
+        res = s_str(buf);
+    } else if(is_bignum(v)) {
+        res = s_str(mpz_get_str(NULL, c_fix(radix), c_big(v)));
+    } else if(is_fixnum(v)) {
+        char *buf;
+        fixnum i = c_fix(v);
+        fixnum r = c_fix(radix);
+        if(r == 2) {
+            buf = scm_new_atomic(512, char);
+            number_to_binary(i, buf);
+        } else {
+            char *fmt;
+            switch(r) {
+                case 8:  fmt = "%o"; break;
+                case 10: fmt = "%ld";  break;
+                case 16: fmt = "%x"; break;
+            }
+            asprintf(&buf, fmt, i);
+        }
+        res = s_str(buf);
+    }
+    return res;
+}
+
 static bool is_valid_digit(char c, int base);
 
 scmval string_to_number(char* buf) {
