@@ -94,6 +94,7 @@ extern scmval scm_eof;
 #include "scm/writer.h"
 #include "scm/reader.h"
 #include "scm/system.h"
+#include "scm/control.h"
 #include "scm/library.h"
 #include "scm/record.h"
 #include "scm/eval.h"
