@@ -14,7 +14,6 @@ struct scm_bytes_buffer {
 scmval scm_g_current_output_port;
 scmval scm_g_current_error_port;
 scmval scm_g_current_input_port;
-scmval scm_eof;
 
 // constructors
 scmval make_port(short flags, void* data, char* name, scm_port_vtable_t* vtable) {
