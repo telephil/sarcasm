@@ -2,12 +2,6 @@
 #include <time.h>
 
 ////////////////////////////////////////////////////////////////////////////////
-// Globals
-////////////////////////////////////////////////////////////////////////////////
-static scmval features;
-static scmval commandline;
-
-////////////////////////////////////////////////////////////////////////////////
 // HELPERS
 ////////////////////////////////////////////////////////////////////////////////
 scmval load(const char* path, scmval env) {
@@ -21,30 +15,6 @@ scmval load(const char* path, scmval env) {
     }
     scm_close_input_port(p);
     return r;
-}
-
-static void set_features() {
-    char* f[] = {
-        "r7rs",
-        "exact-closed", "ieee-float",
-        "posix", OS, ARCH, ENDIANESS,
-        IMPLEMENTATION_NAME, IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION,
-        NULL
-    };
-
-    features = list1(intern(f[0]));
-    scmval t = features;
-    for(int i = 1; f[i] != NULL; i++) {
-        setcdr(t, list1(intern(f[i])));
-        t = cdr(t);
-    }
-}
-
-static void set_commandline(int argc, char* argv[]) {
-    commandline = scm_null;
-    for(int i = argc - 1; i >= 0; i--) {
-        commandline = cons(s_str(argv[i]), commandline);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +43,7 @@ static scmval scm_delete_file(scmval filename) {
 } 
 
 static scmval scm_command_line() {
-    return commandline;
+    return scm_g_command_line;
 }
 
 static scmval scm_exit(scmval obj) {
@@ -135,7 +105,7 @@ static scmval scm_jiffies_per_second() {
 }
 
 static scmval scm_features() {
-    return features;
+    return scm_g_features;
 }
 
 void init_system(scmval env, int argc, char* argv[]) {
@@ -151,8 +121,5 @@ void init_system(scmval env, int argc, char* argv[]) {
     define(env, "features",                   scm_features,             arity_exactly(0));
     define(env, "get-environment-variable",   scm_getenv_var,           arity_exactly(1));
     define(env, "get-environment-variables",  scm_getenv_vars,          arity_exactly(0));
-
-    set_features();
-    set_commandline(argc, argv);
 }
 
