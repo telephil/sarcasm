@@ -1,8 +1,11 @@
 #include "scm.h"
 
-// globals
+////////////////////////////////////////////////////////////////////////////////
+// GLOBALS
+////////////////////////////////////////////////////////////////////////////////
 scmval   scm_g_lasterr;
 jmp_buf  scm_g_errbuf;
+scmval  scm_g_exception_handlers;
 
 scmval exn_error_type;
 scmval cexn_error_type;
@@ -11,7 +14,9 @@ scmval arity_error_type;
 scmval type_error_type;
 scmval file_error_type;
 
-// constructor
+////////////////////////////////////////////////////////////////////////////////
+// CONSTRUCTOR
+////////////////////////////////////////////////////////////////////////////////
 scmval make_error(scmval type, scmval message, scmval irritants) {
     scm_error_t* e = scm_new(scm_error_t);
     e->type      = type;
@@ -20,13 +25,31 @@ scmval make_error(scmval type, scmval message, scmval irritants) {
     return make_ptr(SCM_TYPE_ERROR, e);
 }
 
-// standard library
+////////////////////////////////////////////////////////////////////////////////
+// HELPERS
+////////////////////////////////////////////////////////////////////////////////
 void raise(scmval e) {
     scm_g_lasterr = e;
     longjmp(scm_g_errbuf, 1);
 }
 
-// standard library
+////////////////////////////////////////////////////////////////////////////////
+// STANDARD LIBRARY
+////////////////////////////////////////////////////////////////////////////////
+static scmval scm_with_exception_handler(scmval handler, scmval thunk) {
+    check_arg("with-exception-handler", procedure_c, handler);
+    check_arg("with-exception-handler", procedure_c, thunk);
+    scmval r = scm_undef;
+    push(handler, scm_g_exception_handlers);
+    if(setjmp(scm_g_errbuf)) {
+        scm_g_exception_handlers = cdr(scm_g_exception_handlers);
+        r = eval(list2(handler, scm_g_lasterr), scm_interaction_environment());
+    } else {
+        r = eval(list1(thunk), scm_interaction_environment());
+    }
+    return r;
+}
+
 static scmval scm_raise(scmval obj) {
     scmval err = make_error(exn_error_type, scm_undef, list1(obj));
     raise(err);
@@ -72,6 +95,7 @@ static scmval scm_file_error_p(scmval v) {
 
 // initialization
 void init_errors(scmval env) {
+    define(env, "with-exception-handler",   scm_with_exception_handler, arity_exactly(2));
     define(env, "raise",                    scm_raise,                  arity_exactly(1));
     define(env, "raise-continuable",        scm_raise_continuable,      arity_exactly(1));
     define(env, "error",                    scm_error,                  arity_at_least(1));
@@ -86,5 +110,7 @@ void init_errors(scmval env) {
     range_error_type = intern("range-error");
     arity_error_type = intern("arity-error");
     file_error_type  = intern("file-error");
+
+    scm_g_exception_handlers = scm_null;
 }
 
