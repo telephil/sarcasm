@@ -24,8 +24,8 @@ static scmval scm_load(scmval filename, scmval env) {
     opt_arg(env, scm_interaction_environment());
     check_arg("load", string_c, filename);
     check_arg("load", env_c, env);
-    load(c_str(filename), env);
-    return scm_void;
+    scmval r = load(c_str(filename), env);
+    return r;
 }
 
 // taken from unistd.h that we cannot include as we define conflicting versions
