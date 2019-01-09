@@ -97,6 +97,10 @@ loop:
         CASE(sym_unquote_splicing) {
             error(syntax_error_type, "unquote-splicing: not in quasiquote");
         }
+        CASE(sym_letrec_star) { // needed here for internal define
+            v = expand(v, e);
+            goto loop;
+        }
         CASE(sym_apply) {
             scmval args = eval_aux(caddr(v), e);
             scmval head = scm_null, tail;
