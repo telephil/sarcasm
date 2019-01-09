@@ -19,6 +19,12 @@ scmval make_closure(scmval name, int argc, scmval* argv, scmval env, scmval body
     return make_ptr(SCM_TYPE_CLOSURE, closure);
 }
 
+scmval make_continuation() {
+    scm_continuation_t* cont = scm_new(scm_continuation_t);
+    cont->value = scm_undef;
+    return make_ptr(SCM_TYPE_CONTINUATION, cont);
+}
+
 // arity
 static void arity_error(scmval v, int argc) {
     arity_t arity = primitive_arity(v);
