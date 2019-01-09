@@ -150,44 +150,58 @@ this break begin form in libraries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CONTROL FEATURES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define (collect-by f lst)
-  (let loop ((args lst))
+(define (%map-aux name accumulator f elts)
+  (define length-error (lambda (x y)
+                         (error
+                          (let ((p (open-output-string)))
+                            (display name p)
+                            (display ": lists " p)
+                            (display y p)
+                            (display " and " p)
+                            (display y p)
+                            (display " differ in size" p)
+                            (get-output-string p)))))
+  (define check-lengths (lambda ()
+                          (let loop ((first (car elts)) (args (cdr elts)))
+                            (unless (null? args)
+                              (unless (= (length (car args)) (length first))
+                                (length-error first (car args))
+                                (loop first (cdr args)))))))
+  (define collect-args-by (lambda (f lst)
+                            (let loop ((args lst))
+                              (if (or (null? args) (null? (car args)))
+                                  '()
+                                  (cons (f (car args)) (loop (cdr args)))))))
+  (check-lengths)
+  (let loop ((args elts))
     (if (or (null? args) (null? (car args)))
         '()
-        (cons (f args) (loop (cdr args))))))
-
-(define (%list-mapper-arg-lists lst) 
-  (let loop ((args lst))
-    (if (or (null? args) (null? (car args)))
-        '()
-        (cons (collect-by caar args) (loop (collect-by cdar args))))))
-
-(define (%list-mapper-check-lengths proc frst lst)
-  (unless (null? lst)
-    (unless (= (length (car lst)) (length frst))
-      (error
-        (let ((p (open-output-string)))
-          (display proc p)
-          (display ": lists " p)
-          (display frst p)
-          (display " and " p)
-          (display (car lst) p)
-          (display " differ in size" p)
-          (get-output-string p))))
-    (%list-mapper-check-lengths proc frst (cdr lst))))
-
-(define (%list-mapper name accumulator f lists)
-  (%list-mapper-check-lengths name (car lists) (cdr lists))
-  (let loop ((args (%list-mapper-arg-lists lists)))
-    (if (null? args) '()
-        (accumulator (apply f (car args))
-                     (loop (cdr args))))))
+        (accumulator (apply f (collect-args-by car args))
+                     (loop (collect-args-by cdr args))))))
 
 (define map
   (lambda (f . lists)
-    (%list-mapper "map" cons f lists)))
+    (%map-aux "map" cons f lists)))
 
 (define for-each 
   (lambda (f . lists)
-    (%list-mapper "for-each" void f lists)))
+    (%map-aux "for-each" void f lists)))
+
+(define vector-map
+  (lambda (f . lists)
+    (list->vector
+     (apply map (cons f (map vector->list lists))))))
+
+(define vector-for-each
+  (lambda (f . lists)
+    (apply for-each (cons f (map vector->list lists)))))
+
+(define string-map
+  (lambda (f . lists)
+    (list->string
+     (apply map (cons f (map string->list lists))))))
+
+(define string-for-each
+  (lambda (f . lists)
+    (apply for-each (cons f (map string->list lists)))))
 
