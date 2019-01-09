@@ -6,7 +6,7 @@
           (scheme time))
   (export
     test-begin test-end test-exit
-    is is-q is-v is-true is-false
+    is is-q is-v is-true is-false is-error
     skip)
   (begin
     (define %test-start 0)
@@ -91,5 +91,15 @@
       (syntax-rules ()
         ((_ expr)
          (%test eq? 'expr #f expr))))
+
+    (define-syntax is-error
+      (syntax-rules ()
+        ((_ expr)
+         (let ((result (call-with-current-continuation
+                         (lambda (k)
+                           (with-exception-handler
+                             (lambda (x) (k 'error))
+                             (lambda () expr 'success))))))
+           (%test eq? 'expr 'error result)))))
     ))
 
