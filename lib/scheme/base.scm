@@ -32,7 +32,7 @@
     bytevector?
     caar
     cadr
-    ;call-with-current-continuation
+    call-with-current-continuation
     call-with-port
     call-with-values
     call/cc
@@ -230,7 +230,7 @@
     vector-set!
     vector?
     when
-    ;with-exception-handler
+    with-exception-handler
     write-bytevector
     write-char
     write-string
