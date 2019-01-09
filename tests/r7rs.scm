@@ -110,10 +110,10 @@
 (is 'a (car '(a b c)))
 (is '(a) (car '((a) b c)))
 (is 1 (car '(1 . 2)))
-(skip (is-error (car '())))
+(is-error (car '()))
 (is '(b c d) (cdr '((a) b c d)))
 (is 2 (cdr '(1 . 2)))
-(skip (is-error (cdr '())))
+(is-error (cdr '()))
 (is '(0 2 3) (let ((l (list 1 2 3))) (set-car! l 0) l))
 (is '(0 1 2) (let ((l (list 0 2 3))) (set-cdr! l '(1 2)) l))
 (is-true (null? '()))
@@ -173,7 +173,13 @@
 (is 3 (let ((k (kons 1 2)))
         (set-kar! k 3)
         (kar k)))
-
+;; Control features
+(is-true (call/cc procedure?))
+(is -3 (call-with-current-continuation
+         (lambda (exit)
+           (for-each 
+             (lambda (x) (if (negative? x) (exit x)))
+             '(54 0 37 -3 245 19)))))
 
 (test-end) 
 (test-exit)
