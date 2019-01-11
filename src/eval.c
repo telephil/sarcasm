@@ -136,8 +136,7 @@ loop:
                 goto loop;
             } else if(is_continuation(f)) {
                 r = eval_aux(cadr(v), e);
-                set_continuation_value(f, r);
-                call_continuation(f);
+                call_continuation(f, r);
             } else if(is_syntax(f)) {
                 v = expand(f, v);
                 dbg("E(v)", v);

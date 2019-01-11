@@ -68,6 +68,9 @@ void write(scmval p, scmval v, short flags) {
             else
                 scm_printf(p, "#<closure:%s>", c_str(closure_name(v)));
             break;
+        case SCM_TYPE_CONTINUATION:
+            scm_puts(p, "#<continuation>");
+            break;
         case SCM_TYPE_SYNTAX:
             scm_printf(p, "#<syntax:%s>", c_str(syntax_name(v)));
             break;
