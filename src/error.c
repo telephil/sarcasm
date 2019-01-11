@@ -43,9 +43,9 @@ static scmval scm_with_exception_handler(scmval handler, scmval thunk) {
     push(handler, scm_g_exception_handlers);
     if(setjmp(scm_g_errbuf)) {
         scm_g_exception_handlers = cdr(scm_g_exception_handlers);
-        r = eval(list2(handler, scm_g_lasterr), scm_interaction_environment());
+        r = call(handler, list1(scm_g_lasterr));
     } else {
-        r = eval(list1(thunk), scm_interaction_environment());
+        r = call(thunk, scm_null);
     }
     return r;
 }

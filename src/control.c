@@ -11,8 +11,7 @@ scmval scm_callcc(scmval proc) {
         // back from call
         r = continuation_value(cont);
     } else {
-        scmval expr = list2(proc, cont);
-        r = eval(expr, scm_interaction_environment());
+        r = call(proc, list1(cont));
     }
     return r;
 }
