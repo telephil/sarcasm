@@ -12,6 +12,7 @@ static scmval stx_begin(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
 static scmval call_primitive(scmval, scmval, scmval);
 static scmval call_closure(scmval, scmval, scmval);
+static scmval call_parameter(scmval, scmval, scmval);
 static void   list_to_args(scmval, int*, scmval**);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,6 +138,8 @@ loop:
             } else if(is_continuation(f)) {
                 r = eval_aux(cadr(v), e);
                 call_continuation(f, r);
+            } else if(is_parameter(f)) {
+                r = call_parameter(f, cdr(v), e);
             } else if(is_syntax(f)) {
                 v = expand(f, v);
                 dbg("E(v)", v);
@@ -147,6 +150,17 @@ loop:
         r = v;
     }
     return r;
+}
+
+static scmval call_parameter(scmval param, scmval arglist, scmval env) {
+    if(is_null(arglist))
+        return parameter_value(param);
+    int length = list_length(arglist);
+    if(length > 1)
+        error(arity_error_type, "parameter expects only one argument but received %d", length);
+    scmval value = eval_aux(car(arglist), env);
+    set_parameter_value(param, value);
+    return scm_void;
 }
 
 static scmval call_primitive(scmval prim, scmval arglist, scmval env) {

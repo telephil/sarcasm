@@ -71,6 +71,11 @@ void write(scmval p, scmval v, short flags) {
         case SCM_TYPE_CONTINUATION:
             scm_puts(p, "#<continuation>");
             break;
+        case SCM_TYPE_PARAMETER:
+            scm_puts(p, "#<parameter:");
+            write(p, parameter_value(v), flags);
+            scm_putc(p, '>');
+            break;
         case SCM_TYPE_SYNTAX:
             scm_printf(p, "#<syntax:%s>", c_str(syntax_name(v)));
             break;

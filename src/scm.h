@@ -40,6 +40,7 @@ enum {
     SCM_TYPE_PRIMITIVE,
     SCM_TYPE_CLOSURE,
     SCM_TYPE_CONTINUATION,
+    SCM_TYPE_PARAMETER,
     SCM_TYPE_SYNTAX,
     SCM_TYPE_ERROR,
     SCM_TYPE_PORT,
@@ -98,6 +99,7 @@ extern scmval scm_g_features;
 #include "scm/reader.h"
 #include "scm/system.h"
 #include "scm/control.h"
+#include "scm/parameter.h"
 #include "scm/library.h"
 #include "scm/record.h"
 #include "scm/eval.h"

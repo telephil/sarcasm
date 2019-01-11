@@ -36,7 +36,6 @@ static inline bool is_primitive(scmval v) { return type_of(v) == SCM_TYPE_PRIMIT
 static inline bool is_closure(scmval v) { return type_of(v) == SCM_TYPE_CLOSURE; }
 static inline bool is_continuation(scmval v) { return type_of(v) == SCM_TYPE_CONTINUATION; }
 static inline bool is_procedure(scmval v) { return is_primitive(v) || is_closure(v) || is_continuation(v); }
-static inline bool is_callable(scmval v) { return is_procedure(v); }
 
 // contract
 define_contract(procedure_c, "procedure", is_procedure);
