@@ -108,7 +108,7 @@ static scmval scm_features() {
     return scm_g_features;
 }
 
-void init_system(scmval env, int argc, char* argv[]) {
+void init_system(scmval env) {
     define(env, "load",                       scm_load,                 arity_or(1, 2));
     define(env, "file-exists?",               scm_file_exists_p,        arity_exactly(1));
     define(env, "delete-file",                scm_delete_file,          arity_exactly(1));

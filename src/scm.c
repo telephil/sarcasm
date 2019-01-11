@@ -69,7 +69,7 @@ void scm_boot(int argc, char* argv[]) {
     init_syntax(env);
     init_reader(env);
     init_eval(env);
-    init_system(env, argc, argv);
+    init_system(env);
     init_control(env);
     init_record(env);
     init_library(env);
