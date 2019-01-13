@@ -10,6 +10,7 @@ static scmval stx_if(scmval, scmval);
 static scmval stx_lambda(scmval, scmval);
 static scmval stx_begin(scmval, scmval);
 static scmval stx_quasiquote(scmval, scmval);
+static scmval stx_parameterize(scmval, scmval);
 static scmval call_primitive(scmval, scmval, scmval);
 static scmval call_closure(scmval, scmval, scmval);
 static scmval call_parameter(scmval, scmval, scmval);
@@ -109,6 +110,9 @@ loop:
         CASE(sym_letrec_star) { // needed here for internal define
             v = expand(v, e);
             goto loop;
+        }
+        CASE(sym_parameterize) {
+            r = stx_parameterize(cdr(v), e);
         }
         CASE(sym_apply) {
             scmval args = eval_aux(caddr(v), e);
@@ -481,6 +485,29 @@ static scmval stx_begin(scmval expr, scmval env) {
     }
     return car(lst);
 }
+
+static scmval stx_parameterize(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len < 2) error(syntax_error_type, "invalid parameterize syntax");
+    scmval frame = scm_null;
+    foreach(p, car(expr)) {
+        scmval param = eval_aux(car(p), env);
+        scmval value = cadr(p);
+        if(!is_undef(parameter_conv(param)))
+            value = eval_aux(list2(parameter_conv(param), value), env);
+        else
+            value = eval_aux(value, env);
+        push(cons(param, value), frame);
+    }
+    dynenv_push_frame(frame);
+    scmval ret = scm_void;
+    foreach(x, cdr(expr)) {
+        ret = eval_aux(x, env);
+    }
+    dynenv_pop_frame(frame);
+    return ret;
+}
+
 static void list_to_args(scmval l, int* argc, scmval** argv) {
     int ac = list_length(l);
     if(ac > 0) {
