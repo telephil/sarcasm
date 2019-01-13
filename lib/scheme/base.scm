@@ -65,7 +65,7 @@
     ;define-values
     denominator
     ;do
-    ;dynamic-wind
+    dynamic-wind
     else
     eof-object
     eof-object?
@@ -124,7 +124,7 @@
     list?
     make-bytevector
     make-list
-    ;make-parameter
+    make-parameter
     make-string
     make-vector
     map
@@ -150,7 +150,7 @@
     output-port-open?
     output-port?
     pair?
-    ;parameterize
+    parameterize
     peek-char
     peek-u8
     port?
