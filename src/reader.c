@@ -14,6 +14,7 @@ static scmval read_list(scmval);
 static scmval read_vector(scmval);
 static scmval read_bytevector(scmval);
 static scmval read_any(scmval);
+static char   read_hex_sequence(scmval);
 static char skipws(scmval p);
 static bool is_delimiter(char);
 static bool is_initial(char);
@@ -301,6 +302,7 @@ static scmval read_string(scmval p) {
                 case 'r': c = '\r'; break;
                 case '"': c = '"';  break;
                 case '\\': c = '\\'; break;
+                case 'x': c = read_hex_sequence(p); break;
                 default:
                    read_error(p, "invalid escaped character '%c' in string", c);
             }
@@ -398,6 +400,26 @@ static scmval read_bytevector(scmval p) {
     }
     v = make_bytevector_from_list(size, h);
     return v;
+}
+
+static char read_hex_sequence(scmval p) {
+    char buffer[16];
+    int i = 0;
+    while(true) {
+        char c  = scm_getc(p);
+        if(c == EOF)
+            read_error(p, "unexpected end of file while reading hex sequence");
+        if(c == ';')
+            break;
+        if(i == sizeof(buffer) - 1)
+            read_error(p, "hex sequence too long");
+        buffer[i++] = c;
+    }
+    buffer[i] = '\0';
+    fixnum n = strtol(buffer, NULL, 16);
+//    if(errno == ERANGE)
+//        read_error(p, "unable to convert hex sequence to a valid character");
+    return (char)n;
 }
 
 static char skipws(scmval p) {
