@@ -42,12 +42,12 @@
       (set! %test-count (+ 1 %test-count))
       (if (pred? expected got)
           (begin
-            (display "[PASS] ")
+            (display "[\x001b;[32mPASS\x001b;[0m] ")
             (write expr)
             (newline))
           (begin
             (set! %test-fail (+ 1 %test-fail))
-            (display "[FAIL] ")
+            (display "[\x001b;[31mFAIL\x001b;[0m] ")
             (write expr)
             (display " => expected:")
             (write expected)
