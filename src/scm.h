@@ -48,8 +48,13 @@ enum {
     SCM_TYPE_RECORD
 };
 
+enum {
+    scm_flag_values = 1<<0,
+};
+
 struct scmval {
-    int type;
+    short type;
+    short flags;
     union {
         bool b;
         fixnum i;
@@ -59,9 +64,11 @@ struct scmval {
     };
 };
 
-static inline int type_of(scmval v) { return v.type; }
-static inline scmval make_val(int type) { scmval v = { .type = type, .o = NULL }; return v; }
-static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .o = o }; return v; }
+static inline short  type_of(scmval v) { return v.type; }
+#define set_flag(v, flag) v.flags |= flag
+static inline bool   has_flag(scmval v, int flag) { return v.flags & flag; }
+static inline scmval make_val(int type) { scmval v = { .type = type, .flags = 0, .o = NULL }; return v; }
+static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .flags = 0, .o = o }; return v; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // GLOBALS
