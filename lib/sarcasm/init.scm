@@ -205,3 +205,17 @@ this break begin form in libraries
   (lambda (f . lists)
     (apply for-each (cons f (map string->list lists)))))
 
+(define values
+  (lambda things
+    (call-with-current-continuation
+      (lambda (cont)
+        (apply cont things)))))
+
+;; values are just a list flag as values
+;; this might not be the proper way to proceed though
+(define (call-with-values producer consumer)
+  (let ((v (producer)))
+    (if (list? v)
+        (apply consumer v)
+        (consumer v)))) 
+

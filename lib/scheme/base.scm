@@ -62,7 +62,7 @@
     define
     define-record-type
     define-syntax
-    ;define-values
+    define-values
     denominator
     ;do
     dynamic-wind
@@ -215,7 +215,7 @@
     unquote
     unquote-splicing
     ;utf8->string
-    ;values
+    values
     vector
     vector->list
     vector->string

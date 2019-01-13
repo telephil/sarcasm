@@ -60,11 +60,6 @@ static inline scmval    continuation_value(scmval v) { return get_continuation(v
 static inline void      set_continuation_value(scmval v, scmval o) { get_continuation(v)->value = o; }
 #define continuation_buf(V) get_continuation(V)->buf
 
-static inline void call_continuation(scmval cont, scmval val) {
-    set_continuation_value(cont, val);
-    longjmp(continuation_buf(cont), 1);
-}
-
 // utils
 void check_arity(scmval, int);
 int argc_from_arity(scmval, int);

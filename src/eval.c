@@ -4,6 +4,7 @@ static scmval eval_aux(scmval, scmval);
 static scmval stx_define(scmval, scmval);
 static scmval stx_define_syntax(scmval, scmval);
 static scmval stx_define_library(scmval, scmval);
+static scmval stx_define_values(scmval, scmval);
 static scmval stx_import(scmval, scmval);
 static scmval stx_set(scmval, scmval);
 static scmval stx_if(scmval, scmval);
@@ -14,6 +15,7 @@ static scmval stx_parameterize(scmval, scmval);
 static scmval call_primitive(scmval, scmval, scmval);
 static scmval call_closure(scmval, scmval, scmval);
 static scmval call_parameter(scmval, scmval, scmval);
+static void   call_continuation(scmval, scmval, scmval);
 static void   list_to_args(scmval, int*, scmval**);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,6 +80,9 @@ loop:
         CASE(sym_define_syntax) {
             r = stx_define_syntax(cdr(v), e);
         }
+        CASE(sym_define_values) {
+            r = stx_define_values(cdr(v), e);
+        }
         CASE(sym_set) {
             r = stx_set(cdr(v), e);
         }
@@ -140,8 +145,7 @@ loop:
                 v = cdr(v);
                 goto loop;
             } else if(is_continuation(f)) {
-                r = eval_aux(cadr(v), e);
-                call_continuation(f, r);
+                call_continuation(f, cdr(v), e);
             } else if(is_parameter(f)) {
                 r = call_parameter(f, cdr(v), e);
             } else if(is_syntax(f)) {
@@ -154,6 +158,25 @@ loop:
         r = v;
     }
     return r;
+}
+
+static void call_continuation(scmval cont, scmval arglist, scmval env) {
+    if(is_null(arglist))
+        error(arity_error_type, "continuation expects at least one argument");
+    int len = 0;
+    scmval h = scm_null, t = h;
+    foreach(arg, arglist) {
+        len++;
+        scmval v = eval_aux(arg, env);
+        if(is_null(h)) {
+            h = t = list1(v);
+        } else {
+            setcdr(t, list1(v));
+            t = cdr(t);
+        }
+    }
+    set_continuation_value(cont, h);
+    longjmp(continuation_buf(cont), len);
 }
 
 static scmval call_parameter(scmval param, scmval arglist, scmval env) {
@@ -416,6 +439,22 @@ static scmval stx_define_library(scmval expr, scmval env) {
     }
     register_library(library);
     return library;
+}
+
+static scmval stx_define_values(scmval expr, scmval env) {
+    int len = list_length(expr);
+    if(len != 2) error(syntax_error_type, "invalid define-values syntax");
+    scmval vars = car(expr);
+    scmval thunk = cadr(expr);
+    scmval values = eval_aux(thunk, env);
+    if(list_length(vars) != list_length(values))
+        error(syntax_error_type, "incorrect number of values produced by %s", scm_to_cstr(thunk));
+    while(!is_null(vars) && !is_null(values)) {
+        set(env, car(vars), car(values));
+        vars = cdr(vars);
+        values = cdr(values);
+    }
+    return scm_undef;
 }
 
 static scmval stx_import(scmval expr, scmval env) {

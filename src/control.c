@@ -7,9 +7,14 @@ scmval scm_procedure_p(scmval obj) {
 scmval scm_callcc(scmval proc) {
     scmval r = scm_undef;
     scmval cont = make_continuation();
-    if(setjmp(continuation_buf(cont))) {
-        // back from call
-        r = continuation_value(cont);
+    int ret = setjmp(continuation_buf(cont));
+    if(ret) { // back from call
+        if(ret > 1) { // multiple values
+            r = continuation_value(cont);
+            set_flag(r, scm_flag_values);
+        } else {
+            r = car(continuation_value(cont));
+        }
     } else {
         r = call(proc, list1(cont));
     }

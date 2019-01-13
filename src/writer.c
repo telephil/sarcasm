@@ -5,6 +5,7 @@ static void write_pair(scmval, scmval, short);
 static void write_vector(scmval, scmval, short);
 static void write_bytevector(scmval, scmval, short);
 static void write_error(scmval, scmval, short);
+static void write_values(scmval, scmval, short);
 
 void write(scmval p, scmval v, short flags) {
     switch(type_of(v)) {
@@ -48,7 +49,10 @@ void write(scmval p, scmval v, short flags) {
             scm_puts(p, c_str(v));
             break;
         case SCM_TYPE_PAIR:
-            write_pair(p, v, flags);
+            if(has_flag(v, scm_flag_values))
+                write_values(p, v, flags);
+            else
+                write_pair(p, v, flags);
             break;
         case SCM_TYPE_VECTOR:
             write_vector(p, v, flags);
@@ -167,6 +171,13 @@ static void write_error(scmval p, scmval v, short flags) {
         write(p, car(error_irritants(v)), flags);
     } else {
         write(p, error_message(v), flags);
+    }
+}
+
+static void write_values(scmval p, scmval v, short flags) {
+    foreach(val, v) {
+        write(p, val, flags);
+        scm_putc(p, '\n');
     }
 }
 
