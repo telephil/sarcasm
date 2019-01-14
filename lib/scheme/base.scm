@@ -214,7 +214,7 @@
     unless
     unquote
     unquote-splicing
-    ;utf8->string
+    utf8->string
     values
     vector
     vector->list
