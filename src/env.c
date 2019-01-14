@@ -109,11 +109,22 @@ scmval scm_interaction_environment() {
     return scm_g_interaction_environment;
 }
 
+scmval scm_environment_symbols(scmval env) {
+    int nkeys;
+    scmval* keys;
+    dict_keys(env_globals(env), &nkeys, &keys);
+    scmval symbols = scm_null;
+    for(int i = nkeys - 1; i >= 0; i--)
+        push(keys[i], symbols);
+    return symbols;
+}
+
 void init_env(scmval env) {
     define(env, "environment",               scm_environment,               arity_at_least(0));
     define(env, "scheme-report-environment", scm_report_environment,        arity_exactly(1));
     define(env, "null-environment",          scm_null_environment,          arity_exactly(1));
     define(env, "interaction-environment",   scm_interaction_environment,   arity_exactly(0));
+    define(env, "environment-symbols",       scm_environment_symbols,       arity_exactly(1));
 }
 
 void post_init_env() {
