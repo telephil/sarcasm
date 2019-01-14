@@ -1,4 +1,3 @@
-#include <sys/errno.h>
 #include "scm.h"
 
 static const int DEFAULT_BYTEVECTOR_PORT_SIZE = 1024;

@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <setjmp.h>
 #include <math.h>
+#include <sys/errno.h>
 #include <gc/gc.h>
 #include <gc/cord.h>
 #include <gmp.h>

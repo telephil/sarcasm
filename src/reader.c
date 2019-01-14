@@ -423,8 +423,8 @@ static char read_hex_sequence(scmval p) {
     }
     buffer[i] = '\0';
     fixnum n = strtol(buffer, NULL, 16);
-//    if(errno == ERANGE)
-//        read_error(p, "unable to convert hex sequence to a valid character");
+    if(errno == ERANGE)
+        read_error(p, "unable to convert hex sequence to a valid character");
     return (char)n;
 }
 
