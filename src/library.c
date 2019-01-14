@@ -21,7 +21,7 @@ static void env_copy_callback(scmval key, scmval val, scmval lib) {
 }
 
 scmval make_core_library(scmval env) {
-    scmval corelib = make_library(read_from_string("(sarcasm core)"));
+    scmval corelib = make_library(lib("sarcasm", "core"));
     dict_foreach(env_globals(env), env_copy_callback, corelib);
     register_library(corelib);
     return corelib;

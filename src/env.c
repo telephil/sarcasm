@@ -117,9 +117,8 @@ void init_env(scmval env) {
 }
 
 void post_init_env() {
-    scmval args[] = { read_from_string("(sarcasm core)"),
-                      read_from_string("(scheme cxr)") };
+    scmval args[] = { lib("sarcasm", "core") };
     scm_g_report_environment        = scm_environment(1, args); // FIXME
-    scm_g_interaction_environment   = scm_environment(2, args);
+    scm_g_interaction_environment   = scm_environment(1, args);
     scm_g_null_environment          = make_env(scm_undef);
 }
