@@ -23,7 +23,13 @@ static bool is_peculiar_identifier(char);
 static bool is_subsequent(char);
 static bool is_special_subsequent(char);
 
+scmval scm_read_from_string(scmval str) {
+    check_arg("read-from-string", string_c, str);
+    return read_from_string(c_cstr(str));
+}
+
 void init_reader(scmval env) {
+    define(env, "read-from-string", scm_read_from_string, arity_exactly(1));
 }
 
 static void read_error(scmval p, const char* message, ...) {
