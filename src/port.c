@@ -173,10 +173,10 @@ static scmval scm_char_ready_p(scmval p) {
     return port_ready(p);
 }
 
-static scmval scm_read(scmval p) {
+scmval scm_read(scmval p) {
     opt_arg(p, scm_current_input_port());
     check_arg("read", textual_input_port_c, p);
-    return read(p);
+    return read_(p);
 }
 
 static scmval scm_read_char(scmval p) {
@@ -289,10 +289,10 @@ static scmval scm_read_bytevector_mut(scmval bv, scmval port, scmval start, scmv
     return s_fix(count);
 }
 
-static scmval scm_write(scmval v, scmval p) {
+static scmval scm_write_(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("write", textual_output_port_c, p);
-    write(p, v, scm_mode_write | scm_mode_pp_quote);
+    scm_write(v, p);
     return scm_void;
 }
 
@@ -344,10 +344,10 @@ static scmval scm_write_bytevector(scmval bv, scmval port, scmval start, scmval 
     return scm_void;
 }
 
-static scmval scm_display(scmval v, scmval p) {
+static scmval scm_display_(scmval v, scmval p) {
     opt_arg(p, scm_current_output_port());
     check_arg("display", textual_output_port_c, p);
-    write(p, v, scm_mode_display | scm_mode_pp_quote);
+    scm_display(v, p);
     return scm_void;
 }
 
@@ -414,12 +414,12 @@ void init_port(scmval env) {
     define(env, "u8-ready?",                scm_u8_ready_p,                 arity_or(0, 1));
     define(env, "read-bytevector",          scm_read_bytevector,            arity_or(1, 2));
     define(env, "read-bytevector!",         scm_read_bytevector_mut,        arity_between(1, 4));
-    define(env, "write",                    scm_write,                      arity_or(1, 2));
+    define(env, "write",                    scm_write_,                     arity_or(1, 2));
     define(env, "write-char",               scm_write_char,                 arity_or(1, 2));
     define(env, "write-string",             scm_write_string,               arity_between(1, 4));
     define(env, "write-u8",                 scm_write_u8,                   arity_or(1, 2));
     define(env, "write-bytevector",         scm_write_bytevector,           arity_between(1, 4));
-    define(env, "display",                  scm_display,                    arity_or(1, 2));
+    define(env, "display",                  scm_display_,                   arity_or(1, 2));
     define(env, "newline",                  scm_newline,                    arity_or(0, 1));
     define(env, "flush-output-port",        scm_flush_output_port,          arity_or(0, 1));
 }
@@ -433,7 +433,7 @@ scmval open_input_string(const char* s) {
 
 scmval scm_to_string(scmval v) {
     scmval p = scm_open_output_string();
-    scm_write(v, p);
+    scm_write_(v, p);
     scm_close_output_port(p);
     return scm_get_output_string(p);
 }

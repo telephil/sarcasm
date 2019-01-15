@@ -114,6 +114,7 @@ static inline void   port_flush(scmval p) { get_port(p)->vtable->flush(p); }
 
 // standard library
 void   init_port(scmval);
+scmval scm_read(scmval);
 scmval scm_close_input_port(scmval);
 scmval scm_open_input_file(scmval);
 scmval scm_open_output_string();

@@ -108,8 +108,8 @@ static void init_features() {
 }
 
 static void fatal_error_handler(scmval err) {
-    write(scm_current_error_port(), err, scm_mode_display);
-    write(scm_current_error_port(), s_char('\n'), scm_mode_display);
+    scm_display(err, scm_current_error_port());
+    scm_display(s_char('\n'), scm_current_error_port());
     exit(1);
 }
 

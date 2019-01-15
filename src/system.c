@@ -8,7 +8,7 @@ scmval load(const char* path, scmval env) {
     scmval r = scm_undef;
     scmval p = scm_open_input_file(s_str(path));
     while(true) {
-        scmval v = read(p);
+        scmval v = scm_read(p);
         if(is_eof(v))
             break;
         r = eval(v, env);
@@ -28,13 +28,9 @@ static scmval scm_load(scmval filename, scmval env) {
     return r;
 }
 
-// taken from unistd.h that we cannot include as we define conflicting versions
-// of read and write functions
-extern int access(const char*, int);
-
 scmval scm_file_exists_p(scmval filename) {
     check_arg("file-exists?", string_c, filename);
-    return s_bool(access(c_cstr(filename), 0) != -1);
+    return s_bool(access(c_cstr(filename), F_OK) != -1);
 }
 
 static scmval scm_delete_file(scmval filename) {

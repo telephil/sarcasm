@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <setjmp.h>
 #include <math.h>
+#include <unistd.h>
 #include <sys/errno.h>
 #include <gc/gc.h>
 #include <gc/cord.h>
@@ -132,7 +133,7 @@ void scm_boot(int, char*[]);
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER MACROS
 ////////////////////////////////////////////////////////////////////////////////
-#define dbg(P,V) { printf(">>> " P ": '"); write(scm_current_output_port(), V, scm_mode_write); printf("'\n"); }
+#define dbg(P,V) { printf(">>> " P ": '"); scm_write(V, scm_current_output_port()); printf("'\n"); }
 
 #define opt_arg(ARG,OPT) ARG = is_undef(ARG) ? OPT : ARG
 #define check_arg(N,C,V) if(!C.pred(V)) (type_error(N,C,V))

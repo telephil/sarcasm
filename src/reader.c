@@ -41,13 +41,13 @@ static void read_error(scmval p, const char* message, ...) {
     error(read_error_type, "%s (line: %d - pos: %d)", buf, port_line(p), port_pos(p));
 }
 
-scmval read(scmval p) {
+scmval read_(scmval p) {
     return read_aux(p, false);
 }
 
 scmval read_from_string(const char* s) {
     scmval p = open_input_string(s);
-    scmval v = read(p);
+    scmval v = scm_read(p);
     scm_close_input_port(p);
     return v;
 }

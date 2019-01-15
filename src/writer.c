@@ -1,5 +1,6 @@
 #include "scm.h"
 
+static void _write(scmval, scmval, short);
 static void write_char(scmval, scmval, short);
 static void write_pair(scmval, scmval, short);
 static void write_vector(scmval, scmval, short);
@@ -7,7 +8,21 @@ static void write_bytevector(scmval, scmval, short);
 static void write_error(scmval, scmval, short);
 static void write_values(scmval, scmval, short);
 
-void write(scmval p, scmval v, short flags) {
+enum {
+    scm_mode_write      = 1<<0,
+    scm_mode_display    = 1<<1,
+    scm_mode_pp_quote   = 1<<2
+};
+
+void scm_write(scmval v, scmval p) {
+    _write(p, v, scm_mode_write | scm_mode_pp_quote);
+}
+
+void scm_display(scmval v, scmval p) {
+    _write(p, v, scm_mode_display | scm_mode_pp_quote);
+}
+
+static void _write(scmval p, scmval v, short flags) {
     switch(type_of(v)) {
         case SCM_TYPE_UNDEF:
             scm_puts(p, "#<undefined>");
@@ -77,7 +92,7 @@ void write(scmval p, scmval v, short flags) {
             break;
         case SCM_TYPE_PARAMETER:
             scm_puts(p, "#<parameter:");
-            write(p, parameter_value(v), flags);
+            _write(p, parameter_value(v), flags);
             scm_putc(p, '>');
             break;
         case SCM_TYPE_SYNTAX:
@@ -94,12 +109,12 @@ void write(scmval p, scmval v, short flags) {
             break;
         case SCM_TYPE_LIBRARY:
             scm_puts(p, "#<library:");
-            write(p, library_name(v), flags);
+            _write(p, library_name(v), flags);
             scm_puts(p, ">");
             break;
         case SCM_TYPE_RECORD:
             scm_puts(p, "#<record:");
-            write(p, record_type(v), flags);
+            _write(p, record_type(v), flags);
             scm_puts(p, ">");
             break;
     }
@@ -125,16 +140,16 @@ static void write_pair(scmval p, scmval v, short flags) {
     if(flags & scm_mode_pp_quote) {
         if(!is_null(v) && is_eq(car(v), sym_quote)) {
             scm_putc(p, '\'');
-            write(p, cadr(v), flags);
+            _write(p, cadr(v), flags);
             return;
         }
     }
     scm_putc(p, '(');
     for(scmval l = v; !is_null(l); l = cdr(l)) {
-        write(p, car(l), flags);
+        _write(p, car(l), flags);
         if(!is_pair(cdr(l))) {
             scm_puts(p, " . ");
-            write(p, cdr(l), flags);
+            _write(p, cdr(l), flags);
             break;
         }
         if(!is_null(cdr(l))) {
@@ -150,7 +165,7 @@ static void write_vector(scmval p, scmval v, short flags) {
         if(i > 0) {
             scm_putc(p, ' ');
         }
-        write(p, vector_ref(v, i), flags);
+        _write(p, vector_ref(v, i), flags);
     }
     scm_putc(p, ')');
 }
@@ -159,7 +174,7 @@ static void write_bytevector(scmval p, scmval v, short flags) {
     scm_puts(p, "#u8(");
     for(int i = 0; i < bytevector_size(v); i++) {
         if(i > 0) scm_putc(p, ' ');
-        write(p, bytevector_ref(v, i), flags);
+        _write(p, bytevector_ref(v, i), flags);
     }
     scm_putc(p, ')');
 }
@@ -168,15 +183,15 @@ static void write_error(scmval p, scmval v, short flags) {
     scm_puts(p, "[ERROR] ");
     if(is_eq(error_type(v), exn_error_type) || is_eq(error_type(v), cexn_error_type)) {
         scm_puts(p, "an error was raised with non-condition value ");
-        write(p, car(error_irritants(v)), flags);
+        _write(p, car(error_irritants(v)), flags);
     } else {
-        write(p, error_message(v), flags);
+        _write(p, error_message(v), flags);
     }
 }
 
 static void write_values(scmval p, scmval v, short flags) {
     foreach(val, v) {
-        write(p, val, flags);
+        _write(p, val, flags);
         scm_putc(p, '\n');
     }
 }

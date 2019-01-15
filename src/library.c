@@ -41,7 +41,7 @@ static inline scmval library_to_filename(scmval name) {
     scm_printf(p, "./lib");
     foreach(elt, name) {
         scm_putc(p, '/');
-        write(p, elt, scm_mode_display);
+        scm_display(elt, p);
     }
     scm_puts(p, ".scm");
     scmval s = scm_get_output_string(p);
