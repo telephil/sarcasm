@@ -11,7 +11,7 @@ $(TARGET):	$(SOURCES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $(TARGET)
 
 test:	$(TARGET)
-	@./$(TARGET) ./tests/r7rs.scm
+	@./$(TARGET) -l ./tests/r7rs.scm
 
 clean:
 	rm -f $(TARGET) 
