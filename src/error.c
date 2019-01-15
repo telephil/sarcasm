@@ -51,13 +51,12 @@ static scmval scm_with_exception_handler(scmval handler, scmval thunk) {
 }
 
 static scmval scm_raise(scmval obj) {
-    scmval err = make_error(exn_error_type, scm_undef, list1(obj));
-    raise(err);
+    raise(obj);
     return scm_undef;
 }
 
 static scmval scm_raise_continuable(scmval obj) {
-    scmval err = make_error(cexn_error_type, scm_undef, list1(obj));
+    scmval err = make_error(cexn_error_type, scm_false, list1(obj));
     raise(err);
     return scm_undef;
 }
@@ -100,7 +99,7 @@ void init_errors(scmval env) {
     define(env, "raise-continuable",        scm_raise_continuable,      arity_exactly(1));
     define(env, "error",                    scm_error,                  arity_at_least(1));
     define(env, "file-error?",              scm_file_error_p,           arity_exactly(1));
-    define(env, "error-object-p",           scm_error_object_p,         arity_exactly(1));
+    define(env, "error-object?",            scm_error_object_p,         arity_exactly(1));
     define(env, "error-object-message",     scm_error_object_message,   arity_exactly(1));
     define(env, "error-object-irritants",   scm_error_object_irritants, arity_exactly(1));
 
