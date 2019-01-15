@@ -40,8 +40,24 @@
 
     (define (error-handler err)
       (display "\x001b;[31mERROR\x001b;[0m ")
-      (display (error-object-message err))
-      (newline))
+      (if (error-object? err)
+          (begin
+            (display (error-object-message err))
+            (newline)
+            (unless (null? (error-object-irritants err))
+              (display "irritants:") (newline)
+              (let loop ((irrs (error-object-irritants err)) (i 0))
+                (unless (null? irrs)
+                  (display "  [")
+                  (display i)
+                  (display "]: ")
+                  (write (car irrs))
+                  (newline)
+                  (loop (cdr irrs) (+ 1 i))))))
+          (begin
+            (display "an error was raised with non-condition value ")
+            (write err)
+            (newline)))) 
 
     (define (repl)
       (register-exit-hook end)
@@ -51,12 +67,13 @@
       (let loop ((line (readline "> ")))
         (when line
           (add-history line)
-          (with-exception-handler 
+          (with-exception-handler
             error-handler
             (lambda ()
               (let* ((r (read-from-string line))
                      (v (eval r (interaction-environment))))
-                (write v)
-                (newline))))
+                (unless (eof-object? v)
+                  (write v)
+                  (newline)))))
           (loop (readline "> ")))))
     ))
