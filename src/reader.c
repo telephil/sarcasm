@@ -210,7 +210,9 @@ static scmval read_any(scmval p) {
     int size = 0;
     while(true) {
         c = scm_getc(p);
-        if(c == EOF || is_delimiter(c)) {
+        if(c == EOF)
+            break;
+        if(is_delimiter(c)) {
             scm_ungetc(p, c);
             break;
         }
@@ -432,8 +434,9 @@ static char skipws(scmval p) {
     char c;
     while(true) {
         c = scm_getc(p);
-        if(c == EOF)
+        if(c == EOF) {
             return EOF;
+        }
         if(!isspace(c))
             return c;
     }
