@@ -1,5 +1,6 @@
 (define-library (sarcasm repl)
-  (import (sarcasm core))
+  (import (sarcasm core)
+          (sarcasm string))
   (export repl)
  
   (begin
@@ -11,13 +12,6 @@
 
     (define (save-history)
       (write-history history-filename))
-
-    (define (starts-with? s t)
-      (define lt (string-length t))
-      (define ls (string-length s))
-      (or (zero? lt)
-          (and (<= lt ls)
-               (string=? (substring s 0 (- lt 1)) t))))
 
     (define (completions-for text)
       (define loop
@@ -76,7 +70,7 @@
       (load-history)
       (set-completion-function! completions-for)
       (let loop ((buffer ""))
-        (let ((line (readline (if (zero? (string-length buffer)) "> " "+ "))))
+        (let ((line (readline (if (string-empty? buffer) "> " "+ "))))
           (if (not line) ;; empty string -> done
               (newline)
               (let ((input (string-append buffer line "\n")))
