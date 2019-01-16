@@ -38,12 +38,17 @@ static scmval scm_void_(int argc, scmval *argv) {
     return scm_void;
 }
 
+static scmval scm_void_p(scmval obj) {
+    return s_bool(is_void(obj));
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
 ////////////////////////////////////////////////////////////////////////////////
 void init_eval(scmval env) {
-    define(env, "eval", scm_eval,  arity_exactly(2));
-    define(env, "void", scm_void_, arity_at_least(0));
+    define(env, "eval",         scm_eval,           arity_exactly(2));
+    define(env, "void",         scm_void_,          arity_at_least(0));
+    define(env, "void?",        scm_void_p,         arity_exactly(1));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +383,7 @@ static scmval stx_define(scmval expr, scmval env) {
     } else { // (define name...
         define_symbol(expr, env);
     }
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval stx_define_syntax(scmval expr, scmval env) {
@@ -398,7 +403,7 @@ static scmval stx_define_syntax(scmval expr, scmval env) {
     }
     scmval syntax = make_syntax(name, cadr(rule_list), cddr(rule_list));
     set(env, name, syntax);
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval stx_define_library(scmval expr, scmval env) {
@@ -454,14 +459,14 @@ static scmval stx_define_values(scmval expr, scmval env) {
         vars = cdr(vars);
         values = cdr(values);
     }
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval stx_import(scmval expr, scmval env) {
     foreach(name, expr) {
         import(name, env);
     }
-    return scm_undef;
+    return scm_void;
 }
 
 static scmval stx_set(scmval expr, scmval env) {
