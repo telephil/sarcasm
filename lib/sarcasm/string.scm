@@ -1,6 +1,6 @@
 (define-library (sarcasm string)
   (import (sarcasm core))
-  (export string-empty? starts-with?)
+  (export string-empty? starts-with? format)
   (begin
 
     ;; check whether string <str> is empty

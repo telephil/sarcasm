@@ -217,7 +217,13 @@ static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, 
     return scm_void;
 }
 
+static inline void check_format_arg(int index, int argc, char clause) {
+    if(index > (argc - 1))
+        error(scm_undef, "no more arguments to match ~%c clause", clause);
+}
+
 static scmval scm_format(int argc, scmval* argv) {
+    scmval v;
     int index = 0;
     int arg_index = 1;
     char* fmt = c_cstr(argv[0]);
@@ -233,14 +239,44 @@ static scmval scm_format(int argc, scmval* argv) {
         c = fmt[index++];
         switch(c) {
             case 'a':
-                if(arg_index > (argc - 1))
-                    error(scm_undef, "no more arguments to match ~a clause");
+                check_format_arg(arg_index, argc, 'a');
                 scm_display(argv[arg_index++], port);
                 break;
             case 'v':
-                if(arg_index > (argc - 1))
-                    error(scm_undef, "no more arguments to match ~a clause");
+                check_format_arg(arg_index, argc, 'v');
                 scm_write(argv[arg_index++], port);
+                break;
+            case 'x':
+                check_format_arg(arg_index, argc, 'x');
+                v = argv[arg_index++];
+                if(!is_number(v))
+                    error(type_error_type, "clause ~x require a number argument but received %s", scm_to_cstr(v));
+                v = number_to_string(v, s_fix(16));
+                scm_display(v, port);
+                break;
+            case 'd':
+                check_format_arg(arg_index, argc, 'd');
+                v = argv[arg_index++];
+                if(!is_number(v))
+                    error(type_error_type, "clause ~d require a number argument but received %s", scm_to_cstr(v));
+                v = number_to_string(v, s_fix(10));
+                scm_display(v, port);
+                break;
+            case 'o':
+                check_format_arg(arg_index, argc, 'o');
+                v = argv[arg_index++];
+                if(!is_number(v))
+                    error(type_error_type, "clause ~o require a number argument but received %s", scm_to_cstr(v));
+                v = number_to_string(v, s_fix(8));
+                scm_display(v, port);
+                break;
+            case 'b':
+                check_format_arg(arg_index, argc, 'b');
+                v = argv[arg_index++];
+                if(!is_number(v))
+                    error(type_error_type, "clause ~b require a number argument but received %s", scm_to_cstr(v));
+                v = number_to_string(v, s_fix(2));
+                scm_display(v, port);
                 break;
             case '%':
                 scm_putc(port, '\n');
