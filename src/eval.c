@@ -420,7 +420,9 @@ static scmval stx_define_library(scmval expr, scmval env) {
         if(is_eq(car(obj), sym_export)) {
             exports = cdr(obj);
         } else if(is_eq(car(obj), sym_import)) {
-            imports = cons(cadr(obj), imports);
+            foreach(import, cdr(obj)) {
+                push(import, imports);
+            }
         } else if(is_eq(car(obj), sym_include)) {
             includes = cons(cdr(obj), includes);
         } else if(is_eq(car(obj), sym_begin)) {
