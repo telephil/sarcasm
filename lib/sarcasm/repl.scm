@@ -1,5 +1,7 @@
 (define-library (sarcasm repl)
-  (import (sarcasm core)
+  (import (scheme base)
+          (sarcasm process)
+          (sarcasm readline)
           (sarcasm string))
   (export repl)
  
@@ -42,11 +44,7 @@
               (display "irritants:") (newline)
               (let loop ((irrs (error-object-irritants err)) (i 0))
                 (unless (null? irrs)
-                  (display "  [")
-                  (display i)
-                  (display "]: ")
-                  (write (car irrs))
-                  (newline)
+                  (display (format "  [~a]: ~v~%" i (car irrs)))
                   (loop (cdr irrs) (+ 1 i))))))
           (begin
             (display "an error was raised with non-condition value ")
