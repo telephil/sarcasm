@@ -217,6 +217,38 @@ static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, 
     return scm_void;
 }
 
+static scmval scm_format(int argc, scmval* argv) {
+    int index = 0;
+    int arg_index = 1;
+    char* fmt = c_cstr(argv[0]);
+    scmval port = scm_open_output_string();
+    while(true) {
+        char c = fmt[index++];
+        if(c == '\0' || c == EOF)
+            break;
+        if(c != '~') {
+            scm_putc(port, c);
+            continue;
+        }
+        c = fmt[index++];
+        switch(c) {
+            case 'a':
+                if(arg_index > (argc - 1))
+                    error(scm_undef, "no more arguments to match ~a clause");
+                scm_display(argv[arg_index++], port);
+                break;
+            case 'v':
+                if(arg_index > (argc - 1))
+                    error(scm_undef, "no more arguments to match ~a clause");
+                scm_write(argv[arg_index++], port);
+                break;
+            case '%':
+                scm_putc(port, '\n');
+                break;
+        }
+    }
+    return scm_get_output_string(port);
+}
 
 void init_string(scmval env) {
     define(env, "string?",           scm_string_p,           arity_exactly(1));
@@ -244,5 +276,6 @@ void init_string(scmval env) {
     define(env, "string-copy",       scm_string_copy,        arity_between(1, 3));
     define(env, "string-copy!",      scm_string_mcopy,       arity_between(3, 5));
     define(env, "string-fill!",      scm_string_fill,        arity_between(2, 4));
+    define(env, "format",            scm_format,             arity_at_least(1));
 }
 
