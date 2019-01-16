@@ -204,6 +204,14 @@ scmval scm_register_exit_hook(scmval proc) {
     return scm_void;
 }
 
+scmval scm_system(scmval command) {
+    check_arg("system", string_c, command);
+    int ret = system(c_cstr(command));
+    if(ret == -1 || ret == 127)
+        return scm_false;
+    return s_fix(ret);
+}
+
 static void init_readline(scmval env) {
     define(env, "readline", scm_readline, arity_exactly(1));
     define(env, "read-history", scm_read_history, arity_exactly(1));
@@ -211,6 +219,7 @@ static void init_readline(scmval env) {
     define(env, "add-history", scm_add_history, arity_exactly(1));
     define(env, "set-completion-function!", scm_set_completion_function, arity_exactly(1));
     define(env, "register-exit-hook", scm_register_exit_hook, arity_exactly(1));
+    define(env, "system", scm_system, arity_exactly(1));
     exit_hooks = scm_null;
     atexit(run_exit_hooks);
 }
