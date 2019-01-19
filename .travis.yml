@@ -1,10 +1,10 @@
 language: c
 script: make && make test
+before-script:
+    - ./install-boehm.sh
 compiler: clang
 os: linux
 dist: xenial
-before-install:
-    - ./install-boehm.sh
 addons:
   apt:
     packages:
