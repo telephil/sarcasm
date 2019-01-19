@@ -1,0 +1,12 @@
+language: c
+script: make && make test
+compiler: clang
+os: linux
+dist: xenial
+addons:
+  apt:
+    packages:
+        - libreadline-dev
+        - libgmp-dev
+        - libgc-dev
+
