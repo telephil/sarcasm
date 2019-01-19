@@ -1,6 +1,6 @@
 language: c
 script: make && make test
-before-script:
+before_script:
     - ./install-boehm.sh
 compiler: clang
 os: linux
