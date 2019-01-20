@@ -31,9 +31,6 @@ void init_syntax(scmval env) {
 // Forward declarations
 ////////////////////////////////////////////////////////////////////////////////
 static scmval expand_syntax(scmval, scmval);
-static scmval find_matching_rule(scmval, scmval);
-static scm_dict_t* pattern_bind_vars(scmval, scmval);
-static scmval template_instantiate(scmval, scmval, scm_dict_t*);
 static scmval stx_case_lambda(scmval, scmval);
 static scmval stx_let(scmval, scmval);
 static scmval stx_let_star(scmval, scmval);
@@ -96,105 +93,131 @@ scmval expand(scmval expr, scmval env) {
 ////////////////////////////////////////////////////////////////////////////////
 // SCHEME TRANSFORMER
 ////////////////////////////////////////////////////////////////////////////////
-static scmval expand_syntax(scmval stx, scmval expr) {
-    scmval rule = find_matching_rule(stx, expr);
-    if(is_undef(rule))
-        error(syntax_error_type, "could not find syntax rule to match arguments");
-    scmval pattern  = car(rule);
-    scmval template = cadr(rule);
-    // apply template
-    scmval result = scm_undef;
-    // XXX is it really necessary ?
-    if(!is_eq(car(pattern), sym_underscore) && !is_eq(car(pattern), car(expr))) {
-        error(syntax_error_type, "pattern does not match expression %s", scm_to_cstr(car(expr)));
+typedef bool(*contain_pred)(scmval, scmval);
+
+static inline bool is_ellipsis(scmval v) { return is_eq(v, sym_ellipsis); }
+static inline bool is_ellipsis_pair(scmval v) { return is_list(v) && is_ellipsis(car(v)); }
+
+static inline bool is_ellipsis_var(scmval x, scmval ellipsis_vars) { return memq(x, ellipsis_vars); }
+static inline bool is_not_literal(scmval x, scmval literals) { return !memq(x, literals); }
+static inline bool is_not_binding(scmval x, scmval bindings) { return is_false(assq(x, bindings)); }
+
+static inline scmval get_identifiers(scmval from, contain_pred pred, bool include_scalars, scmval x, scmval l) {
+    if(is_symbol(x)) {
+        if(include_scalars && pred(x, from))
+            l = cons(x, l);
+    } else if(is_list(x)) {
+        if(is_ellipsis_pair(cdr(x))) {
+            l = get_identifiers(from, pred, include_scalars, cddr(x), l);
+            l = get_identifiers(from, pred, true, car(x), l);
+        } else {
+            l = get_identifiers(from, pred, include_scalars, cdr(x), l);
+            l = get_identifiers(from, pred, include_scalars, car(x), l);
+        }
     }
-    if(is_null(cdr(pattern))) {
-        result = template;
-    } else if(is_symbol(template)) {
-        if(is_eq(cadr(pattern), template))
-            result = cadr(expr);
-        else
+    return l;
+}
+
+static scmval match(scmval literals, scmval pattern, scmval expr, scmval bindings) {
+    if(is_null(pattern)) {
+        return is_null(expr) ? bindings : scm_false;
+    } else if(is_symbol(pattern)) {
+        if(memq(pattern, literals))
+            return is_eq(pattern, expr) ? bindings : scm_false;
+        push(cons(pattern, expr), bindings);
+        return bindings;
+    } else if(!is_list(pattern)) {
+        return is_equal(pattern, expr) ? bindings : scm_false;
+    } else if(is_ellipsis_pair(cdr(pattern))) {
+        if(!is_pair(expr)) return scm_false;
+        int tail_len  = list_length(cddr(pattern));
+        int expr_len  = list_length(expr);
+        int seq_len   = expr_len - tail_len;
+        if(seq_len < 0) return scm_false;
+        scmval expr_tail = list_tail(expr, seq_len);
+        scmval seq = list_reverse(list_tail(list_reverse(expr), tail_len));
+        scmval vars = get_identifiers(literals, is_not_literal, true, car(pattern), scm_null);
+        scmval mseq = vars;
+        scmval tally = scm_null;
+        for(tally = mseq; !is_null(cdr(tally)); tally = cdr(tally)) {}
+        foreach(elt, seq) {
+            scmval v = map1(cdr, match(literals, car(pattern), elt, scm_null));
+            setcdr(tally, v);
+            tally = cdr(tally);
+        }
+        scmval rest = match(literals, cddr(pattern), expr_tail, bindings);
+        scmval tail = rest;
+        for(tail = rest; !is_null(cdr(tail)); tail = cdr(tail)) {}
+        setcdr(tail, list1(mseq));
+        return rest;
+    } else if(is_list(expr)) {
+        if(!is_list(pattern))
+            return scm_false;
+        scmval h = match(literals, car(pattern), car(expr), bindings);
+        if(is_false(h)) return scm_false;
+        scmval t = match(literals, cdr(pattern), cdr(expr), h); 
+        return t;
+    }
+    return scm_false;
+}
+
+static scmval expand_part(scmval literals, scmval pattern, scmval template, scmval bindings, scmval evars) {
+    scmval result = template;
+    if(is_symbol(template)) {
+        scmval res = assq(template, bindings);
+        if(is_false(res) && memq(template, literals))
             result = template;
-    } else if(is_pair(template)) {
-        scm_dict_t* dict = pattern_bind_vars(pattern, cdr(expr));
-        result = template_instantiate(stx, template, dict);
-    } else {
-        error(syntax_error_type, "unhandled template type %s", scm_to_cstr(template));
+        else
+            result = cdr(res);
+    } else if(is_list(template)) {
+        if(is_ellipsis_pair(cdr(template))) {
+            scmval vars = get_identifiers(evars, is_ellipsis_var, true, car(template), scm_null);
+            scmval vals = scm_null, t = vals;
+            foreach(elt, vars) {
+                scmval v = list1(cdr(assq(elt, bindings)));
+                if(is_null(vals)) {
+                    vals = t = v;
+                } else {
+                    setcdr(t, v);
+                    t = cdr(t);
+                }
+            }
+            scmval expanded_vals = expand_part(literals, pattern, car(template), map2(cons, vars, vals), evars);
+            result = expand_part(literals, pattern, cddr(template), bindings, evars);
+            if(!is_null(result)) {
+                scmval tail = scm_null;
+                for(tail = result; !is_null(cdr(tail)); tail = cdr(tail)) {}
+                setcdr(tail, expanded_vals);
+            } else {
+                result = expanded_vals;
+            }
+        } else {
+            result = cons(expand_part(literals, pattern, car(template), bindings, evars),
+                          expand_part(literals, pattern, cdr(template), bindings, evars));
+        }
     }
     return result;
 }
 
-static scmval template_instantiate(scmval stx, scmval template, scm_dict_t* vars) {
-    scmval head = scm_null, tail = scm_null;
-    for(scmval tmpl = template; !is_null(tmpl); tmpl = cdr(tmpl)) {
-        scmval expr = car(tmpl);
-        if(is_symbol(expr)) {
-            scmval val = dict_ref(vars, expr);
-            if(!is_undef(val)) {
-                if(!is_eq(expr, sym_ellipsis)) {
-                    expr = cons(val, scm_null);
-                } else {
-                    expr = val;
-                }
-            } else {
-                expr = cons(expr, scm_null);
-            }
-        } else if(is_pair(expr)) {
-            expr = list1(template_instantiate(stx, expr, vars));
-        } else {
-            expr = cons(expr, scm_null);
-        }
-        if(is_null(head)) {
-            head = tail = expr;
-        } else {
-            setcdr(tail, expr);
-            tail = expr;
-        }
-    }
-    return head;
+static scmval expand_template(scmval literals, scmval pattern, scmval template, scmval bindings) {
+    scmval new_literals  = get_identifiers(bindings, is_not_binding, true, template, scm_null);
+    scmval ellipsis_vars = get_identifiers(literals, is_not_literal, false, cdr(pattern), scm_null);
+    return expand_part(new_literals, pattern, template, bindings, ellipsis_vars);
 }
 
-static scm_dict_t* pattern_bind_vars(scmval pattern, scmval arglist) {
-    scm_dict_t* dict = make_dict();
-    for(scmval pvar = cdr(pattern); !is_null(pvar); pvar = cdr(pvar)) {
-        scmval val = scm_null;
-        if(is_eq(car(pvar), sym_ellipsis)) {
-            if(!is_null(arglist))
-                val = arglist;
-        } else {
-            val = car(arglist);
-            arglist = cdr(arglist);
+
+static scmval expand_syntax(scmval stx, scmval expr) {
+    scmval lit = syntax_literals(stx);
+    foreach(rule, syntax_rules(stx)) {
+        scmval pat  = car(rule);
+        scmval tmpl = cadr(rule);
+        scmval ret  = match(lit, cdr(pat), cdr(expr), scm_null);
+        if(!is_false(ret)) {
+            scmval exp = expand_template(lit, pat, tmpl, ret);
+            return exp;
         }
-        dict_set(dict, car(pvar), val);
     }
-    return dict;
-}
-
-static bool pattern_match(scmval pattern, int argc) {
-    scmval l = pattern;
-    int  count = 0;
-    bool more = false;
-    while(!is_null(l)) {
-        ++count;
-        if(is_eq(car(l), sym_ellipsis))
-            more = true;
-        l = cdr(l);
-    }
-    if(more && argc >= (count - 1))
-        return true;
-    if(argc == count)
-        return true;
-    return false;
-}
-
-static scmval find_matching_rule(scmval syn, scmval expr) {
-    int argc = list_length(expr);
-    for(scmval rules = syntax_rules(syn); !is_null(rules); rules = cdr(rules)) {
-        scmval rule = car(rules);
-        scmval pattern = car(rule);
-        if(pattern_match(pattern, argc))
-            return rule;
-    }
+    error(syntax_error_type, "could not find syntax rule to match arguments");
     return scm_undef;
 }
 
