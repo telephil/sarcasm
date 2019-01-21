@@ -93,6 +93,7 @@ scmval expand(scmval expr, scmval env) {
 ////////////////////////////////////////////////////////////////////////////////
 // SCHEME TRANSFORMER
 ////////////////////////////////////////////////////////////////////////////////
+
 typedef bool(*contain_pred)(scmval, scmval);
 
 static inline bool is_ellipsis(scmval v) { return is_eq(v, sym_ellipsis); }
@@ -124,8 +125,7 @@ static scmval match(scmval literals, scmval pattern, scmval expr, scmval binding
     } else if(is_symbol(pattern)) {
         if(memq(pattern, literals))
             return is_eq(pattern, expr) ? bindings : scm_false;
-        push(cons(pattern, expr), bindings);
-        return bindings;
+        return cons(cons(pattern, expr), bindings);
     } else if(!is_list(pattern)) {
         return is_equal(pattern, expr) ? bindings : scm_false;
     } else if(is_ellipsis_pair(cdr(pattern))) {
@@ -137,26 +137,48 @@ static scmval match(scmval literals, scmval pattern, scmval expr, scmval binding
         scmval expr_tail = list_tail(expr, seq_len);
         scmval seq = list_reverse(list_tail(list_reverse(expr), tail_len));
         scmval vars = get_identifiers(literals, is_not_literal, true, car(pattern), scm_null);
-        scmval mseq = vars;
-        scmval tally = scm_null;
-        for(tally = mseq; !is_null(cdr(tally)); tally = cdr(tally)) {}
+        scmval mm1 = scm_null, tail1 = scm_null;
         foreach(elt, seq) {
-            scmval v = map1(cdr, match(literals, car(pattern), elt, scm_null));
-            setcdr(tally, v);
-            tally = cdr(tally);
+           scmval v = map1(cdr, match(literals, car(pattern), elt, scm_null));
+           if(is_null(mm1)) {
+               mm1 = tail1 = list1(v);
+           } else {
+               setcdr(tail1, list1(v));
+               tail1 = cdr(tail1);
+           }
         }
-        scmval rest = match(literals, cddr(pattern), expr_tail, bindings);
-        scmval tail = rest;
-        for(tail = rest; !is_null(cdr(tail)); tail = cdr(tail)) {}
-        setcdr(tail, list1(mseq));
-        return rest;
+        scmval lm = list1(vars);
+        if(!is_null(mm1)) {
+            size_t len = list_length(mm1);
+            switch(len) {
+                case 1:
+                    lm = map2(list2, vars, car(mm1));
+                    break;
+                case 2:
+                    lm = map3(list3, vars, car(mm1), cadr(mm1));
+                    break;
+                case 3:
+                    lm = map4(list4, vars, car(mm1), cadr(mm1), caddr(mm1));
+                    break;
+                case 4:
+                    lm = map5(list5, vars, car(mm1), cadr(mm1), caddr(mm1), cadddr(mm1));
+                    break;
+                default:
+                    printf("(warning) match bug: list too long (length = %zd)\n", len);
+                    break;
+            }
+        }
+        scmval last = match(literals, cddr(pattern), expr_tail, bindings);
+        last = list_append(lm, last);
+        //dbg("result", last);
+        return last;
     } else if(is_list(expr)) {
         if(!is_list(pattern))
             return scm_false;
-        scmval h = match(literals, car(pattern), car(expr), bindings);
-        if(is_false(h)) return scm_false;
-        scmval t = match(literals, cdr(pattern), cdr(expr), h); 
-        return t;
+        scmval t = match(literals, cdr(pattern), cdr(expr), bindings); 
+        if(is_false(t)) return scm_false;
+        scmval h = match(literals, car(pattern), car(expr), t);
+        return h;
     }
     return scm_false;
 }
@@ -184,13 +206,7 @@ static scmval expand_part(scmval literals, scmval pattern, scmval template, scmv
             }
             scmval expanded_vals = expand_part(literals, pattern, car(template), map2(cons, vars, vals), evars);
             result = expand_part(literals, pattern, cddr(template), bindings, evars);
-            if(!is_null(result)) {
-                scmval tail = scm_null;
-                for(tail = result; !is_null(cdr(tail)); tail = cdr(tail)) {}
-                setcdr(tail, expanded_vals);
-            } else {
-                result = expanded_vals;
-            }
+            result = list_append(expanded_vals, result);
         } else {
             result = cons(expand_part(literals, pattern, car(template), bindings, evars),
                           expand_part(literals, pattern, cdr(template), bindings, evars));
@@ -205,7 +221,6 @@ static scmval expand_template(scmval literals, scmval pattern, scmval template, 
     return expand_part(new_literals, pattern, template, bindings, ellipsis_vars);
 }
 
-
 static scmval expand_syntax(scmval stx, scmval expr) {
     scmval lit = syntax_literals(stx);
     foreach(rule, syntax_rules(stx)) {
@@ -214,6 +229,7 @@ static scmval expand_syntax(scmval stx, scmval expr) {
         scmval ret  = match(lit, cdr(pat), cdr(expr), scm_null);
         if(!is_false(ret)) {
             scmval exp = expand_template(lit, pat, tmpl, ret);
+            //dbg("expand", exp);
             return exp;
         }
     }
