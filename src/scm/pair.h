@@ -33,6 +33,7 @@ static inline scmval list1(scmval e) { return cons(e, scm_null); }
 static inline scmval list2(scmval e1, scmval e2) { return cons(e1, list1(e2)); }
 static inline scmval list3(scmval e1, scmval e2, scmval e3) { return cons(e1, list2(e2, e3)); }
 static inline scmval list4(scmval e1, scmval e2, scmval e3, scmval e4) { return cons(e1, list3(e2, e3, e4)); }
+static inline scmval list5(scmval e1, scmval e2, scmval e3, scmval e4, scmval e5) { return cons(e1, list4(e2, e3, e4, e5)); }
 
 #define foreach(E,L) for(scmval E, _lst=L; !is_null(_lst)&&!is_undef(E=car(_lst));_lst=cdr(_lst))
 
@@ -74,6 +75,15 @@ static inline scmval list_reverse(scmval lst) {
     return res;
 }
 
+static inline scmval list_append(scmval lst, scmval to) {
+    if(is_null(to))
+        return lst;
+    scmval tail = scm_null;
+    for(tail = to; !is_null(cdr(tail)); tail = cdr(tail)) {}
+    setcdr(tail, lst);
+    return to;
+}
+
 static inline bool memq(scmval obj, scmval lst) {
     foreach(elt, lst) {
         if(is_eq(elt, obj))
@@ -94,6 +104,9 @@ static inline scmval assq(scmval obj, scmval lst) {
 
 typedef scmval(*f1)(scmval);
 typedef scmval(*f2)(scmval, scmval);
+typedef scmval(*f3)(scmval, scmval, scmval);
+typedef scmval(*f4)(scmval, scmval, scmval, scmval);
+typedef scmval(*f5)(scmval, scmval, scmval, scmval, scmval);
 
 static inline scmval map1(f1 f, scmval l) {
     scmval h = scm_null, t = h;
@@ -123,6 +136,72 @@ static inline scmval map2(f2 f, scmval l1, scmval l2) {
         }
         l1 = cdr(l1);
         l2 = cdr(l2);
+    }
+    return h;
+}
+
+static inline scmval map3(f3 f, scmval l1, scmval l2, scmval l3) {
+    scmval h = scm_null, t = h;
+    while(!is_null(l1) && !is_null(l2) && !is_null(l3)) {
+        scmval e1 = car(l1);
+        scmval e2 = car(l2);
+        scmval e3 = car(l3);
+        scmval v = list1(f(e1, e2, e3));
+        if(is_null(h)) {
+            h = t = v;
+        } else {
+            setcdr(t, v);
+            t = cdr(t);
+        }
+        l1 = cdr(l1);
+        l2 = cdr(l2);
+        l3 = cdr(l3);
+    }
+    return h;
+}
+
+static inline scmval map4(f4 f, scmval l1, scmval l2, scmval l3, scmval l4) {
+    scmval h = scm_null, t = h;
+    while(!is_null(l1) && !is_null(l2) && !is_null(l3) && !is_null(l4)) {
+        scmval e1 = car(l1);
+        scmval e2 = car(l2);
+        scmval e3 = car(l3);
+        scmval e4 = car(l4);
+        scmval v = list1(f(e1, e2, e3, e4));
+        if(is_null(h)) {
+            h = t = v;
+        } else {
+            setcdr(t, v);
+            t = cdr(t);
+        }
+        l1 = cdr(l1);
+        l2 = cdr(l2);
+        l3 = cdr(l3);
+        l4 = cdr(l4);
+    }
+    return h;
+}
+
+static inline scmval map5(f5 f, scmval l1, scmval l2, scmval l3, scmval l4, scmval l5) {
+    scmval h = scm_null, t = h;
+    while(!is_null(l1) && !is_null(l2) && !is_null(l3) && !is_null(l4) && !is_null(l5)) {
+        scmval e1 = car(l1);
+        scmval e2 = car(l2);
+        scmval e3 = car(l3);
+        scmval e4 = car(l4);
+        scmval e5 = car(l5);
+        scmval v = list1(f(e1, e2, e3, e4, e5));
+        if(is_null(h)) {
+            h = t = v;
+        } else {
+            setcdr(t, v);
+            t = cdr(t);
+        }
+        l1 = cdr(l1);
+        l2 = cdr(l2);
+        l3 = cdr(l3);
+        l4 = cdr(l4);
+        l5 = cdr(l5);
     }
     return h;
 }
