@@ -11,6 +11,7 @@ $ make
 #### Dependencies
 - [Boehm GC](http://www.hboehm.info/gc/)
 - [GMP](https://gmplib.org/)
+- [FFI](https://sourceware.org/libffi/)
 - [GNU Readline](https://tiswww.cwru.edu/php/chet/readline/rltop.html)
 
 ### Running
@@ -18,9 +19,12 @@ The run the sarcasm interpreter, type the following command
 ```shell
 $ scm
 ```
-It is also possible to load a scheme file on startup by passing it as an argument
-```shell
-$ scm <filename>
+Following options are recognized by the interpreter:
+```
+  -h, --help                    print help and exit
+  -e, --eval <form>             evaluate form and exit
+  -s, --script <filename>       execute file as a shell script
+  -l, --load <filename>         load file then run repl
 ```
 
 ### Licence
