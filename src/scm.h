@@ -47,7 +47,10 @@ enum {
     SCM_TYPE_ERROR,
     SCM_TYPE_PORT,
     SCM_TYPE_LIBRARY,
-    SCM_TYPE_RECORD
+    SCM_TYPE_RECORD,
+    SCM_TYPE_FOREIGN_LIB,
+    SCM_TYPE_FOREIGN_OBJ,
+    SCM_TYPE_FOREIGN_PTR,
 };
 
 enum {
@@ -111,6 +114,7 @@ extern scmval scm_g_features;
 #include "scm/parameter.h"
 #include "scm/library.h"
 #include "scm/record.h"
+#include "scm/foreign.h"
 #include "scm/eval.h"
 
 ////////////////////////////////////////////////////////////////////////////////

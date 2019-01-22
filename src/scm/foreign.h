@@ -1,0 +1,54 @@
+#include <ffi.h>
+
+typedef struct scm_foreign_lib      scm_foreign_lib_t;
+typedef struct scm_foreign_object   scm_foreign_obj_t;
+
+struct scm_foreign_lib {
+    char* name;
+    void* handle;
+};
+
+struct scm_foreign_object {
+    char*   name;
+    scmval  ret;
+    scmval  args;
+    void*   handle;
+    ffi_cif cif;
+};
+
+// constructors
+scmval make_foreign_lib(const char*, void*);
+scmval make_foreign_object(const char*, scmval, scmval, ffi_cif);
+// predicates
+static inline bool is_foreign_lib(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_LIB; }
+static inline bool is_foreign_obj(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_OBJ; }
+static inline bool is_foreign_ptr(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_PTR; }
+
+// contracts
+define_contract(foreign_lib_c, "foreign library", is_foreign_lib);
+define_contract(foreign_obj_c, "foreign object", is_foreign_obj);
+define_contract(foreign_ptr_c, "foreign pointer", is_foreign_ptr);
+
+// accessors
+static inline scm_foreign_lib_t* get_foreign_lib(scmval v) { return (scm_foreign_lib_t*)v.o; }
+static inline char*              foreign_lib_name(scmval v) { return get_foreign_lib(v)->name; }
+static inline void*              foreign_lib_handle(scmval v) { return get_foreign_lib(v)->handle; }
+
+static inline scm_foreign_obj_t* get_foreign_obj(scmval v) { return (scm_foreign_obj_t*)v.o; }
+static inline char*              foreign_obj_name(scmval v) { return get_foreign_obj(v)->name; }
+static inline scmval             foreign_obj_ret(scmval v) { return get_foreign_obj(v)->ret; }
+static inline scmval             foreign_obj_args(scmval v) { return get_foreign_obj(v)->args; }
+static inline void*              foreign_obj_handle(scmval v) { return get_foreign_obj(v)->handle; }
+static inline ffi_cif            foreign_obj_cif(scmval v) { return get_foreign_obj(v)->cif; }
+
+
+// foreign pointer
+static inline scmval s_ptr(void* o) { return make_ptr(SCM_TYPE_FOREIGN_PTR, o); }
+static inline void*  c_ptr(scmval v) { return v.o; }
+
+// standard lib
+void init_foreign(scmval);
+
+scmval foreign_call(scmval, int, scmval*);
+
+

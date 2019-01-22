@@ -1,5 +1,5 @@
 // predicates
-static inline bool is_callable(scmval v) { return is_procedure(v) || is_parameter(v); }
+static inline bool is_callable(scmval v) { return is_procedure(v) || is_parameter(v) || is_foreign_obj(v); }
 // init
 void init_eval(scmval);
 // helpers

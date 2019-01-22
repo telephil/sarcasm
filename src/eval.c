@@ -16,6 +16,7 @@ static scmval call_primitive(scmval, scmval, scmval);
 static scmval call_closure(scmval, scmval, scmval);
 static scmval call_parameter(scmval, scmval, scmval);
 static void   call_continuation(scmval, scmval, scmval);
+static scmval call_foreign_obj(scmval, scmval, scmval);
 static void   list_to_args(scmval, int*, scmval**);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -153,6 +154,8 @@ loop:
                 call_continuation(f, cdr(v), e);
             } else if(is_parameter(f)) {
                 r = call_parameter(f, cdr(v), e);
+            } else if(is_foreign_obj(f)) {
+                r = call_foreign_obj(f, cdr(v), e);
             } else if(is_syntax(f)) {
                 v = expand(f, v);
                 dbg("E(v)", v);
@@ -163,6 +166,20 @@ loop:
         r = v;
     }
     return r;
+}
+
+static scmval call_foreign_obj(scmval obj, scmval arglist, scmval env) {
+    int argc;
+    scmval *argv;
+    list_to_args(arglist, &argc, &argv);
+    int len = list_length(foreign_obj_args(obj));
+    if(argc != len)
+        error(arity_error_type, "foreign object expects %d arguments but received %d", len, argc);
+    for(int i = 0; i < argc; i++) {
+        argv[i] = eval_aux(argv[i], env);
+    }
+    scmval ret = foreign_call(obj, argc, argv);
+    return ret;
 }
 
 static void call_continuation(scmval cont, scmval arglist, scmval env) {
