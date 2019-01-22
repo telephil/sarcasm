@@ -51,9 +51,10 @@
             (write err)
             (newline)))) 
 
-    (define (print obj)
+    (define (println obj)
       (unless (void? obj)
-        (write obj)))
+        (write obj)
+        (newline)))
 
     ;; filter EOF errors while reading
     ;; to allow user to complete expression
@@ -87,8 +88,7 @@
                           (lambda (port)
                            (let read-loop ((expr (read port)))
                              (unless (eof-object? expr)
-                               (print (eval expr (interaction-environment)))
-                               (newline)
+                               (println (eval expr (interaction-environment)))
                                (set! input "")
                                (read-loop (read port))))))))))
                 (loop input))))))
