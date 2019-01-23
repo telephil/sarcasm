@@ -37,7 +37,7 @@
     call-with-values
     call/cc
     car
-    ;case
+    case
     cdar
     cddr
     cdr
@@ -54,7 +54,7 @@
     close-output-port
     close-port
     ;complex?
-    ;cond
+    cond
     ;cond-expand
     cons
     current-error-port current-input-port
