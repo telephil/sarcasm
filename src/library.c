@@ -38,10 +38,15 @@ static scmval find_in_cache(scmval name) {
 
 static inline scmval library_to_filename(scmval name) {
     scmval p = scm_open_output_string();
-    scm_printf(p, "./lib");
-    foreach(elt, name) {
-        scm_putc(p, '/');
-        scm_display(elt, p);
+    scm_printf(p, "./lib/");
+    scm_display(car(name), p);
+    scm_putc(p, '/');
+    if(is_number(cadr(name))) {
+        scm_display(car(name), p);
+        scm_putc(p, '-');
+        scm_display(cadr(name), p);
+    } else {
+        scm_display(cadr(name), p);
     }
     scm_puts(p, ".scm");
     scmval s = scm_get_output_string(p);
