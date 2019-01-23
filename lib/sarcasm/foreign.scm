@@ -23,7 +23,8 @@
     foreign-type-ulong
     foreign-type-slong
     foreign-type-longdouble
-    foreign-type-pointer)
+    foreign-type-pointer
+    foreign-type-string)
 
   (begin
     (define foreign-type-void           0)
@@ -47,5 +48,6 @@
     (define foreign-type-slong          18)
     (define foreign-type-longdouble     19)
     (define foreign-type-pointer        20)
+    (define foreign-type-string         21)
 
     ))

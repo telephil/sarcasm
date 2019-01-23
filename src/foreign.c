@@ -46,6 +46,7 @@ union value {
 #define FOREIGN_TYPE_SLONG          18
 #define FOREIGN_TYPE_LONGDOUBLE     19
 #define FOREIGN_TYPE_POINTER        20
+#define FOREIGN_TYPE_STRING         21
 
 static ffi_type* types[] = {
     &ffi_type_void,
@@ -68,6 +69,7 @@ static ffi_type* types[] = {
     &ffi_type_ulong,
     &ffi_type_slong,
     &ffi_type_longdouble,
+    &ffi_type_pointer,
     &ffi_type_pointer
 };
 static int ntypes = sizeof(types) / sizeof(types[0]);
@@ -203,6 +205,7 @@ static scmval s_val(value v, scmval type) {
         case FOREIGN_TYPE_ULONG:    res = s_fix(v.ul);  break;
         case FOREIGN_TYPE_SLONG:    res = s_fix(v.l);   break;
         case FOREIGN_TYPE_POINTER:  res = s_ptr(v.p);   break;
+        case FOREIGN_TYPE_STRING:   res = s_str(v.p);   break;
     }
     return res;
 }
@@ -229,6 +232,7 @@ static value  c_val(scmval v, scmval type) {
         case FOREIGN_TYPE_ULONG:    res.ul  = (unsigned long)c_fix(v);      break; // error
         case FOREIGN_TYPE_SLONG:    res.l   = (long)c_fix(v);               break;
         case FOREIGN_TYPE_POINTER:  res.p   = c_ptr(v);                     break;
+        case FOREIGN_TYPE_STRING:   res.p   = c_cstr(v);                    break;
     }
     return res;
 }
