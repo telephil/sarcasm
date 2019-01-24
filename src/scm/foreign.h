@@ -3,6 +3,7 @@
 typedef struct scm_foreign_lib  scm_foreign_lib_t;
 typedef struct scm_foreign_obj  scm_foreign_obj_t;
 typedef struct scm_foreign_type scm_foreign_type_t;
+typedef struct scm_foreign_ptr  scm_foreign_ptr_t;
 
 struct scm_foreign_lib {
     char* name;
@@ -23,10 +24,16 @@ struct scm_foreign_type {
     ffi_type*   type;
 };
 
+struct scm_foreign_ptr {
+    void*   ptr;
+    scmval  type;
+};
+
 // constructors
 scmval make_foreign_lib(const char*, void*);
 scmval make_foreign_object(const char*, scmval, scmval, ffi_cif);
 scmval make_foreign_type(const char*, short, ffi_type*);
+scmval make_foreign_ptr(void*, scmval);
 
 // predicates
 static inline bool is_foreign_lib(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_LIB; }
@@ -57,9 +64,14 @@ static inline char*     foreign_type_name(scmval v) { return get_foreign_type(v)
 static inline short     foreign_type_code(scmval v) { return get_foreign_type(v)->code; }
 static inline ffi_type* foreign_type_type(scmval v) { return get_foreign_type(v)->type; }
 
+static inline scm_foreign_ptr_t* get_foreign_ptr(scmval v) { return (scm_foreign_ptr_t*)v.o; }
+static inline void*     foreign_ptr_ptr(scmval v) { return get_foreign_ptr(v)->ptr; }
+static inline void      set_foreign_ptr_ptr(scmval v, void* p) { get_foreign_ptr(v)->ptr = p; }
+static inline scmval    foreign_ptr_type(scmval v) { return get_foreign_ptr(v)->type; }
+
 // foreign pointer
-static inline scmval s_ptr(void* o) { return make_ptr(SCM_TYPE_FOREIGN_PTR, o); }
-static inline void*  c_ptr(scmval v) { return v.o; }
+static inline scmval s_ptr(void* o) { return make_foreign_ptr(o, scm_undef); }
+static inline void*  c_ptr(scmval v) { return foreign_ptr_ptr(v); }
 
 // standard lib
 void init_foreign(scmval);

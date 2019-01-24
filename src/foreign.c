@@ -82,9 +82,32 @@ scmval make_foreign_type(const char* name, short code, ffi_type* type) {
     return make_ptr(SCM_TYPE_FOREIGN_TYPE, t);
 }
 
+scmval make_foreign_ptr(void* ptr, scmval type) {
+    scm_foreign_ptr_t* p = scm_new(scm_foreign_ptr_t);
+    p->ptr  = ptr;
+    p->type = type;
+    return make_ptr(SCM_TYPE_FOREIGN_PTR, p);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // STANDARD LIBRARY
 ////////////////////////////////////////////////////////////////////////////////
+static scmval scm_foreign_lib_p(scmval obj) {
+    return s_bool(is_foreign_lib(obj));
+}
+
+static scmval scm_foreign_obj_p(scmval obj) {
+    return s_bool(is_foreign_obj(obj));
+}
+
+static scmval scm_foreign_type_p(scmval obj) {
+    return s_bool(is_foreign_type(obj));
+}
+
+static scmval scm_foreign_ptr_p(scmval obj) {
+    return s_bool(is_foreign_ptr(obj));
+}
+
 static scmval scm_foreign_lib(scmval sname) {
     const char* name = c_cstr(sname);
     void* handle = dlopen(name, RTLD_LAZY);
@@ -126,9 +149,60 @@ static scmval scm_foreign_obj(int argc, scmval* argv) {
     return make_foreign_obj(name, ret, args, handle, cif);
 }
 
+static scmval scm_ptr_alloc(scmval type) {
+    check_arg("ptr-alloc", foreign_type_c, type);
+    void* p = malloc(foreign_type_type(type)->size);
+    return make_foreign_ptr(p, type);
+}
+
+static scmval scm_ptr_free(scmval p) {
+    check_arg("ptr-free", foreign_ptr_c, p);
+    free(foreign_ptr_ptr(p));
+    set_foreign_ptr_ptr(p, NULL);
+    return scm_void;
+}
+
+static scmval scm_ptr_deref(scmval ptr) {
+    check_arg("ptr-deref", foreign_ptr_c, ptr);
+    if(is_undef(foreign_ptr_type(ptr)))
+        error(scm_undef, "cannot dereference untyped pointer");
+    if(foreign_ptr_ptr(ptr) == NULL)
+        error(scm_undef, "cannot dereference a null pointer");
+    void* v = foreign_ptr_ptr(ptr);
+    scmval res = scm_undef;
+    switch(foreign_type_code(foreign_ptr_type(ptr))) {
+        case FOREIGN_TYPE_UINT8:    res = s_fix(*(uint8_t*)v);  break;
+        case FOREIGN_TYPE_SINT8:    res = s_fix(*(int8_t*)v);  break;
+        case FOREIGN_TYPE_UINT16:   res = s_fix(*(uint16_t*)v); break;
+        case FOREIGN_TYPE_SINT16:   res = s_fix(*(int16_t*)v); break;
+        case FOREIGN_TYPE_UINT32:   res = s_fix(*(uint32_t*)v); break;
+        case FOREIGN_TYPE_SINT32:   res = s_fix(*(int32_t*)v); break;
+        case FOREIGN_TYPE_UINT64:   res = s_fix(*(uint64_t*)v); break;
+        case FOREIGN_TYPE_SINT64:   res = s_fix(*(int64_t*)v); break;
+        case FOREIGN_TYPE_FLOAT:    res = s_flo(*(float*)v);   break;
+        case FOREIGN_TYPE_DOUBLE:   res = s_flo(*(double*)v);   break;
+        case FOREIGN_TYPE_UCHAR:    res = s_char(*(unsigned char*)v); break;
+        case FOREIGN_TYPE_SCHAR:    res = s_char(*(char*)v);  break;
+        case FOREIGN_TYPE_USHORT:   res = s_fix(*(unsigned short*)v);  break;
+        case FOREIGN_TYPE_SSHORT:   res = s_fix(*(short*)v);   break;
+        case FOREIGN_TYPE_UINT:     res = s_fix(*(unsigned int*)v);  break;
+        case FOREIGN_TYPE_SINT:     res = s_fix(*(int*)v);   break;
+        case FOREIGN_TYPE_ULONG:    res = s_fix(*(unsigned long*)v);  break;
+        case FOREIGN_TYPE_SLONG:    res = s_fix(*(long*)v);   break;
+    }
+    return res;
+}
+
 void init_foreign(scmval env) {
-    define(env, "foreign-lib", scm_foreign_lib, arity_exactly(1));
-    define(env, "foreign-obj", scm_foreign_obj, arity_at_least(3));
+    define(env, "foreign-lib?",     scm_foreign_lib_p,  arity_exactly(1));
+    define(env, "foreign-obj?",     scm_foreign_obj_p,  arity_exactly(1));
+    define(env, "foreign-type?",    scm_foreign_type_p, arity_exactly(1));
+    define(env, "foreign-ptr?",     scm_foreign_ptr_p,  arity_exactly(1));
+    define(env, "foreign-lib",      scm_foreign_lib,    arity_exactly(1));
+    define(env, "foreign-obj",      scm_foreign_obj,    arity_at_least(3));
+    define(env, "ptr-alloc",        scm_ptr_alloc,      arity_exactly(1));
+    define(env, "ptr-free",         scm_ptr_free,       arity_exactly(1));
+    define(env, "ptr-deref",        scm_ptr_deref,      arity_exactly(1));
 
 #define define_foreign_type(env,sname,name,code,type) \
     dict_set(env_globals(env), intern(sname), make_foreign_type(name, code, type))
@@ -229,8 +303,8 @@ static value  c_val(scmval v, scmval type) {
         case FOREIGN_TYPE_SINT:     res.i   = (int)c_fix(v);                break;
         case FOREIGN_TYPE_ULONG:    res.ul  = (unsigned long)c_fix(v);      break; // error
         case FOREIGN_TYPE_SLONG:    res.l   = (long)c_fix(v);               break;
-        case FOREIGN_TYPE_POINTER:  res.p   = c_ptr(v);                     break;
         case FOREIGN_TYPE_STRING:   res.p   = c_cstr(v);                    break;
+        case FOREIGN_TYPE_POINTER:  res.p   = c_ptr(v);                     break;
     }
     return res;
 }

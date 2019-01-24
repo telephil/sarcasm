@@ -2,7 +2,11 @@
   (import (sarcasm core))
   (export
     foreign-lib
+    foreign-lib?
     foreign-obj
+    foreign-obj?
+    foreign-type?
+    foreign-ptr?
     _void
     _uint8
     _int8
