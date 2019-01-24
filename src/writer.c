@@ -126,6 +126,9 @@ static void write_(scmval p, scmval v, short flags) {
         case SCM_TYPE_FOREIGN_PTR:
             scm_printf(p, "#<foreign-pointer:%p>", c_ptr(v));
             break;
+        case SCM_TYPE_FOREIGN_TYPE:
+            scm_printf(p, "#<foreign-type:%s>", foreign_type_name(v));
+            break;
     }
 }
 

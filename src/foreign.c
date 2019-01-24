@@ -48,36 +48,9 @@ union value {
 #define FOREIGN_TYPE_POINTER        20
 #define FOREIGN_TYPE_STRING         21
 
-static ffi_type* types[] = {
-    &ffi_type_void,
-    &ffi_type_uint8,
-    &ffi_type_sint8,
-    &ffi_type_uint16,
-    &ffi_type_sint16,
-    &ffi_type_uint32,
-    &ffi_type_sint32,
-    &ffi_type_uint64,
-    &ffi_type_sint64,
-    &ffi_type_float,
-    &ffi_type_double,
-    &ffi_type_uchar,
-    &ffi_type_schar,
-    &ffi_type_ushort,
-    &ffi_type_sshort,
-    &ffi_type_uint,
-    &ffi_type_sint,
-    &ffi_type_ulong,
-    &ffi_type_slong,
-    &ffi_type_longdouble,
-    &ffi_type_pointer,
-    &ffi_type_pointer
-};
-static int ntypes = sizeof(types) / sizeof(types[0]);
-
 ////////////////////////////////////////////////////////////////////////////////
 // FORWARD DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
-static ffi_type* get_ffi_type(scmval, bool is_arg);
 static scmval s_val(value, scmval);
 static value  c_val(scmval, scmval);
 
@@ -101,6 +74,14 @@ scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle,
     return make_ptr(SCM_TYPE_FOREIGN_OBJ, obj);
 }
 
+scmval make_foreign_type(const char* name, short code, ffi_type* type) {
+    scm_foreign_type_t* t = scm_new(scm_foreign_type_t);
+    t->name = GC_STRDUP(name);
+    t->code = code;
+    t->type = type;
+    return make_ptr(SCM_TYPE_FOREIGN_TYPE, t);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // STANDARD LIBRARY
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +96,8 @@ static scmval scm_foreign_lib(scmval sname) {
 static scmval scm_foreign_obj(int argc, scmval* argv) {
     check_arg("foreign-obj", foreign_lib_c, argv[0]);
     check_arg("foreign-obj", string_c, argv[1]);
-    check_arg("foreign-obj", fixnum_c, argv[2]);
+    for(int i = 2; i < argc; i++)
+        check_arg("foreign-obj", foreign_type_c, argv[i]);
     scmval flib  = argv[0];
     scmval sname = argv[1];
     scmval ret   = argv[2];
@@ -123,14 +105,16 @@ static scmval scm_foreign_obj(int argc, scmval* argv) {
     void* handle = dlsym(foreign_lib_handle(flib), name);
     if(handle == NULL)
         error(scm_undef, "could not find symbol %s in library (%s)", name, dlerror());
-    ffi_type *rtype = get_ffi_type(ret, false);
+    ffi_type *rtype = foreign_type_type(ret);
     ffi_type **atypes = NULL;
     scmval args = scm_null;
     int len = argc - 3;
     if(len > 0) {
         atypes = scm_new_array(len, ffi_type*);
         for(int i = 3; i < argc; i++) {
-            atypes[i - 3] = get_ffi_type(argv[i], true);
+            if(foreign_type_code(argv[i]) == FOREIGN_TYPE_VOID)
+                error(scm_undef, "void is not a valid argument type");
+            atypes[i - 3] = foreign_type_type(argv[i]);
             push(argv[i], args);
         }
         args = list_reverse(args);
@@ -145,6 +129,31 @@ static scmval scm_foreign_obj(int argc, scmval* argv) {
 void init_foreign(scmval env) {
     define(env, "foreign-lib", scm_foreign_lib, arity_exactly(1));
     define(env, "foreign-obj", scm_foreign_obj, arity_at_least(3));
+
+#define define_foreign_type(env,sname,name,code,type) \
+    dict_set(env_globals(env), intern(sname), make_foreign_type(name, code, type))
+
+    define_foreign_type(env, "_void",   "void",     FOREIGN_TYPE_VOID,      &ffi_type_void);
+    define_foreign_type(env, "_uint8",  "uint8",    FOREIGN_TYPE_UINT8,     &ffi_type_uint8);
+    define_foreign_type(env, "_int8",   "int8",     FOREIGN_TYPE_SINT8,     &ffi_type_sint8);
+    define_foreign_type(env, "_uint16", "uint16",   FOREIGN_TYPE_UINT16,    &ffi_type_uint16);
+    define_foreign_type(env, "_int16",  "int16",    FOREIGN_TYPE_SINT16,    &ffi_type_sint16);
+    define_foreign_type(env, "_uint32", "uint32",   FOREIGN_TYPE_UINT32,    &ffi_type_uint32);
+    define_foreign_type(env, "_int32",  "int32",    FOREIGN_TYPE_SINT32,    &ffi_type_sint32);
+    define_foreign_type(env, "_uint64", "uint64",   FOREIGN_TYPE_UINT64,    &ffi_type_uint64);
+    define_foreign_type(env, "_int64",  "int64",    FOREIGN_TYPE_SINT64,    &ffi_type_sint64);
+    define_foreign_type(env, "_float",  "float",    FOREIGN_TYPE_FLOAT,     &ffi_type_float);
+    define_foreign_type(env, "_double", "double",   FOREIGN_TYPE_DOUBLE,    &ffi_type_double);
+    define_foreign_type(env, "_uchar",  "uchar",    FOREIGN_TYPE_UCHAR,     &ffi_type_uchar);
+    define_foreign_type(env, "_char",   "char",     FOREIGN_TYPE_SCHAR,     &ffi_type_schar);
+    define_foreign_type(env, "_ushort", "ushort",   FOREIGN_TYPE_USHORT,    &ffi_type_ushort);
+    define_foreign_type(env, "_short",  "short",    FOREIGN_TYPE_SSHORT,    &ffi_type_sshort);
+    define_foreign_type(env, "_uint",   "uint",     FOREIGN_TYPE_UINT,      &ffi_type_uint);
+    define_foreign_type(env, "_int",    "int",      FOREIGN_TYPE_SINT,      &ffi_type_sint);
+    define_foreign_type(env, "_ulong",  "ulong",    FOREIGN_TYPE_ULONG,     &ffi_type_ulong);
+    define_foreign_type(env, "_slong",  "slong",    FOREIGN_TYPE_SLONG,     &ffi_type_slong);
+    define_foreign_type(env, "_ptr",    "pointer",  FOREIGN_TYPE_POINTER,   &ffi_type_pointer);
+    define_foreign_type(env, "_string", "string",   FOREIGN_TYPE_STRING,    &ffi_type_pointer);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,20 +180,9 @@ scmval foreign_call(scmval fobj, int argc, scmval* argv) {
     return s_val(result, foreign_obj_ret(fobj));
 }
 
-static ffi_type* get_ffi_type(scmval v, bool is_arg) {
-    fixnum i = c_fix(v);
-    if(i < 0 || i > ntypes)
-        error(scm_undef, "invalid foreign type value");
-    if(i == FOREIGN_TYPE_VOID && is_arg)
-        error(scm_undef, "void is not a valid argument type");
-    if(i == FOREIGN_TYPE_LONGDOUBLE) // unhandled
-        error(scm_undef, "unhandled C long double type");
-    return types[i];
-}
-
 static scmval s_val(value v, scmval type) {
     scmval res = scm_undef;
-    switch(c_fix(type)) {
+    switch(foreign_type_code(type)) {
         case FOREIGN_TYPE_VOID:     res = scm_void;     break;
         case FOREIGN_TYPE_UINT8:    res = s_fix(v.u8);  break;
         case FOREIGN_TYPE_SINT8:    res = s_fix(v.s8);  break;
@@ -212,7 +210,7 @@ static scmval s_val(value v, scmval type) {
 
 static value  c_val(scmval v, scmval type) {
     value res = {.i = 0};
-    switch(c_fix(type)) {
+    switch(foreign_type_code(type)) {
         case FOREIGN_TYPE_UINT8:    res.u8  = (uint8_t)c_fix(v);            break;
         case FOREIGN_TYPE_SINT8:    res.s8  = (int8_t)c_fix(v);             break;
         case FOREIGN_TYPE_UINT16:   res.u16 = (uint16_t)c_fix(v);           break;
