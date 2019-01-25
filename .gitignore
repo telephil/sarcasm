@@ -3,4 +3,6 @@
 *.swp
 *.dSYM
 /scm
-.clang_complete
+.deps
+Makefile
+Makefile.in

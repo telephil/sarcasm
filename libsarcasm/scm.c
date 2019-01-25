@@ -23,8 +23,8 @@ static const char* features[] = {
     OS,
     ARCH,
     ENDIANESS,
-    IMPLEMENTATION_NAME,
-    IMPLEMENTATION_NAME "-" IMPLEMENTATION_VERSION
+    PACKAGE_NAME,
+    PACKAGE_NAME "-" PACKAGE_VERSION
 };
 static const int nfeatures = sizeof(features) / sizeof(features[0]);
 

@@ -92,6 +92,7 @@ extern scmval scm_g_features;
 // TYPES
 ////////////////////////////////////////////////////////////////////////////////
 #include "config.h"
+#include "scm/features.h"
 #include "scm/arity.h"
 #include "scm/contract.h"
 #include "scm/dict.h"
