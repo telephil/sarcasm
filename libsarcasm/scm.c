@@ -81,7 +81,9 @@ void scm_boot(int argc, char* argv[]) {
     init_env(env);
     // load scheme defined procedures / syntax
     with_error_handler(fatal_error_handler) {
-        load("./lib/sarcasm/init.scm", env);
+        char filename[PATH_MAX];
+        sprintf(filename, "%s/sarcasm/init.scm", library_path());
+        load(filename, env);
     }
     // TEMP
     init_readline(env);

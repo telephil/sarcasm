@@ -38,7 +38,7 @@ static scmval find_in_cache(scmval name) {
 
 static inline scmval library_to_filename(scmval name) {
     scmval p = scm_open_output_string();
-    scm_printf(p, "./lib/");
+    scm_printf(p, "%s/", library_path());
     scm_display(car(name), p);
     scm_putc(p, '/');
     if(is_number(cadr(name))) {

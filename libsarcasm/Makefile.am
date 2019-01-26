@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libsarcasm.la
 
-libsarcasm_la_CFLAGS = -I$(top_srcdir)/include -Wall -Werror -pedantic -std=c11 $(GC_CFLAGS) $(FFI_CFLAGS) $(GMP_CFLAGS) $(READLINE_CFLAGS)
+libsarcasm_la_CFLAGS = -I$(top_srcdir)/include -Wall -Werror -pedantic -std=c11 $(GC_CFLAGS) $(FFI_CFLAGS) $(GMP_CFLAGS) $(READLINE_CFLAGS) -DSCM_LIBRARY_PATH='"$(scmlibdir)"'
 libsarcasm_la_LIBADD = $(GC_LIBS) $(FFI_LIBS) $(GMP_LIBS) $(READLINE_LIBS) -lcord
 
 libsarcasm_la_SOURCES = \

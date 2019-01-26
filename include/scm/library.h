@@ -25,3 +25,14 @@ void init_library(scmval env);
 // standard library
 scmval load_library(scmval, scmval);
 void   register_library(scmval);
+
+static inline char* library_path() {
+    static char* path = NULL;
+    if(path == NULL) {
+        path = getenv("SCM_LIBRARY_PATH");
+        if(path == NULL)
+            path = SCM_LIBRARY_PATH;
+    }
+    return path;
+}
+
