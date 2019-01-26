@@ -1,0 +1,2 @@
+TESTS = run-tests
+
