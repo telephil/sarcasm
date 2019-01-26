@@ -17,6 +17,12 @@ AC_SUBST([scmlibdir])
 
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_HEADERS([include/config.h])
-AC_CONFIG_FILES([Makefile libsarcasm/Makefile src/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile
+                 libsarcasm/Makefile
+                 src/Makefile
+                 lib/Makefile
+                 lib/sarcasm/Makefile
+                 lib/scheme/Makefile
+                 test/Makefile])
 AC_OUTPUT
 
