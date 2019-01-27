@@ -1,5 +1,3 @@
-#include <readline/readline.h>
-#include <readline/history.h>
 #include "scm.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +32,6 @@ static const int nfeatures = sizeof(features) / sizeof(features[0]);
 static void fatal_error_handler(scmval err);
 static void save_command_line(int, char*[]);
 static void init_features();
-static void init_readline(scmval env);
 
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
@@ -85,8 +82,6 @@ void scm_boot(int argc, char* argv[]) {
         sprintf(filename, "%s/sarcasm/init.scm", library_path());
         load(filename, env);
     }
-    // TEMP
-    init_readline(env);
     // create core library
     make_core_library(env);
     // then create standard environments
@@ -115,117 +110,4 @@ static void fatal_error_handler(scmval err) {
     scm_display(s_char('\n'), scm_current_error_port());
     exit(1);
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// READLINE LIBRARY
-// XXX will be moved to its own lib when ffi will be implemented
-////////////////////////////////////////////////////////////////////////////////
-static scmval scm_readline(scmval prompt) {
-    check_arg("readline", string_c, prompt);
-    char* line = readline(c_cstr(prompt));
-    if(line == NULL)
-        return scm_false;
-    scmval s = s_str(line);
-    free(line);
-    return s;
-}
-
-static scmval scm_read_history(scmval filename) {
-    check_arg("read-history", string_c, filename);
-    read_history(c_cstr(filename));
-    return scm_void;
-}
-
-static scmval scm_write_history(scmval filename) {
-    check_arg("write-history", string_c, filename);
-    write_history(c_cstr(filename));
-    return scm_void;
-}
-
-static scmval scm_add_history(scmval history) {
-    check_arg("add-history", string_c, history);
-    add_history(c_cstr(history));
-    return scm_void;
-}
-
-static scmval scm_generator;
-static char** scm_completion_list_init(const char* text) {
-    scmval ret = call(scm_generator, list1(s_str(text)));
-    if(is_null(ret))
-        return NULL;
-    int l = list_length(ret);
-    char** completions = calloc(l+1, sizeof(char*));
-    completions[l] = NULL;
-    int i = 0;
-    foreach(s, ret) {
-        completions[i++] = strdup(c_cstr(s));
-    }
-    return completions;
-}
-
-char* scm_completion_generator(const char* text, int state) {
-    static char** completions = NULL;
-    static int list_index, len;
-    char *name;
-    if(!state) {
-        if(completions != NULL)
-            free(completions);
-        completions = scm_completion_list_init(text);
-        if(completions == NULL)
-            return NULL;
-        list_index = 0;
-        len = strlen(text);
-    }
-    while((name = completions[list_index++])) {
-        if(!strncmp(name, text, len))
-            return name;
-    }
-    return NULL;
-}
-
-static char** scm_completion_function(const char* text, int start, int end) {
-    rl_attempted_completion_over = 1;
-    return rl_completion_matches(text, scm_completion_generator);
-}
-
-static scmval scm_set_completion_function(scmval func) {
-    scm_generator = func;
-    rl_attempted_completion_function = scm_completion_function;
-    return scm_void;
-}
-
-static scmval exit_hooks;
-
-void run_exit_hooks() {
-    foreach(hook, exit_hooks) {
-        call(hook, scm_null);
-    }
-}
-
-scmval scm_register_exit_hook(scmval proc) {
-    push(proc, exit_hooks);
-    return scm_void;
-}
-
-scmval scm_system(scmval command) {
-    check_arg("system", string_c, command);
-    int ret = system(c_cstr(command));
-    if(ret == -1 || ret == 127)
-        return scm_false;
-    return s_fix(ret);
-}
-
-static void init_readline(scmval env) {
-    define(env, "readline", scm_readline, arity_exactly(1));
-    define(env, "read-history", scm_read_history, arity_exactly(1));
-    define(env, "write-history", scm_write_history, arity_exactly(1));
-    define(env, "add-history", scm_add_history, arity_exactly(1));
-    define(env, "set-completion-function!", scm_set_completion_function, arity_exactly(1));
-    define(env, "register-exit-hook", scm_register_exit_hook, arity_exactly(1));
-    define(env, "system", scm_system, arity_exactly(1));
-    exit_hooks = scm_null;
-    atexit(run_exit_hooks);
-}
-
-
 
