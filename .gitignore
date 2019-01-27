@@ -21,6 +21,7 @@ missing
 stamp-h1
 test-driver
 m4
+out
 autom4te.cache
 configure
 Makefile
