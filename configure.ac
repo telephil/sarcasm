@@ -30,6 +30,7 @@ AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_FILES([Makefile
                  libsarcasm/Makefile
+                 include/Makefile
                  src/Makefile
                  lib/Makefile
                  lib/sarcasm/Makefile
