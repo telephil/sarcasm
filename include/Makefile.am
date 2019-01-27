@@ -23,5 +23,6 @@ nobase_include_HEADERS = scm.h				\
 						 scm/vector.h		\
 						 scm/arity.h		\
 						 scm/foreign.h		\
-						 scm/string.h
+						 scm/string.h		\
+						 scm/symbols.inc
 
