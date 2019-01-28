@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include "scm.h"
 
 // globals
@@ -39,7 +38,7 @@ static scmval find_in_cache(scmval name) {
 
 static inline scmval library_to_filename(scmval name) {
     scmval p = scm_open_output_string();
-    scm_printf(p, "%s/", library_path());
+    scm_printf(p, "./lib/");
     scm_display(car(name), p);
     scm_putc(p, '/');
     if(is_number(cadr(name))) {
@@ -63,19 +62,6 @@ scmval load_library(scmval name, scmval env) {
         error(intern("file-error"), "library %s not found", scm_to_cstr(name));
     lib = load(c_cstr(filename), env);
     return lib;
-}
-
-typedef void(*init_fn)(scmval);
-void import_c_module(scmval env, scmval name) {
-    char module_name[PATH_MAX];
-    sprintf(module_name, "%s.so", c_cstr(name));
-    void* handle = dlopen(module_name, RTLD_LAZY);
-    if(handle == NULL)
-        error(scm_undef, "unable to find C module (%s)", dlerror());
-    init_fn init = (init_fn)dlsym(handle, "init_module");
-    if(init == NULL)
-        error(scm_undef, "invalid C module (%s)", dlerror());
-    init(env);
 }
 
 void init_library(scmval env) {

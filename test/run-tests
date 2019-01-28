@@ -1,3 +1,0 @@
-#!/bin/sh
-set -e
-SCM_LIBRARY_PATH=../lib ../src/sarcasm -l $1

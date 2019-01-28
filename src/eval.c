@@ -427,7 +427,6 @@ static scmval stx_define_library(scmval expr, scmval env) {
     scmval name = car(expr);
     if(!is_list(expr)) error(syntax_error_type, "define-library: %s is not a valid library name", scm_to_cstr(name));
     // XXX check identifier + numbers
-    scmval cimport  = scm_null;
     scmval exports  = scm_null;
     scmval imports  = scm_null;
     scmval includes = scm_null;
@@ -441,8 +440,6 @@ static scmval stx_define_library(scmval expr, scmval env) {
             foreach(import, cdr(obj)) {
                 push(import, imports);
             }
-        } else if(is_eq(car(obj), sym_cimport)) {
-            cimport = cadr(obj);
         } else if(is_eq(car(obj), sym_include)) {
             includes = cons(cdr(obj), includes);
         } else if(is_eq(car(obj), sym_begin)) {
@@ -456,9 +453,6 @@ static scmval stx_define_library(scmval expr, scmval env) {
     }
     scmval libenv = scm_environment(argc, argv);
     get_env(libenv)->next = env; // XXX: is that the proper solution ?
-    if(!is_null(cimport)) {
-        import_c_module(libenv, cimport);
-    }
     foreach(expr, body) {
         eval_aux(expr, libenv);
     }

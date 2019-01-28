@@ -1,8 +1,6 @@
 (define-library (sarcasm readline)
-  (import-module "libsarcasm_readline")
+  (import (sarcasm core))
   (export
-    readline
-    add-history
     read-history
     write-history
     set-completion-function!)
