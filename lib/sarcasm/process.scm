@@ -1,5 +1,5 @@
 (define-library (sarcasm process)
-  (import (sarcasm core))
+  (import-module "libsarcasm_process")
   (export
     register-exit-hook
     system)

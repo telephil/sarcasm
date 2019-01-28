@@ -20,8 +20,10 @@ static inline void           library_add_export(scmval obj, scmval sym) {
 }
 // helpers
 static inline scmval lib(const char* x, const char* y) { return list2(intern(x), intern(y)); }
+void import_c_module(scmval, scmval);
 // initialization
 void init_library(scmval env);
 // standard library
 scmval load_library(scmval, scmval);
 void   register_library(scmval);
+

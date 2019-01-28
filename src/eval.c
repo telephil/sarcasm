@@ -429,6 +429,7 @@ static scmval stx_define_library(scmval expr, scmval env) {
     // XXX check identifier + numbers
     scmval exports  = scm_null;
     scmval imports  = scm_null;
+    scmval module   = scm_null;
     scmval includes = scm_null;
     scmval body     = scm_null;
     foreach(obj, cdr(expr)) {
@@ -440,6 +441,8 @@ static scmval stx_define_library(scmval expr, scmval env) {
             foreach(import, cdr(obj)) {
                 push(import, imports);
             }
+        } else if(is_eq(car(obj), sym_import_module)) {
+            module = cadr(obj);
         } else if(is_eq(car(obj), sym_include)) {
             includes = cons(cdr(obj), includes);
         } else if(is_eq(car(obj), sym_begin)) {
@@ -453,6 +456,9 @@ static scmval stx_define_library(scmval expr, scmval env) {
     }
     scmval libenv = scm_environment(argc, argv);
     get_env(libenv)->next = env; // XXX: is that the proper solution ?
+    if(!is_null(module)) {
+        import_c_module(libenv, module);
+    }
     foreach(expr, body) {
         eval_aux(expr, libenv);
     }
