@@ -2,5 +2,6 @@
 *~
 *.swp
 *.dSYM
+*.o
+*.dylib
 /scm
-.clang_complete
