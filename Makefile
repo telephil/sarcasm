@@ -1,41 +1,48 @@
-PACKAGE_NAME	= sarcasm
-PACKAGE_VERSION	= 0.1
+name	= sarcasm
+version	= 0.1
 
 ################################################################################
-PREFIX		= /usr/local
-BINDIR		= $(PREFIX)/bin
-LIBDIR		= $(PREFIX)/lib
-DATADIR		= $(PREFIX)/share/$(PACKAGE_NAME)
-SCMLIBDIR	= $(DATADIR)/lib
+# Directories
+prefix = /usr/local
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+includedir = $(exec_prefix)/include
+datarootdir = $(prefix)/share
+datadir = $(datarootdir)
+scmlibdir = $(datadir)/$(name)/lib
 
 ################################################################################
-CC		= clang
-CD		= cd
-RM		= rm -f
+# Shell commands
+SHELL = sh
+CD = cd
+RM = rm -f
 INSTALL	= install
-MKDIR	= $(INSTALL) -d
-RMDIR	= rmdir
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL) -m 644
+MKDIR = $(INSTALL) -d
+RMDIR = rmdir
+CC = clang
 
 ################################################################################
-BASE_CFLAGS 		= -g -std=c11 -Wall -Werror -pedantic -Isrc
-BASE_LDFLAGS		=
-LIB_LDFLAGS			= -fPIC -shared
-
-GC_CFLAGS			= $(shell pkg-config --cflags bdw-gc)
-GC_LDFLAGS			= $(shell pkg-config --libs bdw-gc) -lcord
-GMP_CFLAGS			= 
-GMP_LDFLAGS			= -lgmp
-FFI_CFLAGS			= $(shell pkg-config --cflags libffi)
-FFI_LDFLAGS			= $(shell pkg-config --libs libffi)
-READLINE_CFLAGS 	=
-READLINE_LDFLAGS 	= -lreadline
-LIBSARCASM_CFLAGS	=
-LIBSARCASM_LDFLAGS	= -L. -lsarcasm
+# Compilation variables
+CFLAGS = -g
+ALL_CFLAGS = -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
+LIB_LDFLAGS = -fPIC -shared
+GC_CFLAGS = $(shell pkg-config --cflags bdw-gc)
+GC_LDFLAGS = $(shell pkg-config --libs bdw-gc) -lcord
+GMP_CFLAGS = 
+GMP_LDFLAGS = -lgmp
+FFI_CFLAGS = $(shell pkg-config --cflags libffi)
+FFI_LDFLAGS = $(shell pkg-config --libs libffi)
+READLINE_CFLAGS =
+READLINE_LDFLAGS = -lreadline
 
 ################################################################################
-INCLUDES 		= src/scm.h src/scm/symbols.inc $(wildward src/scm/*.h)
-SARCASM_OBJS	= src/main.o
-LIBSARCASM_OBJS = src/scm.o	\
+# Sources
+includes 		= src/scm.h src/scm/symbols.inc $(wildward src/scm/*.h)
+sarcasm_objs	= src/main.o
+libsarcasm_objs = src/scm.o	\
 				  src/bool.o \
 				  src/bytevector.o \
 				  src/char.o \
@@ -59,70 +66,72 @@ LIBSARCASM_OBJS = src/scm.o	\
 				  src/system.o \
 				  src/vector.o \
 				  src/writer.o
-MODPROCESS_OBJS	= lib/sarcasm/process.o
-MODRL_OBJS		= lib/sarcasm/readline.o
+libprocess_objs	= lib/sarcasm/process.o
+libreadline_objs = lib/sarcasm/readline.o
 
 ################################################################################
-SARCASM		= scm
-LIBSARCASM	= libsarcasm.dylib
-MODPROCESS	= libsarcasm_process.dylib
-MODRL		= libsarcasm_readline.dylib
-ALL_MODULES	= $(MODPROCESS) $(MODRL)
+# Output objects
+sarcasm = scm
+libsarcasm = libsarcasm.dylib
+libprocess = libsarcasm_process.dylib
+libreadline = libsarcasm_readline.dylib
+libraries = $(libprocess) $(libreadline)
 
 ################################################################################
-all:	$(LIBSARCASM) $(SARCASM) $(ALL_MODULES)
+# Targets
+all:	$(libsarcasm) $(sarcasm) $(libraries)
 
-%.o:	%.c $(INCLUDES)
-	$(CC) -c $(BASE_CFLAGS) $(GC_CFLAGS) $(GMP_CFLAGS) $(FFI_CFLAGS) -o $@ $<
+%.o:	%.c $(includes)
+	$(CC) -c $(GC_CFLAGS) $(GMP_CFLAGS) $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@ 
 
-$(SARCASM_OBJS):	$(SARCASM_OBJS:.o=.c) $(INCLUDES)
-	$(CC) -c $(BASE_CFLAGS) $(FFI_CFLAGS) -o $@ $<
+$(sarcasm_objs):	$(sarcasm_objs:.o=.c) $(includes)
+	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@
 
-$(MODPROCESS_OBJS):	 $(MODPROCESS_OBJS:.o=.c) $(INCLUDES)
-	$(CC) -c $(BASE_CFLAGS) $(FFI_CFLAGS) -o $@ $<
+$(libprocess_objs):	 $(libprocess_objs:.o=.c) $(includes)
+	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) -o $@ $<
 
-$(MODRL_OBJS):	$(MODRL_OBJS:.o=.c) $(INCLUDES)
-	$(CC) -c $(BASE_CFLAGS) $(FFI_CFLAGS) -o $@ $<
+$(libreadline_objs):	$(libreadline_objs:.o=.c) $(includes)
+	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) -o $@ $<
 
-$(LIBSARCASM):	$(LIBSARCASM_OBJS)
-	$(CC) $(BASE_LDFLAGS) $(GC_LDFLAGS) $(GMP_LDFLAGS) $(FFI_LDFLAGS) $(LIB_LDFLAGS) -o $@ $^
+$(libsarcasm):	$(libsarcasm_objs)
+	$(CC) $(GC_LDFLAGS) $(GMP_LDFLAGS) $(FFI_LDFLAGS) $(LIB_LDFLAGS) $^ -o $@
 
-$(MODPROCESS):	$(MODPROCESS_OBJS)
-	$(CC) $(BASE_LDFLAGS) $(GC_LDFLAGS) $(LIBSARCASM_LDFLAGS) $(LIB_LDFLAGS) -o $@ $^
+$(libprocess):	$(libprocess_objs)
+	$(CC) $(GC_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $^ -o $@
 
-$(MODRL):	$(MODRL_OBJS)
-	$(CC) $(BASE_LDFLAGS) $(GC_LDFLAGS) $(READLINE_LDFLAGS) $(LIBSARCASM_LDFLAGS) $(LIB_LDFLAGS) -o $@ $^
+$(libreadline):	$(libreadline_objs)
+	$(CC) $(GC_LDFLAGS) $(READLINE_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) -o $@ $^
 
-$(SARCASM):	$(SARCASM_OBJS) $(LIBSARCASM)
-	$(CC) $(BASE_LDFLAGS) $(LIBSARCASM_LDFLAGS) -o $@ $<
+$(sarcasm):	$(sarcasm_objs) $(libsarcasm)
+	$(CC) -L. -lsarcasm $< -o $@ $(LDFLAGS)
 
-test:	$(SARCASM)
-	@./$(SARCASM) -l ./tests/r7rs.scm
+check:	$(sarcasm)
+	@./$(sarcasm) -l ./tests/r7rs.scm
 
 install: all
-	$(MKDIR) $(BINDIR)
-	$(INSTALL) $(SARCASM) $(BINDIR)/
-	$(MKDIR) $(LIBDIR)
-	$(INSTALL) $(LIBSARCASM) $(LIBDIR)/
-	$(INSTALL) $(ALL_MODULES) $(LIBDIR)/
-	$(MKDIR) $(SCMLIBDIR) $(SCMLIBDIR)/sarcasm $(SCMLIBDIR)/scheme
-	$(INSTALL) -m 644 lib/sarcasm/*.scm $(SCMLIBDIR)/sarcasm/
-	$(INSTALL) -m 644 lib/scheme/*.scm $(SCMLIBDIR)/scheme/
+	$(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) $(sarcasm) $(bindir)/
+	$(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) $(libsarcasm) $(libdir)/
+	$(INSTALL_PROGRAM) $(libraries) $(libdir)/
+	$(MKDIR) $(scmlibdir) $(scmlibdir)/sarcasm $(scmlibdir)/scheme
+	$(INSTALL_DATA) -m 644 lib/sarcasm/*.scm $(scmlibdir)/sarcasm/
+	$(INSTALL_DATA) -m 644 lib/scheme/*.scm $(scmlibdir)/scheme/
 
 uninstall:
-	-$(RM) $(BINDIR)/$(SARCASM)
-	-$(RM) $(LIBDIR)/$(LIBSARCASM)
-	-$(CD) $(LIBDIR) && $(RM) $(ALL_MODULES)
-	-$(RM) $(LIBDIR)/$(MODPROCESS)
-	-$(RM) $(LIBDIR)/$(MODRL)
-	-$(RM) $(SCMLIBDIR)/sarcasm/*.scm
-	-$(RMDIR) $(SCMLIBDIR)/sarcasm
-	-$(RM) $(SCMLIBDIR)/scheme/*.scm
-	-$(RMDIR) $(SCMLIBDIR)/scheme
-	-$(RMDIR) $(SCMLIBDIR)
-	-$(RMDIR) $(DATADIR)
+	-$(RM) $(bindir)/$(sarcasm)
+	-$(RM) $(libdir)/$(libsarcasm)
+	-$(CD) $(libdir) && $(RM) $(modules)
+	-$(RM) $(libdir)/$(libprocess)
+	-$(RM) $(libdir)/$(libreadline)
+	-$(RM) $(scmlibdir)/sarcasm/*.scm
+	-$(RMDIR) $(scmlibdir)/sarcasm
+	-$(RM) $(scmlibdir)/scheme/*.scm
+	-$(RMDIR) $(scmlibdir)/scheme
+	-$(RMDIR) $(scmlibdir)
+	-$(RMDIR) $(datadir)/$(name)
 
 .PHONY:	clean 
 clean:
-	-$(RM) $(SARCASM) $(SARCASM_OBJS) $(LIBSARCASM) $(LIBSARCASM_OBJS) $(MODPROCESS_OBJS) $(MODPROCESS) $(MODRL_OBJS) $(MODRL)
+	-$(RM) $(sarcasm) $(sarcasm_objs) $(libsarcasm) $(libsarcasm_objs) $(libprocess_objs) $(libprocess) $(libreadline_objs) $(libreadline)
 
