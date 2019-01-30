@@ -28,6 +28,7 @@ CC = clang
 # Compilation variables
 CFLAGS = -g
 ALL_CFLAGS = -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
+CONFIG_CFLAGS = -DNAME="$(name)" -DVERSION="$(version)" -DSCMLIBDIR="$(scmlibdir)"
 LIB_LDFLAGS = -fPIC -shared
 GC_CFLAGS = $(shell pkg-config --cflags bdw-gc)
 GC_LDFLAGS = $(shell pkg-config --libs bdw-gc) -lcord
@@ -37,6 +38,7 @@ FFI_CFLAGS = $(shell pkg-config --cflags libffi)
 FFI_LDFLAGS = $(shell pkg-config --libs libffi)
 READLINE_CFLAGS =
 READLINE_LDFLAGS = -lreadline
+
 
 ################################################################################
 # Sources
@@ -82,7 +84,7 @@ libraries = $(libprocess) $(libreadline)
 all:	$(libsarcasm) $(sarcasm) $(libraries)
 
 %.o:	%.c $(includes)
-	$(CC) -c $(GC_CFLAGS) $(GMP_CFLAGS) $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@ 
+	$(CC) -c $(GC_CFLAGS) $(GMP_CFLAGS) $(FFI_CFLAGS) $(CONFIG_CFLAGS) $(ALL_CFLAGS) $< -o $@ 
 
 $(sarcasm_objs):	$(sarcasm_objs:.o=.c) $(includes)
 	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@
