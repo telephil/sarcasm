@@ -29,9 +29,32 @@ struct scm_foreign_ptr {
     scmval  type;
 };
 
+#define FOREIGN_TYPE_VOID           0
+#define FOREIGN_TYPE_UINT8          1
+#define FOREIGN_TYPE_SINT8          2
+#define FOREIGN_TYPE_UINT16         3
+#define FOREIGN_TYPE_SINT16         4
+#define FOREIGN_TYPE_UINT32         5
+#define FOREIGN_TYPE_SINT32         6
+#define FOREIGN_TYPE_UINT64         7
+#define FOREIGN_TYPE_SINT64         8
+#define FOREIGN_TYPE_FLOAT          9
+#define FOREIGN_TYPE_DOUBLE         10
+#define FOREIGN_TYPE_UCHAR          11
+#define FOREIGN_TYPE_SCHAR          12
+#define FOREIGN_TYPE_USHORT         13
+#define FOREIGN_TYPE_SSHORT         14
+#define FOREIGN_TYPE_UINT           15
+#define FOREIGN_TYPE_SINT           16
+#define FOREIGN_TYPE_ULONG          17
+#define FOREIGN_TYPE_SLONG          18
+#define FOREIGN_TYPE_LONGDOUBLE     19
+#define FOREIGN_TYPE_POINTER        20
+#define FOREIGN_TYPE_STRING         21
+
 // constructors
 scmval make_foreign_lib(const char*, void*);
-scmval make_foreign_object(const char*, scmval, scmval, ffi_cif);
+scmval make_foreign_obj(const char*, scmval, scmval, void*, ffi_cif);
 scmval make_foreign_type(const char*, short, ffi_type*);
 scmval make_foreign_ptr(void*, scmval);
 
@@ -72,9 +95,6 @@ static inline scmval    foreign_ptr_type(scmval v) { return get_foreign_ptr(v)->
 // foreign pointer
 static inline scmval s_ptr(void* o) { return make_foreign_ptr(o, scm_undef); }
 static inline void*  c_ptr(scmval v) { return foreign_ptr_ptr(v); }
-
-// standard lib
-void init_foreign(scmval);
 
 scmval foreign_call(scmval, int, scmval*);
 

@@ -70,6 +70,7 @@ libsarcasm_objs = src/scm.o	\
 				  src/writer.o
 libprocess_objs	= lib/sarcasm/process.o
 libreadline_objs = lib/sarcasm/readline.o
+libforeign_objs = lib/sarcasm/foreign.o
 
 ################################################################################
 # Output objects
@@ -77,7 +78,8 @@ sarcasm = scm
 libsarcasm = libsarcasm.dylib
 libprocess = libsarcasm_process.dylib
 libreadline = libsarcasm_readline.dylib
-libraries = $(libprocess) $(libreadline)
+libforeign = libsarcasm_foreign.dylib
+libraries = $(libprocess) $(libreadline) $(libforeign)
 
 ################################################################################
 # Targets
@@ -95,6 +97,9 @@ $(libprocess_objs):	 $(libprocess_objs:.o=.c) $(includes)
 $(libreadline_objs):	$(libreadline_objs:.o=.c) $(includes)
 	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) -o $@ $<
 
+$(libforeign_objs):	$(libforeign_objs:.o=.c) $(includes)
+	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@
+
 $(libsarcasm):	$(libsarcasm_objs)
 	$(CC) $(GC_LDFLAGS) $(GMP_LDFLAGS) $(FFI_LDFLAGS) $(LIB_LDFLAGS) $^ -o $@
 
@@ -103,6 +108,9 @@ $(libprocess):	$(libprocess_objs)
 
 $(libreadline):	$(libreadline_objs)
 	$(CC) $(GC_LDFLAGS) $(READLINE_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) -o $@ $^
+
+$(libforeign):	$(libforeign_objs)
+	$(CC) $(GC_LDFLAGS) $(FFI_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $^ -o $@
 
 $(sarcasm):	$(sarcasm_objs) $(libsarcasm)
 	$(CC) -L. -lsarcasm $< -o $@ $(LDFLAGS)

@@ -1,5 +1,5 @@
 (define-library (sarcasm foreign)
-  (import (sarcasm core))
+  (import-module "libsarcasm_foreign")
   (export
     foreign-lib
     foreign-lib?
