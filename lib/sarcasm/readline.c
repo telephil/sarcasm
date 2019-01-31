@@ -7,7 +7,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 static scmval scm_readline(scmval prompt) {
     check_arg("readline", string_c, prompt);
-    char* line = readline(c_cstr(prompt));
+    char* line = readline(c_str(prompt));
     if(line == NULL)
         return scm_false;
     scmval s = s_str(line);
@@ -17,19 +17,19 @@ static scmval scm_readline(scmval prompt) {
 
 static scmval scm_read_history(scmval filename) {
     check_arg("read-history", string_c, filename);
-    read_history(c_cstr(filename));
+    read_history(c_str(filename));
     return scm_void;
 }
 
 static scmval scm_write_history(scmval filename) {
     check_arg("write-history", string_c, filename);
-    write_history(c_cstr(filename));
+    write_history(c_str(filename));
     return scm_void;
 }
 
 static scmval scm_add_history(scmval history) {
     check_arg("add-history", string_c, history);
-    add_history(c_cstr(history));
+    add_history(c_str(history));
     return scm_void;
 }
 
@@ -46,7 +46,7 @@ static char** scm_completion_list_init(const char* text) {
     completions[l] = NULL;
     int i = 0;
     foreach(s, ret) {
-        completions[i++] = strdup(c_cstr(s));
+        completions[i++] = strdup(c_str(s));
     }
     return completions;
 }

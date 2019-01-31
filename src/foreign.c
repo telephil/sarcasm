@@ -36,14 +36,14 @@ static value  c_val(scmval, scmval);
 ////////////////////////////////////////////////////////////////////////////////
 scmval make_foreign_lib(const char* name, void* handle) {
     scm_foreign_lib_t* lib = scm_new(scm_foreign_lib_t);
-    lib->name   = GC_STRDUP(name);
+    lib->name   = scm_gc_strdup(name);
     lib->handle = handle;
     return make_ptr(SCM_TYPE_FOREIGN_LIB, lib);
 }
 
 scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle, ffi_cif cif) {
     scm_foreign_obj_t* obj = scm_new(scm_foreign_obj_t);
-    obj->name   = GC_STRDUP(name);
+    obj->name   = scm_gc_strdup(name);
     obj->ret    = ret;
     obj->args   = args;
     obj->handle = handle;
@@ -53,7 +53,7 @@ scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle,
 
 scmval make_foreign_type(const char* name, short code, ffi_type* type) {
     scm_foreign_type_t* t = scm_new(scm_foreign_type_t);
-    t->name = GC_STRDUP(name);
+    t->name = scm_gc_strdup(name);
     t->code = code;
     t->type = type;
     return make_ptr(SCM_TYPE_FOREIGN_TYPE, t);
@@ -139,7 +139,7 @@ static value  c_val(scmval v, scmval type) {
         case FOREIGN_TYPE_SINT:     res.i   = (int)c_fix(v);                break;
         case FOREIGN_TYPE_ULONG:    res.ul  = (unsigned long)c_fix(v);      break; // error
         case FOREIGN_TYPE_SLONG:    res.l   = (long)c_fix(v);               break;
-        case FOREIGN_TYPE_STRING:   res.p   = c_cstr(v);                    break;
+        case FOREIGN_TYPE_STRING:   res.p   = c_str(v);                     break;
         case FOREIGN_TYPE_POINTER:  res.p   = c_ptr(v);                     break;
     }
     return res;

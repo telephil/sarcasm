@@ -9,11 +9,11 @@
 #include "khash.h"
 
 static inline khint_t scm_symbol_hash(scmval v) {
-    return kh_str_hash_func(c_cstr(v));
+    return kh_str_hash_func(c_str(v));
 }
 
 static inline bool scm_symbol_equal(scmval s1, scmval s2) {
-    return CORD_cmp(c_str(s1), c_str(s2)) == 0;
+    return string_equal_p(s1, s2);
 }
 
 KHASH_INIT(dict, scmval, scmval, 1, scm_symbol_hash, scm_symbol_equal)

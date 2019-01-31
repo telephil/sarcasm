@@ -28,7 +28,7 @@ scmval make_continuation() {
 // arity
 static void arity_error(scmval v, int argc) {
     arity_t arity = primitive_arity(v);
-    char* n = c_cstr(primitive_name(v));
+    char* n = c_str(primitive_name(v));
     char* m;
     switch(arity.type) {
         case ARITY_EXACTLY:

@@ -31,7 +31,7 @@ ALL_CFLAGS = -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
 CONFIG_CFLAGS = -DNAME="$(name)" -DVERSION="$(version)" -DSCMLIBDIR="$(scmlibdir)"
 LIB_LDFLAGS = -fPIC -shared
 GC_CFLAGS = $(shell pkg-config --cflags bdw-gc)
-GC_LDFLAGS = $(shell pkg-config --libs bdw-gc) -lcord
+GC_LDFLAGS = $(shell pkg-config --libs bdw-gc)
 GMP_CFLAGS = 
 GMP_LDFLAGS = -lgmp
 FFI_CFLAGS = $(shell pkg-config --cflags libffi)

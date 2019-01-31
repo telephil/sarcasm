@@ -1,6 +1,6 @@
 typedef struct scm_port scm_port_t;
 typedef struct scm_port_vtable  scm_port_vtable_t;
-typedef struct scm_input_string scm_input_string_t;
+typedef struct scm_string_buffer scm_string_buffer_t;
 
 enum {
     scm_port_input      = 1<<0,
@@ -22,8 +22,8 @@ struct scm_port {
     scm_port_vtable_t* vtable;
 };
 
-struct scm_input_string {
-    const char* buf;
+struct scm_string_buffer {
+    char* buf;
     int idx;
     int len;
 };
@@ -124,15 +124,15 @@ scmval scm_get_output_string(scmval);
 scmval scm_current_output_port();
 scmval scm_current_error_port();
 scmval scm_to_string(scmval);
-static inline CORD scm_to_cstr(scmval v) { return c_str(scm_to_string(v)); }
+static inline char* scm_to_cstr(scmval v) { return c_str(scm_to_string(v)); }
 
 // C IO
 char  scm_getc(scmval);
 char  scm_peek(scmval);
 void  scm_ungetc(scmval, char);
 void  scm_putc(scmval, char);
-void  scm_puts(scmval, CORD);
-void  scm_printf(scmval, CORD, ...);
+void  scm_puts(scmval, const char*);
+void  scm_printf(scmval, const char*, ...);
 
 scmval open_input_string(const char*);
 

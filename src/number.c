@@ -520,7 +520,7 @@ static scmval scm_number_to_string(scmval z, scmval radix) {
 
 static scmval scm_string_to_number(scmval s) {
     check_arg("string->number", string_c, s);
-    return string_to_number(c_cstr(s));
+    return string_to_number(c_str(s));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -19,7 +19,7 @@ static scmval scm_foreign_ptr_p(scmval obj) {
 }
 
 static scmval scm_foreign_lib(scmval sname) {
-    const char* name = c_cstr(sname);
+    const char* name = c_str(sname);
     void* handle = dlopen(name, RTLD_LAZY);
     if(handle == NULL)
         error(scm_undef, "could not open library %s: %s", name, dlerror());
@@ -34,7 +34,7 @@ static scmval scm_foreign_obj(int argc, scmval* argv) {
     scmval flib  = argv[0];
     scmval sname = argv[1];
     scmval ret   = argv[2];
-    const char* name = c_cstr(sname);
+    const char* name = c_str(sname);
     void* handle = dlsym(foreign_lib_handle(flib), name);
     if(handle == NULL)
         error(scm_undef, "could not find symbol %s in library (%s)", name, dlerror());

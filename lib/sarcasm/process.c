@@ -19,7 +19,7 @@ static scmval scm_register_exit_hook(scmval proc) {
 
 static scmval scm_system(scmval command) {
     check_arg("system", string_c, command);
-    int ret = system(c_cstr(command));
+    int ret = system(c_str(command));
     if(ret == -1 || ret == 127)
         return scm_false;
     return s_fix(ret);

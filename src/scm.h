@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <sys/errno.h>
 #include <gc/gc.h>
-#include <gc/cord.h>
 #include <gmp.h>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,9 +125,11 @@ extern scmval scm_g_features;
 #define scm_new_atomic(S, T)    GC_MALLOC_ATOMIC(S*sizeof(T))
 #define scm_delete(P)           GC_FREE(P)
 static inline void* scm_gc_malloc(size_t size) { return GC_MALLOC(size); }
+static inline void* scm_gc_malloc_atomic(size_t size) { return GC_MALLOC_ATOMIC(size); }
 static inline void* scm_gc_realloc(void* ptr, size_t old_size, size_t new_size) { return GC_REALLOC(ptr, new_size); }
 static inline void  scm_gc_free(void* ptr, size_t size) { GC_FREE(ptr); }
 static inline void  scm_gc_collect() { GC_gcollect(); }
+static inline char* scm_gc_strdup(const char* s) { return GC_STRDUP(s); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // BOOT
