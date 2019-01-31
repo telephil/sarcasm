@@ -1,7 +1,7 @@
 // SARCASM CONFIGURATION
 
-#define IMPLEMENTATION_NAME     "sarcasm"
-#define IMPLEMENTATION_VERSION  "0.1"
+#define IMPLEMENTATION_NAME     NAME
+#define IMPLEMENTATION_VERSION  VERSION
 
 #if defined(__x86_64__)
     #define ARCH        "x86-64"

@@ -104,6 +104,14 @@ static scmval scm_features() {
     return scm_g_features;
 }
 
+static scmval scm_implementation_name() {
+    return s_str(IMPLEMENTATION_NAME);
+}
+
+static scmval scm_implementation_version() {
+    return s_str(IMPLEMENTATION_VERSION);
+}
+
 void init_system(scmval env) {
     define(env, "load",                       scm_load,                 arity_or(1, 2));
     define(env, "file-exists?",               scm_file_exists_p,        arity_exactly(1));
@@ -117,5 +125,7 @@ void init_system(scmval env) {
     define(env, "features",                   scm_features,             arity_exactly(0));
     define(env, "get-environment-variable",   scm_getenv_var,           arity_exactly(1));
     define(env, "get-environment-variables",  scm_getenv_vars,          arity_exactly(0));
+    define(env, "implementation-name",        scm_implementation_name,  arity_exactly(0));
+    define(env, "implementation-version",     scm_implementation_version, arity_exactly(0));
 }
 
