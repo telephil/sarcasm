@@ -116,7 +116,7 @@ $(sarcasm):	$(sarcasm_objs) $(libsarcasm)
 	$(CC) -L. -lsarcasm $< -o $@ $(LDFLAGS)
 
 check:	$(sarcasm)
-	@./$(sarcasm) -l ./tests/r7rs.scm
+	@SCM_LIBRARY_PATH=./lib ./$(sarcasm) -l ./tests/r7rs.scm
 
 install: all
 	$(MKDIR) $(bindir)
