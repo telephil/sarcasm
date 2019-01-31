@@ -37,9 +37,17 @@ static scmval find_in_cache(scmval name) {
     return scm_undef;
 }
 
+static char* library_path() {
+    static char* default_path = SCMLIBDIR;
+    char* path = getenv("SCM_LIBRARY_PATH");
+    if(path == NULL)
+        path = default_path;
+    return path;
+}
+
 static inline scmval library_to_filename(scmval name) {
     scmval p = scm_open_output_string();
-    scm_printf(p, "./lib/");
+    scm_printf(p, "%s/", library_path());
     scm_display(car(name), p);
     scm_putc(p, '/');
     if(is_number(cadr(name))) {
