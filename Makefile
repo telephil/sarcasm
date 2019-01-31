@@ -28,7 +28,7 @@ CC = clang
 # Compilation variables
 CFLAGS = -g
 ALL_CFLAGS = -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
-CONFIG_CFLAGS = -DNAME="$(name)" -DVERSION="$(version)" -DSCMLIBDIR="$(scmlibdir)"
+CONFIG_CFLAGS = -DNAME='"$(name)"' -DVERSION='"$(version)"' -DSCMLIBDIR='"$(scmlibdir)"'
 LIB_LDFLAGS = -fPIC -shared
 GC_CFLAGS = $(shell pkg-config --cflags bdw-gc)
 GC_LDFLAGS = $(shell pkg-config --libs bdw-gc) -lcord
