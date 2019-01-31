@@ -1,17 +1,16 @@
-#include <gc/cord_pos.h>
 #include "scm.h"
 
 // constructor
 scmval s_str(const char* s) {
     scm_string_t* c = scm_new(scm_string_t);
-    c->value = CORD_from_char_star(s);
+    c->value = scm_gc_strdup(s);
     return make_ptr(SCM_TYPE_STRING, c);
 }
 
-scmval scm_str_from_cord(CORD c) {
-    scm_string_t* s = scm_new(scm_string_t);
-    s->value = c;
-    return make_ptr(SCM_TYPE_STRING, s);
+scmval s_str_nocopy(char* s) {
+    scm_string_t* c = scm_new(scm_string_t);
+    c->value = s;
+    return make_ptr(SCM_TYPE_STRING, c);
 }
 
 // standard library
@@ -23,17 +22,22 @@ static scmval scm_make_string(scmval k, scmval c) {
     opt_arg(c, s_char(' '));
     check_arg("make-string", fixnum_c, k);
     check_arg("make-string", char_c, c);
-    return scm_str_from_cord(CORD_chars(c_char(c), c_fix(k)));
+    char* s = scm_gc_malloc_atomic((c_fix(k) + 1) * sizeof(char));
+    for(int i = 0; i < c_fix(k); i++) {
+        s[i] = c_char(c);
+    }
+    s[c_fix(k)] = '\0';
+    return s_str_nocopy(s);
 }
 
 static scmval scm_string(int argc, scmval* argv) {
     check_args("string", char_c, argc, argv);
-    char* s = scm_new_atomic(argc+1, char);
+    char* s = scm_gc_malloc_atomic((argc+1) * sizeof(char));
     for(int i = 0; i < argc; i++) {
         s[i] = c_char(argv[i]);
     }
     s[argc] = '\0';
-    return s_str(s);
+    return s_str_nocopy(s);
 }
 
 static scmval scm_string_length(scmval s) {
@@ -45,7 +49,7 @@ static scmval scm_string_ref(scmval s, scmval k) {
     check_arg("string-ref", string_c, s);
     check_arg("string-ref", fixnum_c, k);
     check_range("string-ref", c_fix(k), 0, string_length(s));
-    char c = CORD_fetch(c_str(s), c_fix(k));
+    char c = string_ref(s, c_fix(k));
     return s_char(c);
 }
 
@@ -54,26 +58,23 @@ static scmval scm_string_set(scmval s, scmval k, scmval c) {
     check_arg("string-set!", fixnum_c, k);
     check_arg("string-set!", char_c,   c);
     check_range("string-set!", c_fix(k), 0, string_length(s));
-    char* ns = c_cstr(s);
-    ns[c_fix(k)] = c_char(c);
-    get_string(s)->value = CORD_from_char_star(ns);
+    string_set(s, c_fix(k), c_char(c));
     return scm_void;
 }
 
-static int CORD_cmpi(CORD x, CORD y) {
-    CORD_pos xp, yp;
-    CORD_set_pos(xp, x, 0);
-    CORD_set_pos(yp, y, 0);
+static int strcmpi(char* x, char* y) {
+    int xi = 0, yi = 0;
+    size_t xl = strlen(x), yl = strlen(y);
     while(true) {
-        char xc = tolower(CORD_pos_fetch(xp));
-        char yc = tolower(CORD_pos_fetch(yp));
+        char xc = tolower(x[xi]);
+        char yc = tolower(y[yi]);
         if(xc != yc)
             return (xc - yc);
-        CORD_next(xp);
-        CORD_next(yp);
-        if(!CORD_pos_valid(xp)) // reached end of x
-            return !CORD_pos_valid(yp) ? 0 : -1;
-        if(!CORD_pos_valid(yp)) // reached end of y
+        ++xi;
+        ++yi;
+        if(xi >= xl) // reached end of x
+            return yi >= yl ? 0 : -1;
+        if(yi >= yl) // reached end of y
             return 1;
     }
     return 0; // never reached
@@ -82,7 +83,7 @@ static int CORD_cmpi(CORD x, CORD y) {
 #define make_string_comparator(NAME, CNAME, PRED, CMP)  \
     static scmval CNAME(int argc, scmval* argv) {       \
         check_args(NAME, string_c, argc, argv);         \
-        CORD r, r1;                                     \
+        char *r, *r1;                                   \
         r = c_str(argv[0]);                             \
         for(int i = 1; i < argc; i++) {                 \
             r1 = c_str(argv[i]);                        \
@@ -92,40 +93,47 @@ static int CORD_cmpi(CORD x, CORD y) {
         return scm_true;                                \
     }
 
-make_string_comparator("string=?",      scm_string_eq_p,    ==, CORD_cmp)
-make_string_comparator("string<?",      scm_string_lt_p,    <,  CORD_cmp)
-make_string_comparator("string>?",      scm_string_gt_p,    >,  CORD_cmp)
-make_string_comparator("string<=?",     scm_string_le_p,    <=, CORD_cmp)
-make_string_comparator("string>=?",     scm_string_ge_p,    >=, CORD_cmp)
-make_string_comparator("string-ci=?",   scm_string_ci_eq_p, ==, CORD_cmpi)
-make_string_comparator("string-ci<?",   scm_string_ci_lt_p, <,  CORD_cmpi)
-make_string_comparator("string-ci>?",   scm_string_ci_gt_p, >,  CORD_cmpi)
-make_string_comparator("string-ci<=?",  scm_string_ci_le_p, <=, CORD_cmpi)
-make_string_comparator("string-ci>=?",  scm_string_ci_ge_p, >=, CORD_cmpi)
+make_string_comparator("string=?",      scm_string_eq_p,    ==, strcmp)
+make_string_comparator("string<?",      scm_string_lt_p,    <,  strcmp)
+make_string_comparator("string>?",      scm_string_gt_p,    >,  strcmp)
+make_string_comparator("string<=?",     scm_string_le_p,    <=, strcmp)
+make_string_comparator("string>=?",     scm_string_ge_p,    >=, strcmp)
+make_string_comparator("string-ci=?",   scm_string_ci_eq_p, ==, strcmpi)
+make_string_comparator("string-ci<?",   scm_string_ci_lt_p, <,  strcmpi)
+make_string_comparator("string-ci>?",   scm_string_ci_gt_p, >,  strcmpi)
+make_string_comparator("string-ci<=?",  scm_string_ci_le_p, <=, strcmpi)
+make_string_comparator("string-ci>=?",  scm_string_ci_ge_p, >=, strcmpi)
 
 #undef scm_str_comparator
 
 static scmval scm_string_upcase(scmval s) {
     check_arg("string-upcase", string_c, s);
-    char *r = c_cstr(s);
+    char *r = c_str(s);
     for(char* p = r; (*p = toupper(*p)); p++) {}
     return s_str(r);
 }
 
 static scmval scm_string_downcase(scmval s) {
     check_arg("string-downcase", string_c, s);
-    char *r = c_cstr(s);
+    char *r = c_str(s);
     for(char* p = r; (*p = tolower(*p)); p++) {}
     return s_str(r);
 }
 
 static scmval scm_string_append(int argc, scmval* argv) {
     check_args("string-append", string_c, argc, argv);
-    CORD r = CORD_EMPTY;
+    size_t s = 0;
+    for(int i = 0; i < argc; i++)
+        s += string_length(argv[i]);
+    char* r = scm_gc_malloc_atomic((s+1)*sizeof(char));
+    int offset = 0;
     for(int i = 0; i < argc; i++) {
-        r = CORD_cat(r, c_str(argv[i]));
+        int l = string_length(argv[i]);
+        memcpy(r + offset, c_str(argv[i]), l * sizeof(char));
+        offset += l;
     }
-    return scm_str_from_cord(r);
+    r[s] = '\0';
+    return s_str_nocopy(r);
 }
 
 static scmval scm_string_to_list(scmval s, scmval start, scmval end) {
@@ -136,32 +144,25 @@ static scmval scm_string_to_list(scmval s, scmval start, scmval end) {
     check_arg("string->list", fixnum_c, end);
     check_range("string->list", c_fix(start), 0, string_length(s));
     check_range("string->list", c_fix(end), c_fix(start), string_length(s));
-    scmval h, l = scm_null;
-    CORD_pos pos;
-    CORD_set_pos(pos, c_str(s), c_fix(start));
-    for(int i = 0; i < (c_fix(end) - c_fix(start) + 1); i++) {
-        char c = CORD_pos_fetch(pos);
-        CORD_next(pos);
-        scmval v = cons(s_char(c), scm_null);
-        if(is_null(l)) {
-            h = l = v;
-        } else {
-            setcdr(l, v);
-            l = v;
-        }
+    scmval l = scm_null;
+    for(int i = strlen(c_str(s)) - 1; i >= 0; i++) {
+        push(s_char(string_ref(s, i)), l);
     }
-    return h;
+    return l;
 }
 
 static scmval scm_list_to_string(scmval list) {
     check_arg("list->string", list_c, list);
-    CORD r = CORD_EMPTY;
-    for(scmval l = list; !is_null(l); l = cdr(l)) {
-        if(!is_char(car(l)))
-            type_error("list->string", char_c, car(l));
-        r = CORD_cat(r, CORD_chars(c_char(car(l)), 1));
+    size_t l = list_length(list);
+    char* r = scm_gc_malloc_atomic((l+1)*sizeof(char));
+    r[l] = '\0';
+    int i = 0;
+    foreach(elt, list) {
+        if(!is_char(elt))
+            type_error("list->string", char_c, elt);
+        r[i++] = c_char(elt);
     }
-    return scm_str_from_cord(r);
+    return s_str_nocopy(r);
 }
 
 static scmval scm_string_fill(scmval s, scmval fill, scmval start, scmval end) {
@@ -173,11 +174,9 @@ static scmval scm_string_fill(scmval s, scmval fill, scmval start, scmval end) {
     check_arg("string-fill!", fixnum_c, end);
     check_range("string-fill!", c_fix(start), 0, string_length(s));
     check_range("string-fill!", c_fix(end), c_fix(start), string_length(s));
-    char* ns = c_cstr(s);
     for(int i = c_fix(start); i <= c_fix(end); i++) {
-        ns[i] = c_char(fill);
+        string_set(s, i, c_char(fill));
     }
-    get_string(s)->value = CORD_from_char_star(ns);
     return scm_void;
 }
 
@@ -187,8 +186,11 @@ static scmval string_copy(const char* name, scmval s, scmval start, scmval end) 
     check_arg(name, fixnum_c, end);
     check_range(name, c_fix(start), 0, string_length(s));
     check_range(name, c_fix(end), c_fix(start),  string_length(s));
-    CORD r = CORD_substr(c_str(s), c_fix(start), c_fix(end) - c_fix(start) + 1);
-    return scm_str_from_cord(r);
+    int l = c_fix(end) - c_fix(start) + 1;
+    char* r = scm_gc_malloc_atomic((l+1)*sizeof(char));
+    r[l] = '\0';
+    memcpy(r, c_str(s) + c_fix(start), l * sizeof(char));
+    return s_str_nocopy(r);
 }
 
 static scmval scm_substring(scmval s, scmval start, scmval end) {
@@ -210,10 +212,9 @@ static scmval scm_string_mcopy(scmval to, scmval at, scmval from, scmval start, 
     check_range("string-copy!", c_fix(at), 0, string_length(to));
     check_range("string-copy!", c_fix(start), 0, string_length(from));
     check_range("string-copy!", c_fix(end), c_fix(start), string_length(from));
-    char* sto = c_cstr(to);
-    char* sfrom = c_cstr(from);
+    char* sto = c_str(to);
+    char* sfrom = c_str(from);
     strncpy(sto+c_fix(at), sfrom+c_fix(start), c_fix(end)-c_fix(start)+1);
-    get_string(to)->value = CORD_from_char_star(sto);
     return scm_void;
 }
 
@@ -226,7 +227,7 @@ static scmval scm_format(int argc, scmval* argv) {
     scmval v;
     int index = 0;
     int arg_index = 1;
-    char* fmt = c_cstr(argv[0]);
+    char* fmt = c_str(argv[0]);
     scmval port = scm_open_output_string();
     while(true) {
         char c = fmt[index++];

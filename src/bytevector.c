@@ -152,7 +152,7 @@ static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
     scm_bytevector_t* b = scm_new(scm_bytevector_t);
     b->size = c_fix(end) - c_fix(start);
     b->elts = scm_new_array(b->size, byte);
-    memcpy(b->elts, c_cstr(s)+c_fix(start), b->size);
+    memcpy(b->elts, c_str(s)+c_fix(start), b->size);
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
 }
 

@@ -17,7 +17,7 @@ bool is_eqv(scmval x, scmval y) {
         return true;
     bool r = false;
     if(is_string(x)) {
-        r = !CORD_cmp(c_str(x), c_str(y));
+        r = string_equal_p(x, y);
     }
     return r;
 }

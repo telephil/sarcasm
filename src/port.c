@@ -29,7 +29,7 @@ scmval make_port(short flags, void* data, char* name, scm_port_vtable_t* vtable)
 
 // error
 static inline void file_error(const char* message, scmval filename, char* err) {
-    error(file_error_type, message, c_cstr(filename), err);
+    error(file_error_type, message, c_str(filename), err);
 }
 
 // ports creation
@@ -139,8 +139,9 @@ scmval scm_open_output_string() {
 
 scmval scm_get_output_string(scmval p) {
     check_arg("get-output-string", output_string_port_c, p);
-    scm_string_t* s = port_data(p);
-    return make_ptr(SCM_TYPE_STRING, s);
+    scm_string_buffer_t* out = port_data(p);
+    char* s = scm_gc_strdup(out->buf);
+    return s_str_nocopy(s);
 }
 
 static scmval scm_open_input_bytevector(scmval b) {
@@ -313,7 +314,7 @@ static scmval scm_write_string(scmval str, scmval port, scmval start, scmval end
     check_arg("write-string", fixnum_c, end);
     check_range("write-string", c_fix(start), 0, string_length(str));
     check_range("write-string", c_fix(end), c_fix(start), string_length(str));
-    char *cs = c_cstr(str);
+    char *cs = c_str(str);
     for(int i = c_fix(start); i <= c_fix(end); i++) {
         scm_putc(port, cs[i]);
     }
@@ -462,15 +463,15 @@ void scm_putc(scmval p, char c) {
     port_putc(p, s_char(c)); 
 }
 
-void scm_puts(scmval p, CORD c) {
-    port_puts(p, scm_str_from_cord(c)); 
+void scm_puts(scmval p, const char* c) {
+    port_puts(p, s_str(c)); 
 }
 
-void scm_printf(scmval p, CORD format, ...) {
-    CORD r;
+void scm_printf(scmval p, const char* format, ...) {
+    char* r;
     va_list ap;
     va_start(ap, format);
-    CORD_vsprintf(&r, format, ap);
+    vasprintf(&r, format, ap);
     va_end(ap);
     scm_puts(p, r);
 }
@@ -547,7 +548,7 @@ static void file_putc(scmval op, scmval v) {
 
 static void file_puts(scmval op, scmval v) {
     FILE* fp = port_data(op);
-    CORD_fprintf(fp, "%r", c_str(v));
+    fprintf(fp, "%s", c_str(v));
 }
 
 static void file_putb(scmval p, scmval v) {
@@ -576,14 +577,14 @@ static scmval make_file_input_port_from_filename(scmval f) {
     FILE* fp = fopen(c_str(f), "r");
     if(fp == NULL) 
         file_error("unable to open input port for file %s (%s)", f, strerror(errno));
-    return make_file_input_port(fp, c_cstr(f), scm_port_text);
+    return make_file_input_port(fp, c_str(f), scm_port_text);
 }
 
 static scmval make_binary_file_input_port_from_filename(scmval f) {
     FILE* fp = fopen(c_str(f), "rb");
     if(fp == NULL) 
         file_error("unable to open binary input port for file %s (%s)", f, strerror(errno));
-    return make_file_input_port(fp, c_cstr(f), scm_port_binary);
+    return make_file_input_port(fp, c_str(f), scm_port_binary);
 }
 
 static scmval make_file_output_port(FILE* fp, char* name, short mode) {
@@ -596,14 +597,14 @@ static scmval make_file_output_port_from_filename(scmval f) {
     FILE* fp = fopen(c_str(f), "w");
     if(fp == NULL) 
         file_error("unable to open output port for file %s (%s)", f, strerror(errno));
-    return make_file_output_port(fp, c_cstr(f), scm_port_text);
+    return make_file_output_port(fp, c_str(f), scm_port_text);
 }
 
 static scmval make_binary_file_output_port_from_filename(scmval f) {
     FILE* fp = fopen(c_str(f), "wb");
     if(fp == NULL) 
         file_error("unable to open output port for file %s (%s)", f, strerror(errno));
-    return make_file_output_port(fp, c_cstr(f), scm_port_binary);
+    return make_file_output_port(fp, c_str(f), scm_port_binary);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -615,7 +616,7 @@ static void string_close(scmval p) {
 }
 
 static scmval string_getc(scmval p) {
-    scm_input_string_t* in = port_data(p);
+    scm_string_buffer_t* in = port_data(p);
     if(in->idx >= in->len)
         return scm_eof;
     char c = in->buf[in->idx++];
@@ -623,7 +624,7 @@ static scmval string_getc(scmval p) {
 }
 
 static scmval string_ungetc(scmval p, scmval c) {
-    scm_input_string_t* in = port_data(p);
+    scm_string_buffer_t* in = port_data(p);
     if(in->idx <= 0)
         return scm_eof;
     in->idx--;
@@ -631,19 +632,29 @@ static scmval string_ungetc(scmval p, scmval c) {
 }
 
 static scmval string_char_ready(scmval p) {
-    scm_input_string_t* in = port_data(p);
+    scm_string_buffer_t* in = port_data(p);
     return s_bool(in->idx >= in->len);
 }
 
 static void string_putc(scmval p, scmval v) {
-    scm_string_t* s = port_data(p);
-    CORD c = CORD_chars(c_char(v), 1);
-    s->value = CORD_cat(s->value, c);
+    scm_string_buffer_t* s = port_data(p);
+    if(s->idx >= s->len) {
+        s->len *= 1.5;
+        s->buf = scm_gc_realloc(s->buf, 0, s->len);
+    }
+    s->buf[s->idx++] = c_char(v);
 }
 
 static void string_puts(scmval p, scmval v) {
-    scm_string_t* s = port_data(p);
-    s->value = CORD_cat(s->value, c_str(v));
+    scm_string_buffer_t* s = port_data(p);
+    size_t l = string_length(v);
+    if((s->idx + l) >= s->len) {
+        s->len *= 1.5;
+        s->buf = scm_gc_realloc(s->buf, 0, s->len);
+    }
+    memcpy(s->buf+s->idx, c_str(v), l*sizeof(char));
+    s->idx += l;
+    s->buf[s->idx] = '\0';
 }
 
 static void string_flush(scmval p) {
@@ -652,8 +663,8 @@ static void string_flush(scmval p) {
 static scmval scm_str_input_port(scmval s) {
     static scm_port_vtable_t vtable =
       { string_close, string_getc, string_ungetc, NULL, NULL, string_char_ready, NULL, NULL, NULL, NULL };
-    scm_input_string_t* in = scm_new(scm_input_string_t);
-    in->buf = CORD_to_const_char_star(c_str(s));
+    scm_string_buffer_t* in = scm_new(scm_string_buffer_t);
+    in->buf = scm_gc_strdup(c_str(s));
     in->idx = 0;
     in->len = strlen(in->buf);
     return make_port(scm_port_input | scm_port_string | scm_port_text, in, "string", &vtable);
@@ -662,8 +673,10 @@ static scmval scm_str_input_port(scmval s) {
 static scmval scm_str_output_port() {
     static scm_port_vtable_t vtable =
       { string_close, NULL, NULL, NULL, NULL, NULL, string_putc, string_puts, NULL, string_flush };
-    scm_string_t* s = scm_new(scm_string_t);
-    s->value = NULL;
+    scm_string_buffer_t* s = scm_new(scm_string_buffer_t);
+    s->buf = scm_gc_malloc_atomic(1024*sizeof(char));
+    s->idx = 0;
+    s->len = 1024;
     return make_port(scm_port_output | scm_port_string | scm_port_text, s, "string", &vtable);
 }
 

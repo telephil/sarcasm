@@ -25,7 +25,7 @@ static bool is_special_subsequent(char);
 
 scmval scm_read_from_string(scmval str) {
     check_arg("read-from-string", string_c, str);
-    return read_from_string(c_cstr(str));
+    return read_from_string(c_str(str));
 }
 
 void init_reader(scmval env) {

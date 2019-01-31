@@ -69,14 +69,14 @@ scmval load_library(scmval name, scmval env) {
     scmval filename = library_to_filename(name);
     if(is_false(scm_file_exists_p(filename)))
         error(intern("file-error"), "library %s not found", scm_to_cstr(name));
-    lib = load(c_cstr(filename), env);
+    lib = load(c_str(filename), env);
     return lib;
 }
 
 typedef void(*init_fn)(scmval);
 void import_c_module(scmval env, scmval name) {
     char module_name[PATH_MAX];
-    sprintf(module_name, "%s.dylib", c_cstr(name));
+    sprintf(module_name, "%s.dylib", c_str(name));
     void* handle = dlopen(module_name, RTLD_LAZY);
     if(handle == NULL)
         error(scm_undef, "unable to find C module (%s)", dlerror());

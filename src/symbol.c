@@ -3,7 +3,7 @@
 // constructor
 scmval make_symbol(const char* s) {
     scm_string_t* c = scm_new(scm_string_t);
-    c->value = CORD_from_char_star(s);
+    c->value = scm_gc_strdup(s);
     return make_ptr(SCM_TYPE_SYMBOL, c);
 }
 

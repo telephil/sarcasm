@@ -30,7 +30,7 @@ static scmval scm_load(scmval filename, scmval env) {
 
 scmval scm_file_exists_p(scmval filename) {
     check_arg("file-exists?", string_c, filename);
-    return s_bool(access(c_cstr(filename), F_OK) != -1);
+    return s_bool(access(c_str(filename), F_OK) != -1);
 }
 
 static scmval scm_delete_file(scmval filename) {

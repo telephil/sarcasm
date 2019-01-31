@@ -121,7 +121,7 @@ static scmval scm_string_to_vector(scmval s, scmval start, scmval end) {
     scm_vector_t* v = scm_new(scm_vector_t);
     v->size = size;
     v->elts = scm_new_array(size, scmval);
-    char* str = c_cstr(s);
+    char* str = c_str(s);
     for(int i = c_fix(start), j = 0; i <= c_fix(end); i++, j++) {
         v->elts[j] = s_char(str[i]);
     }
