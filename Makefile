@@ -117,8 +117,8 @@ install: all
 	$(INSTALL_PROGRAM) $(libsarcasm) $(libdir)/
 	$(INSTALL_PROGRAM) $(libraries) $(libdir)/
 	$(MKDIR) $(scmlibdir) $(scmlibdir)/sarcasm $(scmlibdir)/scheme
-	$(INSTALL_DATA) -m 644 lib/sarcasm/*.scm $(scmlibdir)/sarcasm/
-	$(INSTALL_DATA) -m 644 lib/scheme/*.scm $(scmlibdir)/scheme/
+	$(INSTALL_DATA) lib/sarcasm/*.scm $(scmlibdir)/sarcasm/
+	$(INSTALL_DATA) lib/scheme/*.scm $(scmlibdir)/scheme/
 
 uninstall:
 	-$(RM) $(bindir)/$(sarcasm)
