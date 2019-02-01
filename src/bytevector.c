@@ -135,10 +135,10 @@ static scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
     check_range("utf8->string", c_fix(start), 0, bytevector_size(b));
     check_range("utf8->string", c_fix(end), c_fix(start), bytevector_size(b));
     int size = (c_fix(end)-c_fix(start)) + 1;
-    char* s = scm_new_atomic(size, char);
+    char* s = scm_gc_malloc_atomic(size*sizeof(char));
     memcpy(s, get_bytevector(b)->elts + c_fix(start), size);
     s[size] = '\0';
-    return s_str(s);
+    return s_str_nocopy(s);
 }
 
 static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
