@@ -61,6 +61,7 @@ static scmval scm_vector_set(scmval v, scmval i, scmval x) {
     check_arg("vector-set!", vector_c, v);
     check_arg("vector-set!", fixnum_c, i);
     check_range("vector-set!", c_fix(i), 0, vector_size(v));
+    check_mutable("vector-set!", "vector", v);
     vector_set(v, c_fix(i), x);
     return scm_void;
 }
@@ -154,6 +155,7 @@ static scmval scm_vector_mcopy(scmval to, scmval at, scmval from, scmval start, 
     check_range("vector-copy!", c_fix(at), 0, vector_size(to));
     check_range("vector-copy!", c_fix(start), 0, vector_size(from));
     check_range("vector-copy!", c_fix(end), c_fix(start), vector_size(from));
+    check_mutable("vector-copy!", "vector", to);
     int size = c_fix(end) - c_fix(start) + 1;
     if((vector_size(to) - c_fix(at)) < size)
         error(range_error_type, "vector-copy!: cannot fit %d elements in %s starting at index %d", 
@@ -191,6 +193,7 @@ static scmval scm_vector_fill(scmval v, scmval fill, scmval start, scmval end) {
     check_arg("vector-fill!", fixnum_c, end);
     check_range("vector-fill!", c_fix(start), 0, vector_size(v));
     check_range("vector-fill!", c_fix(end), c_fix(start), vector_size(v));
+    check_mutable("vector-fill!", "vector", v);
     for(int i = c_fix(start); i <= c_fix(end); i++) {
         vector_set(v, i, fill);
     }

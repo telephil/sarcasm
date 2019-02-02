@@ -359,6 +359,7 @@ static scmval read_list(scmval p) {
         }            
         v = read_aux(p, true);
     }
+    set_immutable(h);
     return h;
 }
 
@@ -382,6 +383,7 @@ static scmval read_vector(scmval p) {
         v = read_aux(p, true);
     }
     v = make_vector_from_list(size, h);
+    set_immutable(v);
     return v;
 }
 
@@ -407,6 +409,7 @@ static scmval read_bytevector(scmval p) {
         v = read_aux(p, true);
     }
     v = make_bytevector_from_list(size, h);
+    set_immutable(v);
     return v;
 }
 

@@ -59,3 +59,7 @@ static inline void range_error(const char* name, int index, int low, int high) {
           name, index, low, high-1);
 }
 
+static inline void mutability_error(const char* name, const char* type) {
+    error(scm_undef, "%s: cannot modify an immutable %s", name, type);
+}
+

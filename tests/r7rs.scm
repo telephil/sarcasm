@@ -153,6 +153,7 @@
 (is '((a)) (assoc (list 'a) '(((a)) ((b)) ((c)))))
 (is '(2 4) (assoc 2.0 '((1 1) (2 4) (3 9))))
 (is '(5 7) (assoc 5 '((2 3) (5 7) (11 13))))
+(is-error (set-car! '(1 2 3) 0))
 ;; Symbols
 (is-true (symbol? 'foo))
 (is-true (symbol? (car '(a b))))

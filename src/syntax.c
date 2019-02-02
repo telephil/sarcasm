@@ -60,6 +60,7 @@ scmval expand(scmval expr, scmval env) {
     } else { // dotted list
         setcdr(result, cdr(expr));
     }
+    copy_flags(expr, result);
     scmval expanded = result;
     if(is_eq(car(result), sym_case_lambda)) {
         expanded = stx_case_lambda(cdr(result), env);

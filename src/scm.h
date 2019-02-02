@@ -54,7 +54,8 @@ enum {
 };
 
 enum {
-    scm_flag_values = 1<<0,
+    scm_flag_immutable  = 1<<0,
+    scm_flag_values     = 1<<1,
 };
 
 struct scmval {
@@ -70,10 +71,14 @@ struct scmval {
 };
 
 static inline short  type_of(scmval v) { return v.type; }
-#define set_flag(v, flag) v.flags |= flag
-static inline bool   has_flag(scmval v, int flag) { return v.flags & flag; }
 static inline scmval make_val(int type) { scmval v = { .type = type, .flags = 0, .o = NULL }; return v; }
 static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .flags = 0, .o = o }; return v; }
+
+#define copy_flags(from, to) to.flags = from.flags
+#define set_flag(v, flag) v.flags |= flag
+#define set_immutable(v) set_flag(v, scm_flag_immutable)
+static inline bool   has_flag(scmval v, int flag) { return v.flags & flag; }
+static inline bool is_immutable(scmval v) { return has_flag(v, scm_flag_immutable); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // GLOBALS
@@ -145,4 +150,5 @@ void scm_boot(int, char*[]);
 #define check_arg(N,C,V) if(!C.pred(V)) (type_error(N,C,V))
 #define check_args(N,C,AC,AV) for(int i = 0; i < AC; i++) { if(!C.pred(AV[i])) (type_error(N,C,AV[i])); }
 #define check_range(N,V,L,H) if((V) < (L) || (V) >= (H)) range_error(N, (V), (L), (H))
+#define check_mutable(N,T,V) if(is_immutable((V))) mutability_error(N, T)
 

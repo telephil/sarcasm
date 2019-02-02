@@ -62,12 +62,14 @@ static scmval scm_cdr(scmval l) {
 
 static scmval scm_setcar(scmval l, scmval v) {
     check_arg("set-car!", list_c, l);
+    check_mutable("set-car!", "list", l);
     setcar(l, v);
     return scm_void;
 }
 
 static scmval scm_setcdr(scmval l, scmval v) {
     check_arg("set-cdr!", list_c, l);
+    check_mutable("set-cdr!", "list", l);
     setcdr(l, v);
     return scm_void;
 }
@@ -118,6 +120,7 @@ static scmval scm_list_set(scmval lst, scmval k, scmval obj) {
     check_arg("list-set!", list_c, lst);
     check_arg("list-set!", fixnum_c, k);
     check_range("list-set!", c_fix(k), 0, list_length(lst));
+    check_mutable("list-set!", "list", lst);
     scmval p = lst;
     for(int i = 0; i < c_fix(k); i++)
         p = cdr(p);

@@ -68,6 +68,7 @@ static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
     check_arg("bytevector-u8-set!", fixnum_c, k);
     check_arg("bytevector-u8-set!", byte_c, byte);
     check_range("bytevector-u8-set!", c_fix(k), 0, bytevector_size(b));
+    check_mutable("bytevector-u8-set!", "bytevector", b);
     bytevector_set(b, c_fix(k), byte);
     return scm_void;
 }
@@ -98,6 +99,7 @@ static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval sta
     check_range("bytevector-copy!", c_fix(at), 0, bytevector_size(to));
     check_range("bytevector-copy!", c_fix(start), 0, bytevector_size(from));
     check_range("bytevector-copy!", c_fix(end), c_fix(start), bytevector_size(from));
+    check_mutable("bytevector-copy!", "bytevector", to);
     if((bytevector_size(to) - c_fix(at)) < (c_fix(end) - c_fix(start)))
         error(range_error_type, "bytevector-copy!: cannot fit %d elements in %s starting at index %d", 
                 (c_fix(end)-c_fix(start)), scm_to_cstr(to), c_fix(at));
