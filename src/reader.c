@@ -143,6 +143,12 @@ start_read:
                             }
                         }
                     }
+                case ';':
+                    v = read_aux(p, false);
+                    if(is_eof(v))
+                        read_error(p, "unexpected end of file while reading expression comment");
+                    goto start_read;
+                    break;
                 case 't':
                 case 'f':
                     v = read_bool(p, c);
