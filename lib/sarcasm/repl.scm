@@ -1,5 +1,6 @@
 (define-library (sarcasm repl)
   (import (scheme base)
+          (sarcasm info)
           (sarcasm process)
           (sarcasm readline)
           (sarcasm string))
@@ -27,7 +28,10 @@
       (loop (environment-symbols (interaction-environment))))
 
     (define (banner)
-      (display "sarcasm v0.1\n")
+      (display (implementation-name))
+      (display " v")
+      (display (implementation-version))
+      (newline)
       (display "=============\n\n"))
 
     (define (end)
