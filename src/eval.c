@@ -160,6 +160,8 @@ loop:
                 v = expand(f, v);
                 dbg("E(v)", v);
                 goto loop;
+            } else {
+                error(scm_undef, "invalid call to non-procedure %s", scm_to_cstr(f));
             }
         }
     } else { // immediate
