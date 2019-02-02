@@ -5,3 +5,4 @@
 *.o
 *.dylib
 /scm
+out
