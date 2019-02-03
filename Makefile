@@ -1,5 +1,5 @@
 name	= sarcasm
-version	= 0.1
+version	= 0.2
 
 ################################################################################
 # Directories
@@ -45,6 +45,7 @@ READLINE_LDFLAGS = -lreadline
 includes 		= src/scm.h src/scm/symbols.inc $(wildward src/scm/*.h)
 sarcasm_objs	= src/main.o
 libsarcasm_objs = src/scm.o	\
+				  src/types.o \
 				  src/bool.o \
 				  src/bytevector.o \
 				  src/char.o \

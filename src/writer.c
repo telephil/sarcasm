@@ -23,6 +23,7 @@ void scm_display(scmval v, scmval p) {
 }
 
 static void write_(scmval p, scmval v, short flags) {
+    scm_printer printer = NULL;
     switch(type_of(v)) {
         case SCM_TYPE_UNDEF:
             scm_puts(p, "#<undefined>");
@@ -128,6 +129,12 @@ static void write_(scmval p, scmval v, short flags) {
             break;
         case SCM_TYPE_FOREIGN_TYPE:
             scm_printf(p, "#<foreign-type:%s>", foreign_type_name(v));
+        default:
+            printer = get_type_printer(type_of(v));
+            if(printer != NULL)
+                printer(p, v, flags);
+            else
+                scm_printf(p, "#<unknown object:%d>", type_of(v));
             break;
     }
 }

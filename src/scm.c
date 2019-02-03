@@ -29,9 +29,10 @@ static const int nfeatures = sizeof(features) / sizeof(features[0]);
 ////////////////////////////////////////////////////////////////////////////////
 // FORWARD DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
-static void fatal_error_handler(scmval err);
+static void init_base_types();
 static void save_command_line(int, char*[]);
 static void init_features();
+static void fatal_error_handler(scmval err);
 
 ////////////////////////////////////////////////////////////////////////////////
 // I N I T I A L I Z A T I O N
@@ -39,6 +40,8 @@ static void init_features();
 void scm_boot(int argc, char* argv[]) {
     GC_INIT();
     mp_set_memory_functions(scm_gc_malloc, scm_gc_realloc, scm_gc_free);
+
+    init_base_types();
 
     // create globals
     scm_undef = make_val(SCM_TYPE_UNDEF);
@@ -73,6 +76,7 @@ void scm_boot(int argc, char* argv[]) {
     init_control(env);
     init_parameter(env);
     init_record(env);
+    init_foreign(env);
     init_library(env);
     init_env(env);
     // load scheme defined procedures / syntax
@@ -88,6 +92,33 @@ void scm_boot(int argc, char* argv[]) {
 ////////////////////////////////////////////////////////////////////////////////
 // HELPERS
 ////////////////////////////////////////////////////////////////////////////////
+static void init_base_types() {
+    register_type("#undef");
+    register_type("#void");
+    register_type("#null");
+    register_type("#eof");
+    register_type("#bool");
+    register_type("#fixnum");
+    register_type("#bignum");
+    register_type("#flonum");
+    register_type("#char");
+    register_type("#string");
+    register_type("#symbol");
+    register_type("#pair");
+    register_type("#vector");
+    register_type("#bytevector");
+    register_type("#environment");
+    register_type("#primitive");
+    register_type("#closure");
+    register_type("#continuation");
+    register_type("#parameter");
+    register_type("#syntax");
+    register_type("#error");
+    register_type("#port");
+    register_type("#library");
+    register_type("#record");
+}
+
 static void save_command_line(int argc, char* argv[]) {
     scm_g_command_line = scm_null;
     for(int i = argc - 1; i >= 0; i--) {

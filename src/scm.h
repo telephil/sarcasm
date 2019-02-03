@@ -18,6 +18,7 @@
 // SCMVAL DEFINITION
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct scmval scmval;
+typedef unsigned short scm_type_t;
 typedef uint8_t byte;
 typedef int64_t fixnum;
 typedef double flonum;
@@ -59,7 +60,7 @@ enum {
 };
 
 struct scmval {
-    short type;
+    scm_type_t type;
     short flags;
     union {
         bool b;
@@ -70,9 +71,9 @@ struct scmval {
     };
 };
 
-static inline short  type_of(scmval v) { return v.type; }
-static inline scmval make_val(int type) { scmval v = { .type = type, .flags = 0, .o = NULL }; return v; }
-static inline scmval make_ptr(int type, void* o) { scmval v = { .type = type, .flags = 0, .o = o }; return v; }
+static inline scm_type_t type_of(scmval v) { return v.type; }
+static inline scmval make_val(scm_type_t type) { scmval v = { .type = type, .flags = 0, .o = NULL }; return v; }
+static inline scmval make_ptr(scm_type_t type, void* o) { scmval v = { .type = type, .flags = 0, .o = o }; return v; }
 
 #define copy_flags(from, to) to.flags = from.flags
 #define set_flag(v, flag) v.flags |= flag
@@ -92,8 +93,19 @@ extern scmval scm_eof;
 
 extern scmval scm_g_command_line;
 extern scmval scm_g_features;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TYPES
+////////////////////////////////////////////////////////////////////////////////
+typedef void(*scm_printer)(scmval,scmval,short);
+scm_type_t register_type(const char*);
+const char* get_type_name(scm_type_t);
+void register_type_printer(scm_type_t, scm_printer);
+scm_printer get_type_printer(scm_type_t);
+scm_type_t register_type_with_printer(const char*, scm_printer);
+
+////////////////////////////////////////////////////////////////////////////////
+// CORE
 ////////////////////////////////////////////////////////////////////////////////
 #include "config.h"
 #include "scm/arity.h"
