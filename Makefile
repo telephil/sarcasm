@@ -27,9 +27,15 @@ CC = clang
 ################################################################################
 # Compilation variables
 CFLAGS = -g
-ALL_CFLAGS = -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
-CONFIG_CFLAGS = -DNAME='"$(name)"' -DVERSION='"$(version)"' -DSCMLIBDIR='"$(scmlibdir)"'
+ifeq ($(PLATFORM),linux)
+	ALL_CFLAGS = -DSARCASM_LINUX -D_GNU_SOURCE -fPIC -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
+	ALL_LDFLAGS = -lm
+else
+	ALL_CFLAGS = -fPIC -std=c11 -Wall -Werror -pedantic -Isrc $(CFLAGS)
+	ALL_LDFLAGS = 
+endif
 LIB_LDFLAGS = -fPIC -shared
+CONFIG_CFLAGS = -DNAME='"$(name)"' -DVERSION='"$(version)"' -DSCMLIBDIR='"$(scmlibdir)"'
 GC_CFLAGS = $(shell pkg-config --cflags bdw-gc)
 GC_LDFLAGS = $(shell pkg-config --libs bdw-gc)
 GMP_CFLAGS = 
@@ -74,12 +80,20 @@ libforeign_objs = lib/sarcasm/foreign.o
 
 ################################################################################
 # Output objects
-sarcasm = scm
+sarcasm = sarcasm
+ifeq ($(PLATFORM),linux)
+libsarcasm = libsarcasm.so
+libprocess = libsarcasm_process.so
+libreadline = libsarcasm_readline.so
+libforeign = libsarcasm_foreign.so
+libraries = $(libprocess) $(libreadline) $(libforeign)
+else
 libsarcasm = libsarcasm.dylib
 libprocess = libsarcasm_process.dylib
 libreadline = libsarcasm_readline.dylib
 libforeign = libsarcasm_foreign.dylib
 libraries = $(libprocess) $(libreadline) $(libforeign)
+endif
 
 ################################################################################
 # Targets
@@ -101,19 +115,22 @@ $(libforeign_objs):	$(libforeign_objs:.o=.c) $(includes)
 	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@
 
 $(libsarcasm):	$(libsarcasm_objs)
-	$(CC) $(GC_LDFLAGS) $(GMP_LDFLAGS) $(FFI_LDFLAGS) $(LIB_LDFLAGS) $^ -o $@
+	$(CC) $(ALL_LDFLAGS) $(GC_LDFLAGS) $(GMP_LDFLAGS) $(FFI_LDFLAGS) $(LIB_LDFLAGS) $^ -o $@
 
 $(libprocess):	$(libprocess_objs)
-	$(CC) $(GC_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $^ -o $@
+	$(CC) $(ALL_LDFLAGS) $(GC_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $^ -o $@
 
 $(libreadline):	$(libreadline_objs)
-	$(CC) $(GC_LDFLAGS) $(READLINE_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) -o $@ $^
+	$(CC) $(ALL_LDFLAGS) $(GC_LDFLAGS) $(READLINE_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) -o $@ $^
 
 $(libforeign):	$(libforeign_objs)
-	$(CC) $(GC_LDFLAGS) $(FFI_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $^ -o $@
+	$(CC) $(ALL_LDFLAGS) $(GC_LDFLAGS) $(FFI_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $^ -o $@
 
 $(sarcasm):	$(sarcasm_objs) $(libsarcasm)
 	$(CC) -L. -lsarcasm $< -o $@ $(LDFLAGS)
+ifeq ($(PLATFORM), linux)
+	patchelf --set-rpath '$$ORIGIN' $@
+endif
 
 check:	$(sarcasm)
 	@SCM_LIBRARY_PATH=./lib ./$(sarcasm) -l ./tests/r7rs.scm
@@ -143,5 +160,5 @@ uninstall:
 
 .PHONY:	clean 
 clean:
-	-$(RM) $(sarcasm) $(sarcasm_objs) $(libsarcasm) $(libsarcasm_objs) $(libprocess_objs) $(libprocess) $(libreadline_objs) $(libreadline)
+	-$(RM) $(sarcasm) $(sarcasm_objs) $(libsarcasm) $(libsarcasm_objs) $(libprocess_objs) $(libprocess) $(libreadline_objs) $(libreadline) $(libforeign)
 

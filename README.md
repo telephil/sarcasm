@@ -2,11 +2,20 @@
 A simple (even naive) work-in-progress R7RS scheme interpreter written in C11.
 
 ### Building
-Type ```make``` in the root directory to create the ```scm``` executable.
+
+Type ```make``` in the root directory to create the ```sarcasm``` executable.
+
 ```shell
 $ make
 ```
-**Note:** Build has only been tested on Mac OSX
+
+When building on Linux and not on macOS, use next command:
+
+```shell
+$ PLATFORM=linux make
+```
+
+When installing into a custom prefix, prepend `prefix=/path/to/prefix` to the command.
 
 #### Dependencies
 - [Boehm GC](http://www.hboehm.info/gc/)

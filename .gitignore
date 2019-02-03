@@ -4,5 +4,7 @@
 *.dSYM
 *.o
 *.dylib
+*.so
 /scm
+/sarcasm
 out
