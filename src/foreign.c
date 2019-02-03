@@ -1,6 +1,11 @@
 #include <dlfcn.h>
 #include "scm.h"
 
+scm_type_t scm_type_foreign_lib;
+scm_type_t scm_type_foreign_obj;
+scm_type_t scm_type_foreign_ptr;
+scm_type_t scm_type_foreign_type;
+
 typedef union value value;
 
 union value {
@@ -38,7 +43,7 @@ scmval make_foreign_lib(const char* name, void* handle) {
     scm_foreign_lib_t* lib = scm_new(scm_foreign_lib_t);
     lib->name   = scm_gc_strdup(name);
     lib->handle = handle;
-    return make_ptr(SCM_TYPE_FOREIGN_LIB, lib);
+    return make_ptr(scm_type_foreign_lib, lib);
 }
 
 scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle, ffi_cif cif) {
@@ -48,7 +53,7 @@ scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle,
     obj->args   = args;
     obj->handle = handle;
     obj->cif    = cif;
-    return make_ptr(SCM_TYPE_FOREIGN_OBJ, obj);
+    return make_ptr(scm_type_foreign_obj, obj);
 }
 
 scmval make_foreign_type(const char* name, short code, ffi_type* type) {
@@ -56,14 +61,37 @@ scmval make_foreign_type(const char* name, short code, ffi_type* type) {
     t->name = scm_gc_strdup(name);
     t->code = code;
     t->type = type;
-    return make_ptr(SCM_TYPE_FOREIGN_TYPE, t);
+    return make_ptr(scm_type_foreign_type, t);
 }
 
 scmval make_foreign_ptr(void* ptr, scmval type) {
     scm_foreign_ptr_t* p = scm_new(scm_foreign_ptr_t);
     p->ptr  = ptr;
     p->type = type;
-    return make_ptr(SCM_TYPE_FOREIGN_PTR, p);
+    return make_ptr(scm_type_foreign_ptr, p);
+}
+
+static void print_foreign_lib(scmval port, scmval v, short flags) {
+    scm_printf(port, "#<foreign-lib:%s>", foreign_lib_name(v));
+}
+
+static void print_foreign_obj(scmval port, scmval v, short flags) {
+    scm_printf(port, "#<foreign-obj:%s>", foreign_obj_name(v));
+}
+
+static void print_foreign_ptr(scmval port, scmval v, short flags) {
+    scm_printf(port, "#<foreign-pointer:%p>", c_ptr(v));
+}
+
+static void print_foreign_type(scmval port, scmval v, short flags) {
+    scm_printf(port, "#<foreign-type:%s>", foreign_type_name(v));
+}
+
+void init_foreign(scmval env) {
+    scm_type_foreign_lib = register_type_with_printer("#foreign-lib", print_foreign_lib);
+    scm_type_foreign_obj = register_type_with_printer("#foreign-obj", print_foreign_obj);
+    scm_type_foreign_ptr = register_type_with_printer("#foreign-ptr", print_foreign_ptr);
+    scm_type_foreign_type = register_type_with_printer("#foreign-type", print_foreign_type);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

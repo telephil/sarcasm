@@ -118,17 +118,6 @@ static void write_(scmval p, scmval v, short flags) {
             write_(p, record_type(v), flags);
             scm_puts(p, ">");
             break;
-        case SCM_TYPE_FOREIGN_LIB:
-            scm_printf(p, "#<foreign-lib:%s>", foreign_lib_name(v));
-            break;
-        case SCM_TYPE_FOREIGN_OBJ:
-            scm_printf(p, "#<foreign-obj:%s>", foreign_obj_name(v));
-            break;
-        case SCM_TYPE_FOREIGN_PTR:
-            scm_printf(p, "#<foreign-pointer:%p>", c_ptr(v));
-            break;
-        case SCM_TYPE_FOREIGN_TYPE:
-            scm_printf(p, "#<foreign-type:%s>", foreign_type_name(v));
         default:
             printer = get_type_printer(type_of(v));
             if(printer != NULL)

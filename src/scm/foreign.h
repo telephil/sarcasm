@@ -5,6 +5,11 @@ typedef struct scm_foreign_obj  scm_foreign_obj_t;
 typedef struct scm_foreign_type scm_foreign_type_t;
 typedef struct scm_foreign_ptr  scm_foreign_ptr_t;
 
+extern scm_type_t scm_type_foreign_lib;
+extern scm_type_t scm_type_foreign_obj;
+extern scm_type_t scm_type_foreign_ptr;
+extern scm_type_t scm_type_foreign_type;
+
 struct scm_foreign_lib {
     char* name;
     void* handle;
@@ -59,10 +64,10 @@ scmval make_foreign_type(const char*, short, ffi_type*);
 scmval make_foreign_ptr(void*, scmval);
 
 // predicates
-static inline bool is_foreign_lib(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_LIB; }
-static inline bool is_foreign_obj(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_OBJ; }
-static inline bool is_foreign_ptr(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_PTR; }
-static inline bool is_foreign_type(scmval obj) { return type_of(obj) == SCM_TYPE_FOREIGN_TYPE; }
+static inline bool is_foreign_lib(scmval obj) { return type_of(obj) == scm_type_foreign_lib; }
+static inline bool is_foreign_obj(scmval obj) { return type_of(obj) == scm_type_foreign_obj; }
+static inline bool is_foreign_ptr(scmval obj) { return type_of(obj) == scm_type_foreign_ptr; }
+static inline bool is_foreign_type(scmval obj) { return type_of(obj) == scm_type_foreign_type; }
 
 // contracts
 define_contract(foreign_lib_c, "foreign library", is_foreign_lib);
@@ -96,6 +101,7 @@ static inline scmval    foreign_ptr_type(scmval v) { return get_foreign_ptr(v)->
 static inline scmval s_ptr(void* o) { return make_foreign_ptr(o, scm_undef); }
 static inline void*  c_ptr(scmval v) { return foreign_ptr_ptr(v); }
 
+void init_foreign(scmval env);
 scmval foreign_call(scmval, int, scmval*);
 
 
