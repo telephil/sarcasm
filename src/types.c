@@ -4,7 +4,7 @@
 
 static int ntype = 0;
 static const char* typenames[TYPES_MAX] = { 0 };
-static scm_printer printers[TYPES_MAX];
+static scm_printer printers[TYPES_MAX] = { 0 };
 
 scm_type_t register_type(const char* name) {
     if(ntype >= TYPES_MAX) {

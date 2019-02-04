@@ -299,7 +299,7 @@ static scmval read_string(scmval p) {
     scmval v;
     char c, *buf;
     int len = MAX_TOK_SIZE, i = 0;
-    buf = GC_MALLOC(len*sizeof(char));
+    buf = scm_gc_malloc_atomic(len * sizeof(char));
     while(true) {
         c = scm_getc(p);
         if(c == EOF) {
@@ -323,7 +323,7 @@ static scmval read_string(scmval p) {
         }
         if((i+1) >= len) {
             len = 1.5 * len;
-            buf = GC_REALLOC(buf, len*sizeof(char));
+            buf = scm_gc_realloc(buf, len * sizeof(char));
         }
         buf[i++] = c;
     }

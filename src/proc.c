@@ -2,7 +2,7 @@
 
 // constructor
 scmval make_primitive(const char* name, primitive_f fn, arity_t arity) {
-    scm_primitive_t* primitive = scm_new(scm_primitive_t);
+    scm_primitive_t* primitive = scm_gc_malloc(sizeof(scm_primitive_t));
     primitive->name  = s_str(name);
     primitive->f     = fn;
     primitive->arity = arity;
@@ -10,7 +10,7 @@ scmval make_primitive(const char* name, primitive_f fn, arity_t arity) {
 }
 
 scmval make_closure(scmval name, int argc, scmval* argv, scmval env, scmval body) {
-    scm_closure_t* closure = scm_new(scm_closure_t);
+    scm_closure_t* closure = scm_gc_malloc(sizeof(scm_closure_t));
     closure->name = name;
     closure->argc = argc;
     closure->argv = argv;
@@ -20,7 +20,7 @@ scmval make_closure(scmval name, int argc, scmval* argv, scmval env, scmval body
 }
 
 scmval make_continuation() {
-    scm_continuation_t* cont = scm_new(scm_continuation_t);
+    scm_continuation_t* cont = scm_gc_malloc(sizeof(scm_continuation_t));
     cont->value = scm_undef;
     return make_ptr(SCM_TYPE_CONTINUATION, cont);
 }

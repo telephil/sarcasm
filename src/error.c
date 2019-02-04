@@ -18,7 +18,7 @@ scmval file_error_type;
 // CONSTRUCTOR
 ////////////////////////////////////////////////////////////////////////////////
 scmval make_error(scmval type, scmval message, scmval irritants) {
-    scm_error_t* e = scm_new(scm_error_t);
+    scm_error_t* e = scm_gc_malloc(sizeof(scm_error_t));
     e->type      = type;
     e->message   = message;
     e->irritants = irritants;

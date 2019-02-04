@@ -2,7 +2,7 @@
 
 // constructor
 scmval make_pair(scmval car, scmval cdr) {
-    scm_pair_t* l = scm_new(scm_pair_t);
+    scm_pair_t* l = scm_gc_malloc(sizeof(scm_pair_t));
     l->car = car;
     l->cdr = cdr;
     return make_ptr(SCM_TYPE_PAIR, l);

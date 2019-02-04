@@ -1,9 +1,9 @@
 #include "scm.h"
 
 scmval make_bytevector(size_t size, scmval initial) {
-    scm_bytevector_t* b = scm_new(scm_bytevector_t);
+    scm_bytevector_t* b = scm_gc_malloc(sizeof(scm_bytevector_t));
     b->size = size;
-    b->elts = scm_new_array(size, byte);
+    b->elts = scm_gc_malloc_atomic(size * sizeof(byte));
     for(int i = 0; i < size; i++) {
         b->elts[i] = c_fix(initial);
     }
@@ -11,11 +11,11 @@ scmval make_bytevector(size_t size, scmval initial) {
 }
 
 scmval make_bytevector_from_list(int size, scmval l) {
-    scm_bytevector_t* b = scm_new(scm_bytevector_t);
+    scm_bytevector_t* b = scm_gc_malloc(sizeof(scm_bytevector_t));
     if(size < 0)
         size = list_length(l);
     b->size = size;
-    b->elts = scm_new_array(size, byte);
+    b->elts = scm_gc_malloc_atomic(size * sizeof(byte));
     int i;
     scmval c;
     for(c = l, i = 0; !is_null(c); c = cdr(c), i++) {
@@ -25,7 +25,7 @@ scmval make_bytevector_from_list(int size, scmval l) {
 }
 
 scmval make_bytevector_from_data(int size, byte* data) {
-    scm_bytevector_t* b = scm_new(scm_bytevector_t);
+    scm_bytevector_t* b = scm_gc_malloc(sizeof(scm_bytevector_t));
     b->size = size;
     b->elts = data;
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
@@ -81,9 +81,9 @@ static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
     check_arg("bytevector-copy", fixnum_c, end);
     check_range("bytevector-copy", c_fix(start), 0, bytevector_size(b));
     check_range("bytevector-copy", c_fix(end), c_fix(start), bytevector_size(b));
-    scm_bytevector_t* copy = scm_new(scm_bytevector_t);
+    scm_bytevector_t* copy = scm_gc_malloc(sizeof(scm_bytevector_t));
     copy->size = c_fix(end) - c_fix(start) + 1;
-    copy->elts = scm_new_array(copy->size, byte);
+    copy->elts = scm_gc_malloc_atomic(copy->size * sizeof(byte));
     memcpy(copy->elts, get_bytevector(b)->elts+c_fix(start), copy->size);
     return make_ptr(SCM_TYPE_BYTEVECTOR, copy);
 }
@@ -115,9 +115,9 @@ static scmval scm_bytevector_append(int argc, scmval* argv) {
     for(int i = 0; i < argc; i++) {
         size += bytevector_size(argv[i]);
     }
-    scm_bytevector_t* b = scm_new(scm_bytevector_t);
+    scm_bytevector_t* b = scm_gc_malloc(sizeof(scm_bytevector_t));
     b->size = size;
-    b->elts = scm_new_array(size, byte);
+    b->elts = scm_gc_malloc_atomic(size * sizeof(byte));
     int offset = 0;
     for(int i = 0; i < argc; i++) {
         memcpy(b->elts + offset,
@@ -137,7 +137,7 @@ static scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
     check_range("utf8->string", c_fix(start), 0, bytevector_size(b));
     check_range("utf8->string", c_fix(end), c_fix(start), bytevector_size(b));
     int size = (c_fix(end)-c_fix(start)) + 1;
-    char* s = scm_gc_malloc_atomic(size*sizeof(char));
+    char* s = scm_gc_malloc_atomic(size * sizeof(char));
     memcpy(s, get_bytevector(b)->elts + c_fix(start), size);
     s[size] = '\0';
     return s_str_nocopy(s);
@@ -151,9 +151,9 @@ static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
     check_arg("string->utf8", fixnum_c, end);
     check_range("string->utf8", c_fix(start), 0, string_length(s));
     check_range("string->utf8", c_fix(end), c_fix(start), string_length(s));
-    scm_bytevector_t* b = scm_new(scm_bytevector_t);
+    scm_bytevector_t* b = scm_gc_malloc(sizeof(scm_bytevector_t));
     b->size = c_fix(end) - c_fix(start);
-    b->elts = scm_new_array(b->size, byte);
+    b->elts = scm_gc_malloc_atomic(b->size * sizeof(byte));
     memcpy(b->elts, c_str(s)+c_fix(start), b->size);
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
 }

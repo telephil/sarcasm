@@ -2,7 +2,7 @@
 
 // constructor
 scmval make_symbol(const char* s) {
-    scm_string_t* c = scm_new(scm_string_t);
+    scm_string_t* c = scm_gc_malloc(sizeof(scm_string_t));
     c->value = scm_gc_strdup(s);
     return make_ptr(SCM_TYPE_SYMBOL, c);
 }

@@ -6,7 +6,7 @@ scmval syntax_error_type;
 // CONSTRUCTOR
 ////////////////////////////////////////////////////////////////////////////////
 scmval make_syntax(scmval name, scmval literals, scmval rules) {
-    scm_syntax_t* syntax = scm_new(scm_syntax_t);
+    scm_syntax_t* syntax = scm_gc_malloc(sizeof(scm_syntax_t));
     syntax->name        = name;
     syntax->literals    = literals;
     syntax->rules       = rules;
@@ -246,7 +246,7 @@ static scmval stx_case_lambda(scmval expr, scmval env) {
     if(is_null(expr)) error(syntax_error_type, "invalid case-lambda syntax");
     // transform all clauses to if / apply
     int len = list_length(expr);
-    scmval* transformed = scm_new_array(len+1, scmval);
+    scmval* transformed = scm_gc_malloc((len + 1) * sizeof(scmval));
     int i = 0;
     foreach(clause, expr) {
         scmval p = list3(sym_if,

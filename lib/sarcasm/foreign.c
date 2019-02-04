@@ -43,7 +43,7 @@ static scmval scm_foreign_obj(int argc, scmval* argv) {
     scmval args = scm_null;
     int len = argc - 3;
     if(len > 0) {
-        atypes = scm_new_array(len, ffi_type*);
+        atypes = scm_gc_malloc(len * sizeof(ffi_type*));
         for(int i = 3; i < argc; i++) {
             if(foreign_type_code(argv[i]) == FOREIGN_TYPE_VOID)
                 error(scm_undef, "void is not a valid argument type");

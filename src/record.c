@@ -1,7 +1,7 @@
 #include "scm.h"
 
 scmval make_record(scmval type, scmval slots) {
-    scm_record_t* record = scm_new(scm_record_t);
+    scm_record_t* record = scm_gc_malloc(sizeof(scm_record_t));
     record->type = type;
     record->slots = slots;
     return make_ptr(SCM_TYPE_RECORD, record);

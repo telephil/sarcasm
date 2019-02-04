@@ -2,13 +2,13 @@
 
 // constructor
 scmval s_str(const char* s) {
-    scm_string_t* c = scm_new(scm_string_t);
+    scm_string_t* c = scm_gc_malloc(sizeof(scm_string_t));
     c->value = scm_gc_strdup(s);
     return make_ptr(SCM_TYPE_STRING, c);
 }
 
 scmval s_str_nocopy(char* s) {
-    scm_string_t* c = scm_new(scm_string_t);
+    scm_string_t* c = scm_gc_malloc(sizeof(scm_string_t));
     c->value = s;
     return make_ptr(SCM_TYPE_STRING, c);
 }

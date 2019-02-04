@@ -2,9 +2,9 @@
 #include "scm.h"
 
 #define kcalloc(N,Z) kmalloc(N*Z)
-#define kmalloc(Z) GC_MALLOC(Z)
-#define krealloc(P,Z) GC_REALLOC(P,Z)
-#define kfree(P) GC_FREE(P)
+#define kmalloc(Z) scm_gc_malloc(Z)
+#define krealloc(P,Z) scm_gc_realloc(P,Z)
+#define kfree(P) scm_gc_free(P)
 
 #include "khash.h"
 
@@ -55,7 +55,7 @@ scmval dict_ref(scm_dict_t* d, scmval k) {
 void dict_keys(scm_dict_t* d, int* size, scmval** keys) {
     int i = 0;
     int s = kh_size(d);
-    scmval* res = scm_new_array(s, scmval);
+    scmval* res = scm_gc_malloc(s * sizeof(scmval));
     scmval k, v;
     kh_foreach(d, k, v, res[i++] = k);
     *size = s;

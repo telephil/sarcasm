@@ -6,7 +6,7 @@ static scmval scm_g_null_environment;
 
 // constructor
 scmval make_env(scmval n) {
-    scm_env_t* e = scm_new(scm_env_t);
+    scm_env_t* e = scm_gc_malloc(sizeof(scm_env_t));
     e->globals   = make_dict();
     e->bindings  = make_dict();
     e->next = n;

@@ -2,9 +2,9 @@
 
 // constructor
 scmval make_vector(size_t size, scmval initial) {
-    scm_vector_t* v = scm_new(scm_vector_t);
+    scm_vector_t* v = scm_gc_malloc(sizeof(scm_vector_t));
     v->size = size;
-    v->elts = scm_new_array(size, scmval);
+    v->elts = scm_gc_malloc(size * sizeof(scmval));
     for(int i = 0; i < size; i++) {
         v->elts[i] = initial;
     }
@@ -14,11 +14,11 @@ scmval make_vector(size_t size, scmval initial) {
 scmval make_vector_from_list(int size, scmval l) {
     int i;
     scmval c;
-    scm_vector_t* v = scm_new(scm_vector_t);
+    scm_vector_t* v = scm_gc_malloc(sizeof(scm_vector_t));
     if(size < 0)
         size = list_length(l);
     v->size = size;
-    v->elts = scm_new_array(size, scmval);
+    v->elts = scm_gc_malloc(size * sizeof(scmval));
     for(c = l, i = 0; !is_null(c); c = cdr(c), i++) {
         v->elts[i] = car(c);
     }
@@ -100,7 +100,7 @@ static scmval scm_vector_to_string(scmval v, scmval start, scmval end) {
     check_range("vector->string", c_fix(start), 0, vector_size(v));
     check_range("vector->string", c_fix(end), c_fix(start), vector_size(v));
     int size = c_fix(end) - c_fix(start) + 2;
-    char* s = scm_new_atomic(size, char);
+    char* s = scm_gc_malloc_atomic(size * sizeof(char));
     for(int i = c_fix(start), j = 0; i <= c_fix(end); i++, j++) {
         scmval x = vector_ref(v, i);
         if(!is_char(x)) error(type_error_type, "vector->string: vector element %s is not a character", scm_to_cstr(x));
@@ -119,9 +119,9 @@ static scmval scm_string_to_vector(scmval s, scmval start, scmval end) {
     check_range("string->vector", c_fix(start), 0, string_length(s));
     check_range("string->vector", c_fix(end), c_fix(start), string_length(s));
     int size = c_fix(end) - c_fix(start) + 1;
-    scm_vector_t* v = scm_new(scm_vector_t);
+    scm_vector_t* v = scm_gc_malloc_atomic(sizeof(scm_vector_t));
     v->size = size;
-    v->elts = scm_new_array(size, scmval);
+    v->elts = scm_gc_malloc_atomic(size * sizeof(scmval));
     char* str = c_str(s);
     for(int i = c_fix(start), j = 0; i <= c_fix(end); i++, j++) {
         v->elts[j] = s_char(str[i]);
@@ -137,9 +137,9 @@ static scmval scm_vector_copy(scmval v, scmval start, scmval end) {
     check_arg("vector-copy", fixnum_c, end);
     check_range("vector-copy", c_fix(start), 0, vector_size(v));
     check_range("vector-copy", c_fix(end), c_fix(start), vector_size(v));
-    scm_vector_t* copy = scm_new(scm_vector_t);
+    scm_vector_t* copy = scm_gc_malloc(sizeof(scm_vector_t));
     copy->size = c_fix(end) - c_fix(start) + 1;
-    copy->elts = scm_new_array(copy->size, scmval);
+    copy->elts = scm_gc_malloc(copy->size * sizeof(scmval));
     memcpy(copy->elts, get_vector(v)->elts+c_fix(start), copy->size*sizeof(scmval));
     return make_ptr(SCM_TYPE_VECTOR, copy);
 }
@@ -172,9 +172,9 @@ static scmval scm_vector_append(int argc, scmval* argv) {
     for(int i = 0; i < argc; i++) {
         size += vector_size(argv[i]);
     }
-    scm_vector_t* v = scm_new(scm_vector_t);
+    scm_vector_t* v = scm_gc_malloc(sizeof(scm_vector_t));
     v->size = size;
-    v->elts = scm_new_array(size, scmval);
+    v->elts = scm_gc_malloc(size * sizeof(scmval));
     int offset = 0;
     for(int i = 0; i < argc; i++) {
         memcpy(v->elts + offset,

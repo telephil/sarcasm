@@ -35,13 +35,13 @@ scmval s_flo(flonum d) {
 }
 
 scmval s_big(mpz_t m) {
-    scm_bignum_t* big = scm_new(scm_bignum_t);
+    scm_bignum_t* big = scm_gc_malloc(sizeof(scm_bignum_t));
     mpz_init_set(big->m, m);
     return make_ptr(SCM_TYPE_BIGNUM, big);
 }
 
 scmval s_bigi(fixnum i) {
-    scm_bignum_t* big = scm_new(scm_bignum_t);
+    scm_bignum_t* big = scm_gc_malloc(sizeof(scm_bignum_t));
     mpz_init_set_si(big->m, i);
     scmval v = make_ptr(SCM_TYPE_BIGNUM, big);
     return v;
@@ -612,7 +612,7 @@ scmval number_to_string(scmval v, scmval radix) {
         fixnum i = c_fix(v);
         fixnum r = c_fix(radix);
         if(r == 2) {
-            buf = scm_new_atomic(512, char);
+            buf = scm_gc_malloc_atomic(512 * sizeof(char));
             number_to_binary(i, buf);
         } else {
             char *fmt;

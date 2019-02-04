@@ -39,7 +39,7 @@ static void fatal_error_handler(scmval err);
 ////////////////////////////////////////////////////////////////////////////////
 void scm_boot(int argc, char* argv[]) {
     GC_INIT();
-    mp_set_memory_functions(scm_gc_malloc, scm_gc_realloc, scm_gc_free);
+    mp_set_memory_functions(scm_gc_malloc, scm_gc_realloc_z, scm_gc_free_z);
 
     init_base_types();
 

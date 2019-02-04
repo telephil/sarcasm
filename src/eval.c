@@ -223,7 +223,7 @@ static scmval call_primitive(scmval prim, scmval arglist, scmval env) {
     int new_argc = argc_from_arity(prim, argc);
     scmval *new_argv = argv;
     if(new_argc > 0) {
-        new_argv = scm_new_array(new_argc, scmval);
+        new_argv = scm_gc_malloc(new_argc * sizeof(scmval));
         for(int i = 0; i < new_argc; i++) {
             new_argv[i] = (i < argc)
                 ? eval_aux(argv[i], env)
@@ -356,7 +356,7 @@ static scmval stx_lambda(scmval expr, scmval env) {
     } else {
         check_arg("lambda", symbol_c, arglist);
         ac = -1;
-        av = scm_new_array(1, scmval);
+        av = scm_gc_malloc(sizeof(scmval));
         av[0] = arglist;
     }
     scmval body = transform_internal_definitions(cdr(expr));
@@ -374,7 +374,7 @@ static void define_closure(scmval expr, scmval env) {
     scmval* av = NULL;
     int     i = 0;
     if(ac > 0) { 
-        av = scm_new_array(ac, scmval);
+        av = scm_gc_malloc(ac * sizeof(scmval));
         for(scmval l = args; !is_null(l); l = cdr(l)) {
             check_arg("define", symbol_c, car(l));
             av[i++] = car(l);
@@ -452,7 +452,7 @@ static scmval stx_define_library(scmval expr, scmval env) {
         }
     }
     int argc = list_length(imports), i = 0;
-    scmval* argv = scm_new_array(argc, scmval);
+    scmval* argv = scm_gc_malloc(argc * sizeof(scmval));
     foreach(name, imports) {
         argv[i++] = name;
     }
@@ -583,7 +583,7 @@ static void list_to_args(scmval l, int* argc, scmval** argv) {
     int ac = list_length(l);
     if(ac > 0) {
         int     i  = 0;
-        scmval *av = scm_new_array(ac, scmval);
+        scmval *av = scm_gc_malloc(ac * sizeof(scmval));
         for( ; !is_null(l); l = cdr(l)) {
             av[i++] = car(l);
             if(!is_pair(cdr(l))) {

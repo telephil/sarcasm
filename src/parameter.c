@@ -14,7 +14,7 @@ void dynenv_pop_frame() {
 // CONSTRUCTOR
 ////////////////////////////////////////////////////////////////////////////////
 scmval make_parameter(scmval init, scmval converter) {
-    scm_parameter_t* param = scm_new(scm_parameter_t);
+    scm_parameter_t* param = scm_gc_malloc(sizeof(scm_parameter_t));
     if(is_undef(converter))
         param->value = init;
     else

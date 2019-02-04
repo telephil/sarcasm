@@ -5,7 +5,7 @@
 static scmval library_cache;
 
 scmval make_library(scmval name) {
-    scm_library_t* lib = scm_new(scm_library_t);
+    scm_library_t* lib = scm_gc_malloc(sizeof(scm_library_t));
     lib->name       = name;
     lib->symbols    = make_dict();
     lib->exports    = scm_null;

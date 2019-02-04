@@ -16,7 +16,7 @@ scmval scm_g_current_input_port;
 
 // constructors
 scmval make_port(short flags, void* data, char* name, scm_port_vtable_t* vtable) {
-    scm_port_t* port = scm_new(scm_port_t);
+    scm_port_t* port = scm_gc_malloc(sizeof(scm_port_t));
     port->flags  = flags;
     port->data   = data;
     port->name   = name;
@@ -157,7 +157,7 @@ static scmval scm_get_output_bytevector(scmval p) {
     check_arg("get-output-bytevector", output_bytevector_port_c, p);
     scm_bytes_buffer_t* out = port_data(p);
     int len = out->idx + 1;
-    byte* data = scm_new_atomic(len, byte);
+    byte* data = scm_gc_malloc_atomic(len * sizeof(byte));
     memcpy(data, out->data, len * sizeof(byte));
     return make_bytevector_from_data(len, data);
 }
@@ -202,7 +202,7 @@ static scmval scm_read_line(scmval p) {
     int i = 0, len = 1024;
     char* buf, c;
     scmval v;
-    buf = scm_new_atomic(len, char);
+    buf = scm_gc_malloc_atomic(len * sizeof(char));
     while(true) {
         c = scm_getc(p);
         if(c == EOF)
@@ -222,7 +222,7 @@ static scmval scm_read_string(scmval k, scmval port) {
     opt_arg(port, scm_current_input_port());
     check_arg("read-string", fixnum_c, k);
     check_arg("read-string", textual_input_port_c, port);
-    char* buf = scm_new_atomic(c_fix(k) + 1, char);
+    char* buf = scm_gc_malloc_atomic((c_fix(k) + 1) * sizeof(char));
     int i = 0;
     for(i = 0; i < c_fix(k); i++) {
         char c = scm_getc(port);
@@ -256,7 +256,7 @@ static scmval scm_read_bytevector(scmval k, scmval port) {
     opt_arg(port, scm_current_input_port());
     check_arg("read-bytevector", fixnum_c, k);
     check_arg("read-bytevector", binary_input_port_c, port);
-    byte* data = scm_new_atomic(c_fix(k), byte);
+    byte* data = scm_gc_malloc_atomic(c_fix(k) * sizeof(byte));
     int i = 0;
     for(i = 0; i < c_fix(k); i++) {
         scmval b = scm_read_u8(port);
@@ -611,7 +611,7 @@ static scmval make_binary_file_output_port_from_filename(scmval f) {
 // -- STRING
 static void string_close(scmval p) {
     if(is_input_port(p))
-        scm_delete(port_data(p));
+        scm_gc_free(port_data(p));
     set_port_open(p, false);
 }
 
@@ -640,7 +640,7 @@ static void string_putc(scmval p, scmval v) {
     scm_string_buffer_t* s = port_data(p);
     if(s->idx >= s->len) {
         s->len *= 1.5;
-        s->buf = scm_gc_realloc(s->buf, 0, s->len);
+        s->buf = scm_gc_realloc(s->buf, s->len);
     }
     s->buf[s->idx++] = c_char(v);
 }
@@ -650,7 +650,7 @@ static void string_puts(scmval p, scmval v) {
     size_t l = string_length(v);
     if((s->idx + l) >= s->len) {
         s->len *= 1.5;
-        s->buf = scm_gc_realloc(s->buf, 0, s->len);
+        s->buf = scm_gc_realloc(s->buf, s->len);
     }
     memcpy(s->buf+s->idx, c_str(v), l*sizeof(char));
     s->idx += l;
@@ -663,7 +663,7 @@ static void string_flush(scmval p) {
 static scmval scm_str_input_port(scmval s) {
     static scm_port_vtable_t vtable =
       { string_close, string_getc, string_ungetc, NULL, NULL, string_char_ready, NULL, NULL, NULL, NULL };
-    scm_string_buffer_t* in = scm_new(scm_string_buffer_t);
+    scm_string_buffer_t* in = scm_gc_malloc(sizeof(scm_string_buffer_t));
     in->buf = scm_gc_strdup(c_str(s));
     in->idx = 0;
     in->len = strlen(in->buf);
@@ -673,7 +673,7 @@ static scmval scm_str_input_port(scmval s) {
 static scmval scm_str_output_port() {
     static scm_port_vtable_t vtable =
       { string_close, NULL, NULL, NULL, NULL, NULL, string_putc, string_puts, NULL, string_flush };
-    scm_string_buffer_t* s = scm_new(scm_string_buffer_t);
+    scm_string_buffer_t* s = scm_gc_malloc(sizeof(scm_string_buffer_t));
     s->buf = scm_gc_malloc_atomic(1024*sizeof(char));
     s->idx = 0;
     s->len = 1024;
@@ -684,7 +684,7 @@ static scmval scm_str_output_port() {
 // -- BYTEVECTOR
 static void bytevector_close(scmval p) {
     if(is_input_port(p))
-        scm_delete(port_data(p));
+        scm_gc_free(port_data(p));
     set_port_open(p, false);
 }
 
@@ -712,7 +712,7 @@ static void bytevector_putb(scmval p, scmval b) {
     ++out->idx;
     if(out->idx >= out->len) {
         out->len = 1.5*out->len;
-        out->data = GC_REALLOC(out->data, out->len * sizeof(byte));
+        out->data = scm_gc_realloc(out->data, out->len * sizeof(byte));
     }
     out->data[out->idx] = c_fix(b);
 }
@@ -723,7 +723,7 @@ static void bytevector_flush(scmval p) {
 static scmval make_bytevector_input_port(scmval bv) {
     static scm_port_vtable_t vtable =
       { bytevector_close, NULL, NULL, bytevector_getb, bytevector_peekb, bytevector_ready, NULL, NULL, NULL, NULL };
-    scm_bytes_buffer_t* in = scm_new(scm_bytes_buffer_t);
+    scm_bytes_buffer_t* in = scm_gc_malloc(sizeof(scm_bytes_buffer_t));
     in->data = get_bytevector(bv)->elts;
     in->idx  = 0;
     in->len  = bytevector_size(bv);
@@ -733,8 +733,8 @@ static scmval make_bytevector_input_port(scmval bv) {
 static scmval make_bytevector_output_port() {
     static scm_port_vtable_t vtable =
       { bytevector_close, NULL, NULL, NULL, NULL, bytevector_ready, NULL, NULL, bytevector_putb, bytevector_flush };
-    scm_bytes_buffer_t* out = scm_new(scm_bytes_buffer_t);
-    out->data = scm_new_atomic(DEFAULT_BYTEVECTOR_PORT_SIZE, byte);
+    scm_bytes_buffer_t* out = scm_gc_malloc(sizeof(scm_bytes_buffer_t));
+    out->data = scm_gc_malloc_atomic(DEFAULT_BYTEVECTOR_PORT_SIZE * sizeof(byte));
     out->len  = DEFAULT_BYTEVECTOR_PORT_SIZE;
     out->idx  = -1;
     return make_port(scm_port_output | scm_port_bytevector | scm_port_binary, out, "bytevector", &vtable);

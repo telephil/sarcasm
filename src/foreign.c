@@ -40,14 +40,14 @@ static value  c_val(scmval, scmval);
 // CONSTRUCTORS
 ////////////////////////////////////////////////////////////////////////////////
 scmval make_foreign_lib(const char* name, void* handle) {
-    scm_foreign_lib_t* lib = scm_new(scm_foreign_lib_t);
+    scm_foreign_lib_t* lib = scm_gc_malloc(sizeof(scm_foreign_lib_t));
     lib->name   = scm_gc_strdup(name);
     lib->handle = handle;
     return make_ptr(scm_type_foreign_lib, lib);
 }
 
 scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle, ffi_cif cif) {
-    scm_foreign_obj_t* obj = scm_new(scm_foreign_obj_t);
+    scm_foreign_obj_t* obj = scm_gc_malloc(sizeof(scm_foreign_obj_t));
     obj->name   = scm_gc_strdup(name);
     obj->ret    = ret;
     obj->args   = args;
@@ -57,7 +57,7 @@ scmval make_foreign_obj(const char* name, scmval ret, scmval args, void* handle,
 }
 
 scmval make_foreign_type(const char* name, short code, ffi_type* type) {
-    scm_foreign_type_t* t = scm_new(scm_foreign_type_t);
+    scm_foreign_type_t* t = scm_gc_malloc(sizeof(scm_foreign_type_t));
     t->name = scm_gc_strdup(name);
     t->code = code;
     t->type = type;
@@ -65,7 +65,7 @@ scmval make_foreign_type(const char* name, short code, ffi_type* type) {
 }
 
 scmval make_foreign_ptr(void* ptr, scmval type) {
-    scm_foreign_ptr_t* p = scm_new(scm_foreign_ptr_t);
+    scm_foreign_ptr_t* p = scm_gc_malloc(sizeof(scm_foreign_ptr_t));
     p->ptr  = ptr;
     p->type = type;
     return make_ptr(scm_type_foreign_ptr, p);

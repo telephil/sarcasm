@@ -133,14 +133,12 @@ scm_type_t register_type_with_printer(const char*, scm_printer);
 ////////////////////////////////////////////////////////////////////////////////
 // GC FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
-#define scm_new(T)              GC_MALLOC(sizeof(T))
-#define scm_new_array(S, T)     GC_MALLOC(S*sizeof(T))
-#define scm_new_atomic(S, T)    GC_MALLOC_ATOMIC(S*sizeof(T))
-#define scm_delete(P)           GC_FREE(P)
 static inline void* scm_gc_malloc(size_t size) { return GC_MALLOC(size); }
 static inline void* scm_gc_malloc_atomic(size_t size) { return GC_MALLOC_ATOMIC(size); }
-static inline void* scm_gc_realloc(void* ptr, size_t old_size, size_t new_size) { return GC_REALLOC(ptr, new_size); }
-static inline void  scm_gc_free(void* ptr, size_t size) { GC_FREE(ptr); }
+static inline void* scm_gc_realloc(void* ptr, size_t new_size) { return GC_REALLOC(ptr, new_size); }
+static inline void* scm_gc_realloc_z(void* ptr, size_t old, size_t news) { return scm_gc_realloc(ptr, news); }
+static inline void  scm_gc_free(void* ptr) { GC_FREE(ptr); }
+static inline void  scm_gc_free_z(void* ptr, size_t s) { scm_gc_free(ptr); }
 static inline void  scm_gc_collect() { GC_gcollect(); }
 static inline char* scm_gc_strdup(const char* s) { return GC_STRDUP(s); }
 
