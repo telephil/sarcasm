@@ -90,7 +90,7 @@ libforeign_objs = lib/sarcasm/foreign.o
 
 ################################################################################
 # Output objects
-sarcasm = scm
+sarcasm = sarcasm
 libsarcasm = libsarcasm$(LIBEXT)
 libprocess = libsarcasm_process$(LIBEXT)
 libreadline = libsarcasm_readline$(LIBEXT)

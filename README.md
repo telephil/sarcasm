@@ -2,7 +2,7 @@
 A simple (even naive) work-in-progress R7RS scheme interpreter written in C11.
 
 ### Building
-Type ```make``` in the root directory to create the ```scm``` executable.
+Type ```make``` in the root directory to create the ```sarcasm``` executable.
 ```shell
 $ make
 ```
@@ -17,7 +17,7 @@ $ make
 ### Running
 The run the sarcasm interpreter, type the following command
 ```shell
-$ scm
+$ sarcasm
 ```
 Following options are recognized by the interpreter:
 ```
