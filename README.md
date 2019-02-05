@@ -1,12 +1,19 @@
 # sarcasm
 A simple (even naive) work-in-progress R7RS scheme interpreter written in C11.
 
-### Building
-Type ```make``` in the root directory to create the ```sarcasm``` executable.
+### Building and installing
+To build and install the ```sarcasm``` executable, type ```make install``` in the root directory:
 ```shell
-$ make
+$ make install
 ```
-**Note:** Build has only been tested on Mac OSX
+By default, installation is done in ```/usr/local```. This can be changed by adding a ```prefix``` variable to the ```make```command
+```shell
+$ make install prefix=/my/path
+```
+
+**Note:** Build has been tested on:
+- Mac OSX Mojave (10.14)
+- Ubuntu Cosmic (18.10)
 
 #### Dependencies
 - [Boehm GC](http://www.hboehm.info/gc/)
