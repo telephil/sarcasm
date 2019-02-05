@@ -76,7 +76,7 @@ scmval load_library(scmval name, scmval env) {
 typedef void(*init_fn)(scmval);
 void import_c_module(scmval env, scmval name) {
     char module_name[PATH_MAX];
-    sprintf(module_name, "%s.dylib", c_str(name));
+    sprintf(module_name, "%s%s", c_str(name), LIBEXT);
     void* handle = dlopen(module_name, RTLD_LAZY);
     if(handle == NULL)
         error(scm_undef, "unable to find C module (%s)", dlerror());
