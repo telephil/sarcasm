@@ -102,7 +102,7 @@ libraries = $(libprocess) $(libreadline) $(libforeign)
 all:	$(libsarcasm) $(sarcasm) $(libraries)
 
 %.o:	%.c $(includes)
-	$(CC) -c $(GC_CFLAGS) $(GMP_CFLAGS) $(FFI_CFLAGS) $(CONFIG_CFLAGS) $(ALL_CFLAGS) $< -o $@ 
+	$(CC) -c $(GC_CFLAGS) $(GMP_CFLAGS) $(FFI_CFLAGS) $(CONFIG_CFLAGS) $(LIB_CFLAGS) $(ALL_CFLAGS) $< -o $@ 
 
 $(sarcasm_objs):	$(sarcasm_objs:.o=.c) $(includes)
 	$(CC) -c $(FFI_CFLAGS) $(ALL_CFLAGS) $< -o $@
