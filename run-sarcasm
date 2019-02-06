@@ -1,8 +1,8 @@
 #!/bin/sh
 
 BASEDIR=$(dirname "$0")
-LD_LIBRARY_PATH="$BASEDIR"
-SCM_LIBRARY_PATH="$BASEDIR/lib"
+export LD_LIBRARY_PATH="$BASEDIR"
+export SCM_LIBRARY_PATH="$BASEDIR/lib"
 SARCASM="$BASEDIR/sarcasm"
 
 if [ ! -f $SARCASM ]; then
