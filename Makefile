@@ -46,12 +46,14 @@ ifeq ($(shell uname),Darwin)
 	LIBEXT = .dylib
 	LIB_CFLAGS =
 	LIB_LDFLAGS = -dynamiclib
+	RPATH_LDFLAGS =
 else 
 ifeq ($(shell uname),Linux)
 	PLATFORM_CFLAGS = -D_GNU_SOURCE
 	LIBEXT = .so
 	LIB_CFLAGS = -fPIC
 	LIB_LDFLAGS = -shared
+	RPATH_LDFLAGS = -Wl,-R'$(libdir)'
 endif
 endif
 
@@ -129,7 +131,7 @@ $(libforeign):	$(libforeign_objs)
 	$(CC) $(GC_LDFLAGS) $(FFI_LDFLAGS) -L. -lsarcasm $(LIB_LDFLAGS) $(ALL_LDFLAGS) $^ -o $@
 
 $(sarcasm):	$(sarcasm_objs) $(libsarcasm)
-	$(CC) -L. -lsarcasm $< -o $@ $(ALL_LDFLAGS)
+	$(CC) -L. -lsarcasm $(RPATH_LDFLAGS) $(ALL_LDFLAGS) $< -o $@
 
 check:	$(sarcasm)
 	@SCM_LIBRARY_PATH=./lib ./$(sarcasm) -l ./tests/r7rs.scm
@@ -147,7 +149,7 @@ install: all
 uninstall:
 	-$(RM) $(bindir)/$(sarcasm)
 	-$(RM) $(libdir)/$(libsarcasm)
-	-$(CD) $(libdir) && $(RM) $(modules)
+	-$(CD) $(libdir) && $(RM) $(libraries)
 	-$(RM) $(libdir)/$(libprocess)
 	-$(RM) $(libdir)/$(libreadline)
 	-$(RM) $(scmlibdir)/sarcasm/*.scm
