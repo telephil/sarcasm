@@ -3,6 +3,7 @@
 *.swp
 *.dSYM
 *.o
+*.so
 *.dylib
-/scm
+/sarcasm
 out
