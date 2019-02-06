@@ -1,0 +1,14 @@
+#!/bin/sh
+
+BASEDIR=$(dirname "$0")
+LD_LIBRARY_PATH="$BASEDIR"
+SCM_LIBRARY_PATH="$BASEDIR/lib"
+SARCASM="$BASEDIR/sarcasm"
+
+if [ ! -f $SARCASM ]; then
+	echo "sarcasm executable not found in $BASEDIR"
+	exit 1
+fi
+
+exec $SARCASM $@
+
