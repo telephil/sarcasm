@@ -724,7 +724,7 @@ static scmval make_bytevector_input_port(scmval bv) {
     static scm_port_vtable_t vtable =
       { bytevector_close, NULL, NULL, bytevector_getb, bytevector_peekb, bytevector_ready, NULL, NULL, NULL, NULL };
     scm_bytes_buffer_t* in = scm_gc_malloc(sizeof(scm_bytes_buffer_t));
-    in->data = get_bytevector(bv)->elts;
+    in->data = bytevector_data(bv);
     in->idx  = 0;
     in->len  = bytevector_size(bv);
     return make_port(scm_port_input | scm_port_bytevector | scm_port_binary, in, "bytevector", &vtable);

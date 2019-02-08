@@ -1,5 +1,23 @@
 #include "scm.h"
 
+////////////////////////////////////////////////////////////////////////////////
+// Type definition
+////////////////////////////////////////////////////////////////////////////////
+typedef struct scm_bytevector scm_bytevector_t;
+
+struct scm_bytevector {
+    size_t   size;
+    byte* elts;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Globals
+////////////////////////////////////////////////////////////////////////////////
+scm_type_t scm_type_bytevector;
+
+////////////////////////////////////////////////////////////////////////////////
+// Constructors
+////////////////////////////////////////////////////////////////////////////////
 scmval make_bytevector(size_t size, scmval initial) {
     scm_bytevector_t* b = scm_gc_malloc(sizeof(scm_bytevector_t));
     b->size = size;
@@ -31,18 +49,43 @@ scmval make_bytevector_from_data(int size, byte* data) {
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Accessors
+////////////////////////////////////////////////////////////////////////////////
+static inline scm_bytevector_t* get_bytevector(scmval v) {
+    return (scm_bytevector_t*)v.o;
+}
+
+size_t bytevector_size(scmval v) {
+    return get_bytevector(v)->size;
+}
+
+byte* bytevector_data(scmval v) {
+    return get_bytevector(v)->elts;
+}
+
+scmval bytevector_ref(scmval v, int i) {
+    return s_fix(get_bytevector(v)->elts[i]);
+}
+
+void bytevector_set(scmval v, int i, scmval x) {
+    get_bytevector(v)->elts[i] = c_fix(x);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // standard library
-static scmval scm_bytevector_p(scmval v) {
+////////////////////////////////////////////////////////////////////////////////
+scmval scm_bytevector_p(scmval v) {
     return s_bool(is_bytevector(v));
 }
 
-static scmval scm_make_bytevector(scmval size, scmval initial) {
+scmval scm_make_bytevector(scmval size, scmval initial) {
     check_arg("make-bytevector", fixnum_c, size);
     opt_arg(initial, scm_0);
     return make_bytevector(c_fix(size), initial);
 }
 
-static scmval scm_bytevector(int argc, scmval* argv) {
+scmval scm_bytevector(int argc, scmval* argv) {
     check_args("bytevector", byte_c, argc, argv);
     scmval b = make_bytevector(argc, scm_0);
     for(int i = 0; i < argc; i++) {
@@ -51,19 +94,19 @@ static scmval scm_bytevector(int argc, scmval* argv) {
     return b;
 }
 
-static scmval scm_bytevector_length(scmval b) {
+scmval scm_bytevector_length(scmval b) {
     check_arg("bytevector-length", bytevector_c, b);
     return s_fix(bytevector_size(b));
 }
 
-static scmval scm_bytevector_ref(scmval b, scmval k) {
+scmval scm_bytevector_ref(scmval b, scmval k) {
     check_arg("bytevector-u8-ref", bytevector_c, b);
     check_arg("bytevector-u8-ref", fixnum_c, k);
     check_range("bytevector-u8-ref", c_fix(k), 0, bytevector_size(b));
     return bytevector_ref(b, c_fix(k));
 }
 
-static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
+scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
     check_arg("bytevector-u8-set!", bytevector_c, b);
     check_arg("bytevector-u8-set!", fixnum_c, k);
     check_arg("bytevector-u8-set!", byte_c, byte);
@@ -73,7 +116,7 @@ static scmval scm_bytevector_set(scmval b, scmval k, scmval byte) {
     return scm_void;
 }
 
-static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
+scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
     opt_arg(start, scm_0);
     opt_arg(end, s_fix(bytevector_size(b) - 1));
     check_arg("bytevector-copy", bytevector_c, b);
@@ -88,7 +131,7 @@ static scmval scm_bytevector_copy(scmval b, scmval start, scmval end) {
     return make_ptr(SCM_TYPE_BYTEVECTOR, copy);
 }
 
-static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval start, scmval end) {
+scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval start, scmval end) {
     opt_arg(start, scm_0);
     opt_arg(end, s_fix(bytevector_size(from) - 1));
     check_arg("bytevector-copy!", bytevector_c, to);
@@ -109,7 +152,7 @@ static scmval scm_bytevector_mcopy(scmval to, scmval at, scmval from, scmval sta
     return scm_void;
 }
 
-static scmval scm_bytevector_append(int argc, scmval* argv) {
+scmval scm_bytevector_append(int argc, scmval* argv) {
     check_args("bytevector-append", bytevector_c, argc, argv);
     int size = 0;
     for(int i = 0; i < argc; i++) {
@@ -128,7 +171,7 @@ static scmval scm_bytevector_append(int argc, scmval* argv) {
     return make_ptr(SCM_TYPE_BYTEVECTOR, b);
 }
 
-static scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
+scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
     opt_arg(start, scm_0);
     opt_arg(end  , s_fix(bytevector_size(b)));
     check_arg("utf8->string", bytevector_c, b);
@@ -143,7 +186,7 @@ static scmval scm_utf8_to_string(scmval b, scmval start, scmval end) {
     return s_str_nocopy(s);
 }
 
-static scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
+scmval scm_string_to_utf8(scmval s, scmval start, scmval end) {
     opt_arg(start, scm_0);
     opt_arg(end  , s_fix(string_length(s)));
     check_arg("string->utf8", string_c, s);

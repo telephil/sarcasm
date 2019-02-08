@@ -105,8 +105,8 @@ static void init_base_types() {
     register_type("#string");
     register_type("#symbol");
     register_type("#pair");
-    register_type("#vector");
-    register_type("#bytevector");
+    scm_type_vector = register_type("#vector");
+    scm_type_bytevector = register_type("#bytevector");
     register_type("#environment");
     register_type("#primitive");
     register_type("#closure");
